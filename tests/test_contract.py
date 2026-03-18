@@ -4,7 +4,7 @@ Tests pour clinical-contract.
 import pytest
 from clinical_contract import load_contract, load_raw
 from clinical_contract.contract import DataContract
-from clinical_contract.models import CheckStatus
+from clinical_contract.models import CheckStatus, ColumnCheckStatus
 
 # ------------------------------------------------------------------ #
 # YAML de test                                                         #
@@ -48,6 +48,57 @@ schema:
     properties: []
 """
 
+YAML_OPTIONAL_COLUMN = """
+apiVersion: v1.0.0
+kind: DataContract
+id: optional-contract
+name: Optional Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Tests unitaires"
+  limitations: "Aucune"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant
+        required: true
+      - name: notes
+        logicalType: string
+        physicalType: TEXT
+        description: Colonne optionnelle
+        required: false
+"""
+
+YAML_SANS_QUALITY = """
+apiVersion: v1.0.0
+kind: DataContract
+id: no-quality
+name: No Quality Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Tests unitaires"
+  limitations: "Aucune"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant
+        required: true
+"""
+
 
 # ------------------------------------------------------------------ #
 # Tests validate_structure                                             #
@@ -72,6 +123,12 @@ def test_validate_structure_incomplet():
     assert "description" in missing_fields
 
 
+def test_validate_structure_racine_non_mapping():
+    report = DataContract.validate_structure(["not", "a", "mapping"])
+    assert report.success is False
+    assert len(report.missing()) == len(report.fields)
+
+
 # ------------------------------------------------------------------ #
 # Tests load_contract                                                  #
 # ------------------------------------------------------------------ #
@@ -86,6 +143,11 @@ def test_load_contract_depuis_string():
 def test_load_contract_depuis_bytes():
     contract, raw = load_contract(YAML_COMPLET.encode())
     assert contract.id == "test-contract"
+
+
+def test_load_contract_yaml_vide():
+    with pytest.raises(ValueError, match="YAML est vide"):
+        load_contract(b"")
 
 
 # ------------------------------------------------------------------ #
@@ -134,3 +196,78 @@ def test_check_backend_inconnu():
     contract, _ = load_contract(YAML_COMPLET)
     with pytest.raises(ValueError, match="Backend inconnu"):
         contract.check("fake.parquet", backend="mysql")
+
+
+def test_check_sans_quality_rules():
+    class DummyBackend:
+        def run_query(self, sql: str, parquet_path: str | bytes, table_name: str) -> int:
+            return 0
+
+    contract, _ = load_contract(YAML_SANS_QUALITY)
+    report = contract.check("unused.parquet", backend=DummyBackend())
+    assert report.success is True
+    assert report.code == 0
+    assert report.results == []
+    assert "Aucun quality check" in report.summary
+
+
+# ------------------------------------------------------------------ #
+# Tests check_schema()                                                 #
+# ------------------------------------------------------------------ #
+
+def test_check_schema_colonne_optionnelle_absente(tmp_path):
+    pytest.importorskip("pyarrow")
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    table = pa.table({"id": ["A001", "A002"]})
+    parquet_file = tmp_path / "patients.parquet"
+    pq.write_table(table, parquet_file)
+
+    contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
+    reports = contract.check_schema(str(parquet_file))
+    assert len(reports) == 1
+
+    cols = {c.column: c for c in reports[0].columns}
+    assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["notes"].status == ColumnCheckStatus.optional_missing
+    assert reports[0].success is True
+
+
+def test_check_schema_timestamp_tz_compatible(tmp_path):
+    pytest.importorskip("pyarrow")
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    yaml_timestamp_tz = """
+apiVersion: v1.0.0
+kind: DataContract
+id: ts-contract
+name: Timestamp Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Tests unitaires"
+  limitations: "Aucune"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: event_ts
+        logicalType: timestamp[us, tz=Europe/Paris]
+        physicalType: TIMESTAMP
+        description: Horodatage
+        required: true
+"""
+    table = pa.table(
+        {"event_ts": pa.array([1_700_000_000_000_000], type=pa.timestamp("us", tz="Europe/Paris"))}
+    )
+    parquet_file = tmp_path / "patients.parquet"
+    pq.write_table(table, parquet_file)
+
+    contract, _ = load_contract(yaml_timestamp_tz)
+    reports = contract.check_schema(str(parquet_file))
+    assert reports[0].success is True
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok

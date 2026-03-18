@@ -77,8 +77,9 @@ class ValidateReport(BaseModel):
 
 
 class ColumnCheckStatus(str, Enum):
-    ok      = "ok"       # colonne présente et type compatible
+    ok = "ok"  # colonne présente et type compatible
     missing = "missing"  # colonne absente du parquet
+    optional_missing = "optional_missing"  # colonne absente mais optionnelle
     type_mismatch = "type_mismatch"  # colonne présente mais type incompatible
 
 
@@ -86,13 +87,15 @@ class ColumnCheckResult(BaseModel):
     """Result of a single column check (schema vs parquet)."""
     column: str
     yaml_type: str
-    parquet_type: str   # "--" si absente
+    parquet_type: str   # "—" si absente
     status: ColumnCheckStatus
 
     @property
     def status_icon(self) -> str:
         if self.status == ColumnCheckStatus.ok:
             return "✅"
+        if self.status == ColumnCheckStatus.optional_missing:
+            return "⚪ optionnel"
         if self.status == ColumnCheckStatus.missing:
             return "❌ absent"
         return "❌ type"
@@ -105,4 +108,7 @@ class SchemaCheckReport(BaseModel):
     columns: list[ColumnCheckResult] = Field(default_factory=list)
 
     def failures(self) -> list[ColumnCheckResult]:
-        return [c for c in self.columns if c.status != ColumnCheckStatus.ok]
+        return [
+            c for c in self.columns
+            if c.status not in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
+        ]

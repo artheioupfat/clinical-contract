@@ -90,7 +90,7 @@ def cmd_validate(yaml_path: str) -> None:
 def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
     """
     1. Vérifie la structure du YAML
-    2. Vérifie que les colonnes du parquet correspondent au contrat (nom + type)
+    2. Vérifie que les colonnes obligatoires du parquet correspondent au contrat (nom + type)
     3. Si le schéma est valide, exécute les quality checks SQL
     """
     yaml_file    = Path(yaml_path)
@@ -190,7 +190,10 @@ def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
             str(r.expected),
         ])
 
-    _print_table(headers, rows)
+    if rows:
+        _print_table(headers, rows)
+    else:
+        print("  (aucun quality check défini dans le contrat)")
 
     # Résumé
     n_total  = len(report.results)

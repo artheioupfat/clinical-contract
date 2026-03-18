@@ -30,7 +30,13 @@ from .models import (
     ColumnCheckStatus,
     SchemaCheckReport,
 )
-from .backends import DuckDBBackend, PolarsBackend, PyArrowBackend, auto_backend
+from .backends import (
+    DuckDBBackend,
+    PolarsBackend,
+    PyArrowBackend,
+    auto_backend,
+    available_backends,
+)
 
 __all__ = [
     "load_contract",
@@ -45,10 +51,14 @@ __all__ = [
     "QualityResult",
     "FieldValidation",
     "CheckStatus",
+    "ColumnCheckResult",
+    "ColumnCheckStatus",
+    "SchemaCheckReport",
     "DuckDBBackend",
     "PolarsBackend",
     "PyArrowBackend",
     "auto_backend",
+    "available_backends",
 ]
 
 from importlib.metadata import version, PackageNotFoundError

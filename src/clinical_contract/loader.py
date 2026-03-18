@@ -9,6 +9,16 @@ import yaml
 from .contract import DataContract
 
 
+def _read_yaml_source(source: str | Path | bytes):
+    if isinstance(source, bytes):
+        return yaml.safe_load(source)
+    if isinstance(source, Path):
+        return yaml.safe_load(source.read_text(encoding="utf-8"))
+    if isinstance(source, str) and "\n" in source:
+        return yaml.safe_load(source)
+    return yaml.safe_load(Path(source).read_text(encoding="utf-8"))
+
+
 def load_contract(source: str | Path | bytes) -> tuple[DataContract, dict]:
     """
     Charge et parse un DataContract depuis un fichier YAML.
@@ -29,17 +39,18 @@ def load_contract(source: str | Path | bytes) -> tuple[DataContract, dict]:
     ------
     FileNotFoundError
         Si le fichier n'existe pas.
+    ValueError
+        Si le YAML est vide ou si la racine n'est pas un objet.
     pydantic.ValidationError
         Si la structure ne correspond pas au schéma attendu.
     """
-    if isinstance(source, bytes):
-        raw = yaml.safe_load(source)
-    elif isinstance(source, Path):
-        raw = yaml.safe_load(source.read_text(encoding="utf-8"))
-    elif isinstance(source, str) and "\n" in source:
-        raw = yaml.safe_load(source)
-    else:
-        raw = yaml.safe_load(Path(source).read_text(encoding="utf-8"))
+    raw = _read_yaml_source(source)
+    if raw is None:
+        raise ValueError("Le YAML est vide.")
+    if not isinstance(raw, dict):
+        raise ValueError(
+            "Le contenu YAML racine doit être un objet (mapping clé/valeur)."
+        )
 
     return DataContract(**raw), raw
 
@@ -50,11 +61,9 @@ def load_raw(source: str | Path | bytes) -> dict:
     Utilisé par la commande 'validate' pour afficher les champs manquants
     même si le YAML est incomplet.
     """
-    if isinstance(source, bytes):
-        return yaml.safe_load(source) or {}
-    elif isinstance(source, Path):
-        return yaml.safe_load(source.read_text(encoding="utf-8")) or {}
-    elif isinstance(source, str) and "\n" in source:
-        return yaml.safe_load(source) or {}
-    else:
-        return yaml.safe_load(Path(source).read_text(encoding="utf-8")) or {}
+    raw = _read_yaml_source(source)
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    return raw
