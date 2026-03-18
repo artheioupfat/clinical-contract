@@ -26,6 +26,4 @@ htmlcov/
 EOF
 
 #test_file
-test_file/test_file/
-test_file/
 test_file/
