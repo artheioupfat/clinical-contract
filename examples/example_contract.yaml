@@ -1,0 +1,41 @@
+apiVersion: v1.0.0
+kind: DataContract
+id: export-contract
+name: Export Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Export dataset contenant les événements médicaux et échantillons"
+  usage: "Analytics et traitement downstream"
+  limitations: "Les données historiques peuvent contenir des timestamps legacy"
+
+schema:
+  - name: export
+    physicalType: TABLE
+    description: Dataset exporté contenant les données patient
+    properties:
+      - name: IPP
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant patient permanent
+        required: true
+        quality:
+          - type: sql
+            description: IPP ne doit pas être null
+            query: "SELECT COUNT(*) FROM export WHERE IPP IS NULL"
+            mustBe: 0
+          - type: sql
+            description: IPP doit faire entre 35 et 37 caractères
+            query: "SELECT COUNT(*) FROM export WHERE LENGTH(IPP) NOT BETWEEN 35 AND 37"
+            mustBe: 0
+
+      - name: DATE_EVENEMENT
+        logicalType: timestamp[us, tz=Europe/Paris]
+        physicalType: DATE
+        description: Date de l'événement médical
+        required: true
+        quality:
+          - type: sql
+            description: Pas de dates dans le futur
+            query: "SELECT COUNT(*) FROM export WHERE DATE_EVENEMENT > CURRENT_DATE"
+            mustBe: 0
