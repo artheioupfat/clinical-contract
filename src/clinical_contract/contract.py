@@ -26,28 +26,60 @@ TYPE_FAMILIES: dict[str, set[str]] = {
     "string":    {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
     "text":      {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
     "varchar":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "integer":   {"int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64"},
-    "int":       {"int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64"},
-    "int32":     {"int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64"},
-    "int64":     {"int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64"},
-    "float":     {"float16", "float32", "float64", "double", "decimal128", "decimal"},
-    "double":    {"float16", "float32", "float64", "double", "decimal128", "decimal"},
-    "decimal":   {"float16", "float32", "float64", "double", "decimal128", "decimal"},
+    "integer":   {
+        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
+        "tinyint", "smallint", "integer", "bigint",
+        "utinyint", "usmallint", "uinteger", "ubigint",
+    },
+    "int":       {
+        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
+        "tinyint", "smallint", "integer", "bigint",
+        "utinyint", "usmallint", "uinteger", "ubigint",
+    },
+    "int32":     {
+        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
+        "tinyint", "smallint", "integer", "bigint",
+        "utinyint", "usmallint", "uinteger", "ubigint",
+    },
+    "int64":     {
+        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
+        "tinyint", "smallint", "integer", "bigint",
+        "utinyint", "usmallint", "uinteger", "ubigint",
+    },
+    "float":     {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
+    "double":    {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
+    "decimal":   {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
     "boolean":   {"bool", "boolean"},
     "bool":      {"bool", "boolean"},
     "date":      {"date32", "date64", "date"},
     "date32":    {"date32", "date64", "date"},
-    "datetime":  {"timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]"},
-    "timestamp": {"timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]"},
+    "datetime":  {
+        "timestamp", "timestamp with time zone", "timestamptz",
+        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
+    },
+    "timestamp": {
+        "timestamp", "timestamp with time zone", "timestamptz",
+        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
+    },
     "binary":    {"binary", "large_binary"},
     "bytes":     {"binary", "large_binary"},
 }
 
 
+def _normalize_type_name(type_name: str) -> str:
+    type_lower = type_name.lower().strip()
+    if type_lower.startswith("timestamp[") and ", tz=" in type_lower:
+        unit = type_lower[len("timestamp["):].split(",", 1)[0].strip()
+        return f"timestamp[{unit}]"
+    if type_lower.startswith("decimal("):
+        return "decimal"
+    return type_lower
+
+
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
     """Retourne True si parquet_type appartient à la famille de yaml_type."""
-    yaml_lower    = yaml_type.lower()
-    parquet_lower = parquet_type.lower()
+    yaml_lower = _normalize_type_name(yaml_type)
+    parquet_lower = _normalize_type_name(parquet_type)
     if yaml_lower == parquet_lower:
         return True
     return parquet_lower in TYPE_FAMILIES.get(yaml_lower, set())
@@ -128,6 +160,9 @@ class DataContract(BaseModel):
         -------
         ValidateReport
         """
+        if not isinstance(raw, dict):
+            raw = {}
+
         fields = []
         for field in REQUIRED_FIELDS:
             value = raw.get(field)
@@ -160,16 +195,23 @@ class DataContract(BaseModel):
     def check_schema(self, parquet_path: str | bytes) -> list[SchemaCheckReport]:
         """
         Pour chaque SchemaItem du contrat, vérifie que :
-        - chaque property existe comme colonne dans le parquet
+        - chaque property obligatoire existe comme colonne dans le parquet
         - le type de la colonne est compatible avec logicalType du YAML
+        Les colonnes optionnelles absentes sont signalées mais n'échouent pas.
 
         Returns
         -------
         list[SchemaCheckReport]
             Un rapport par schema. success=True si tout est ok.
         """
-        import pyarrow.parquet as pq
         import io
+        try:
+            import pyarrow.parquet as pq
+        except ImportError as exc:
+            raise ImportError(
+                "La vérification de schéma nécessite pyarrow. "
+                "Installe avec: pip install \"clinical-contract[pyarrow]\""
+            ) from exc
 
         if isinstance(parquet_path, (bytes, bytearray)):
             pq_schema = pq.read_schema(io.BytesIO(parquet_path))
@@ -190,13 +232,22 @@ class DataContract(BaseModel):
                 parquet_type = parquet_columns.get(prop.name)
 
                 if parquet_type is None:
-                    # Colonne absente
-                    column_results.append(ColumnCheckResult(
-                        column=prop.name,
-                        yaml_type=prop.logicalType,
-                        parquet_type="—",
-                        status=ColumnCheckStatus.missing,
-                    ))
+                    if prop.required:
+                        # Colonne absente et obligatoire
+                        column_results.append(ColumnCheckResult(
+                            column=prop.name,
+                            yaml_type=prop.logicalType,
+                            parquet_type="—",
+                            status=ColumnCheckStatus.missing,
+                        ))
+                    else:
+                        # Colonne absente mais optionnelle
+                        column_results.append(ColumnCheckResult(
+                            column=prop.name,
+                            yaml_type=prop.logicalType,
+                            parquet_type="—",
+                            status=ColumnCheckStatus.optional_missing,
+                        ))
                 elif not _types_compatible(prop.logicalType, parquet_type):
                     # Colonne présente mais type incompatible
                     column_results.append(ColumnCheckResult(
@@ -215,7 +266,10 @@ class DataContract(BaseModel):
 
             reports.append(SchemaCheckReport(
                 schema_name=schema_item.name,
-                success=all(c.status == ColumnCheckStatus.ok for c in column_results),
+                success=all(
+                    c.status in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
+                    for c in column_results
+                ),
                 columns=column_results,
             ))
 
@@ -258,6 +312,7 @@ class DataContract(BaseModel):
                         f"Backend inconnu : '{backend}'. "
                         f"Choix possibles : {list(BACKENDS.keys())}"
                     )
+                cls.ensure_available()
                 _backend = cls()
         else:
             _backend = backend
@@ -307,7 +362,9 @@ class DataContract(BaseModel):
         has_failed = any(r.status == CheckStatus.failed for r in results)
         all_ok     = not has_error and not has_failed
 
-        if all_ok:
+        if not results:
+            code, summary = 0, "Aucun quality check défini."
+        elif all_ok:
             code, summary = 0, "Tous les checks sont passés."
         elif has_error:
             code, summary = 2, "Des erreurs d'exécution ont été rencontrées."

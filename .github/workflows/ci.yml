@@ -26,11 +26,33 @@ jobs:
       - name: Install dependencies
         run: uv pip install --system -e ".[dev]"
 
+      - name: Run lint
+        run: ruff check .
+
       - name: Run tests
         run: pytest tests/ -v --tb=short
 
-  publish:
+  package-check:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Verify package metadata
+        run: twine check dist/*
+
+  publish:
+    needs: package-check
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     environment: pypi

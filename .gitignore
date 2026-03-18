@@ -1,21 +1,29 @@
-cat > .gitignore << 'EOF'
-# Python
+# Python artifacts
 __pycache__/
 *.py[cod]
+*.so
+
+# Packaging
 *.egg-info/
 dist/
 build/
 .eggs/
+*.whl
 
-# Virtual env
+# Virtual environments
 .venv/
 venv/
 env/
 
-# Tests
+# Tooling caches
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
 htmlcov/
+
+# Lock and local tool cache
+.uv-cache/
 
 # IDE
 .vscode/
@@ -23,7 +31,3 @@ htmlcov/
 
 # OS
 .DS_Store
-EOF
-
-#test_file
-test_file/

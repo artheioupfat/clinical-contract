@@ -14,14 +14,14 @@ A contract defines:
 - **Schema** — which columns exist, their logical and physical types
 - **Quality rules** — SQL-based assertions that must hold true on the data
 
-The library supports multiple query backends (DuckDB, Polars, PyArrow) and is compatible with [PyScript](https://pyscript.net), making it suitable for both server-side pipelines and browser-based tooling.
+The library supports multiple loading backends (DuckDB, Polars, PyArrow) and is compatible with [PyScript](https://pyscript.net), making it suitable for both server-side pipelines and browser-based tooling.
 
 ---
 
 ## Features
 
 - **YAML contract validation** — verify that a contract file is structurally complete before running it against data
-- **Schema verification** — check that all declared columns exist in the Parquet file with compatible types
+- **Schema verification** — check that required columns exist in the Parquet file with compatible types
 - **SQL quality checks** — execute custom SQL assertions and report pass/fail with obtained vs expected values
 - **Flexible type mapping** — loose type family matching (`string`, `varchar`, `text` are treated as equivalent; `int32`, `int64`, `integer` likewise)
 - **Multi-backend support** — DuckDB (recommended), Polars, PyArrow — auto-detected at runtime
@@ -49,7 +49,8 @@ pip install "clinical-contract[pyarrow]"
 pip install "clinical-contract[all]"
 ```
 
-> **Note:** The core package (`pip install clinical-contract`) installs only Pydantic and PyYAML. At least one query backend is required to run `check`.
+> **Note:** The core package (`pip install clinical-contract`) installs only Pydantic and PyYAML.  
+> Use one of the extras (`duckdb`, `polars`, `pyarrow`, `all`) to run `check`.
 
 ---
 
@@ -182,10 +183,14 @@ Checks that the YAML contract file contains all required top-level fields. Does 
 Runs a full validation pipeline in three stages:
 
 1. **YAML structure** — same checks as `validate`
-2. **Schema compatibility** — verifies that all declared columns exist in the Parquet file with compatible types. Quality checks are **blocked** if this step fails.
+2. **Schema compatibility** — verifies that required columns exist in the Parquet file with compatible types (optional columns may be absent). Quality checks are **blocked** if this step fails.
 3. **Quality checks** — executes each SQL assertion and reports the result
 
 **Backend options:** `auto` (default), `duckdb`, `polars`, `pyarrow`
+
+All quality SQL checks are executed with DuckDB; `polars` and `pyarrow` modes mainly control how parquet data is loaded before query execution.
+
+`required: false` columns are treated as optional in schema compatibility. If absent, they are reported as `optionnel` and do not fail the run.
 
 **Exit codes:** `0` if all checks pass, `1` if any check fails or a column is missing/mistyped, `2` if an execution error occurs.
 
@@ -202,7 +207,7 @@ Types in the YAML contract are matched against Parquet types using a loose famil
 | `float`, `double`, `decimal` | `float32`, `float64`, `double`, `decimal128` |
 | `boolean`, `bool` | `bool`, `boolean` |
 | `date`, `date32` | `date32`, `date64` |
-| `datetime`, `timestamp` | `timestamp[ms]`, `timestamp[us]`, `timestamp[ns]` |
+| `datetime`, `timestamp` | `timestamp[ms]`, `timestamp[us]`, `timestamp[ns]`, `timestamp[s]`, timezone variants |
 | `binary`, `bytes` | `binary`, `large_binary` |
 
 ---
@@ -249,13 +254,14 @@ for result in report.failed():
 `clinical-contract` is designed to work inside [PyScript](https://pyscript.net) with Pyodide. Pass raw bytes from a file upload instead of a file path:
 
 ```html
-<script type="py" config='{"packages": ["clinical-contract", "duckdb", "pyyaml", "pydantic"]}'>
+<script type="py" config='{"packages": ["clinical-contract", "duckdb", "pyarrow", "pyyaml", "pydantic"]}'>
 import js
 from clinical_contract import load_contract
 
 async def on_file_upload(event):
-    file = event.target.files[0]
-    yaml_bytes   = (await yaml_file.arrayBuffer()).to_bytes()
+    yaml_file = js.document.getElementById("yaml-input").files[0]
+    parquet_file = js.document.getElementById("parquet-input").files[0]
+    yaml_bytes = (await yaml_file.arrayBuffer()).to_bytes()
     parquet_bytes = (await parquet_file.arrayBuffer()).to_bytes()
 
     contract, raw = load_contract(yaml_bytes)
@@ -292,7 +298,7 @@ schema:
         logicalType: string   # Semantic type (string, integer, date…)
         physicalType: string  # Storage type (TEXT, INT, DATE…)
         description: string
-        required: bool        # Default: false
+        required: bool        # Default: false (missing optional columns do not fail schema check)
         quality:              # Optional list of SQL assertions
           - type: sql
             description: string   # Human-readable description of the rule
@@ -306,7 +312,7 @@ schema:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/clinical-contract.git
+git clone https://github.com/artheioupfat/clinical-contract.git
 cd clinical-contract
 
 # Create a virtual environment
