@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clinical-contract"
-version = "0.0.1"
+version = "0.0.2"
 description = "Valide des data contracts YAML cliniques contre des fichiers Parquet"
 readme = "README.md"
 requires-python = ">=3.9"
