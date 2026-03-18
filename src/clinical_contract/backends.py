@@ -74,10 +74,10 @@ class DuckDBBackend(BaseBackend):
                 table = pq.read_table(io.BytesIO(parquet_path))
                 conn.register(table_name, table)
             else:
+                parquet_path_literal = str(parquet_path).replace("'", "''")
                 conn.execute(
                     f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                    "SELECT * FROM read_parquet(?)",
-                    [str(parquet_path)],
+                    f"SELECT * FROM read_parquet('{parquet_path_literal}')",
                 )
             result = conn.execute(sql).fetchone()
         return _result_to_int(result)

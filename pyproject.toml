@@ -39,9 +39,11 @@ polars = ["duckdb>=0.10", "polars>=0.20", "pyarrow>=14.0"]
 pyarrow = ["duckdb>=0.10", "pyarrow>=14.0"]
 all = ["duckdb>=0.10", "polars>=0.20", "pyarrow>=14.0"]
 dev = [
+    "build>=1.2.0",
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.5.0",
+    "twine>=5.1.0",
     "duckdb>=0.10",
     "polars>=0.20",
     "pyarrow>=14.0",
