@@ -31,3 +31,7 @@ htmlcov/
 
 # OS
 .DS_Store
+
+
+#test_file
+test_file/
