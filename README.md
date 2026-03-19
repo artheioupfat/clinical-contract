@@ -14,7 +14,7 @@ A contract defines:
 - **Schema** — which columns exist, their logical and physical types
 - **Quality rules** — SQL-based assertions that must hold true on the data
 
-The library supports multiple loading backends (DuckDB, Polars, PyArrow) and is compatible with [PyScript](https://pyscript.net), making it suitable for both server-side pipelines and browser-based tooling.
+The library is DuckDB-first and is compatible with [PyScript](https://pyscript.net), making it suitable for both server-side pipelines and browser-based tooling.
 
 ---
 
@@ -24,7 +24,7 @@ The library supports multiple loading backends (DuckDB, Polars, PyArrow) and is 
 - **Schema verification** — check that required columns exist in the Parquet file with compatible types
 - **SQL quality checks** — execute custom SQL assertions and report pass/fail with obtained vs expected values
 - **Flexible type mapping** — loose type family matching (`string`, `varchar`, `text` are treated as equivalent; `int32`, `int64`, `integer` likewise)
-- **Multi-backend support** — DuckDB (recommended), Polars, PyArrow — auto-detected at runtime
+- **DuckDB engine** — one execution path for schema checks and SQL quality checks
 - **PyScript compatible** — runs in the browser via Pyodide/WebAssembly
 - **Clean CLI output** — formatted tables with ✅/❌ indicators directly in the terminal
 - **Programmable API** — use as a Python library in your own pipelines and CI workflows
@@ -33,24 +33,14 @@ The library supports multiple loading backends (DuckDB, Polars, PyArrow) and is 
 
 ## Installation
 
-Install with your preferred query backend:
+Install with DuckDB included:
 
 ```bash
-# DuckDB (recommended for local use and CI)
-pip install "clinical-contract[duckdb]"
-
-# Polars
-pip install "clinical-contract[polars]"
-
-# PyArrow
-pip install "clinical-contract[pyarrow]"
-
-# All backends
-pip install "clinical-contract[all]"
+pip install clinical-contract
 ```
 
-> **Note:** The core package (`pip install clinical-contract`) installs only Pydantic and PyYAML.  
-> Use one of the extras (`duckdb`, `polars`, `pyarrow`, `all`) to run `check`.
+> `duckdb` is installed as a core dependency.  
+> `clinical-contract[duckdb]` is still available for backward compatibility.
 
 ---
 
@@ -186,9 +176,9 @@ Runs a full validation pipeline in three stages:
 2. **Schema compatibility** — verifies that required columns exist in the Parquet file with compatible types (optional columns may be absent). Quality checks are **blocked** if this step fails.
 3. **Quality checks** — executes each SQL assertion and reports the result
 
-**Backend options:** `auto` (default), `duckdb`, `polars`, `pyarrow`
+**Backend options:** `auto` (default), `duckdb`
 
-All quality SQL checks are executed with DuckDB; `polars` and `pyarrow` modes mainly control how parquet data is loaded before query execution.
+`auto` resolves to DuckDB.
 
 `required: false` columns are treated as optional in schema compatibility. If absent, they are reported as `optionnel` and do not fail the run.
 
@@ -254,7 +244,7 @@ for result in report.failed():
 `clinical-contract` is designed to work inside [PyScript](https://pyscript.net) with Pyodide. Pass raw bytes from a file upload instead of a file path:
 
 ```html
-<script type="py" config='{"packages": ["clinical-contract", "duckdb", "pyarrow", "pyyaml", "pydantic"]}'>
+<script type="py" config='{"packages": ["clinical-contract", "duckdb"]}'>
 import js
 from clinical_contract import load_contract
 
@@ -265,7 +255,7 @@ async def on_file_upload(event):
     parquet_bytes = (await parquet_file.arrayBuffer()).to_bytes()
 
     contract, raw = load_contract(yaml_bytes)
-    report = contract.check(parquet_bytes, backend="auto")
+    report = contract.check(parquet_bytes, backend="duckdb")
 
     for result in report.results:
         print(result.description, result.status)

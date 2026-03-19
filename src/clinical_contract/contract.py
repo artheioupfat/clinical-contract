@@ -3,6 +3,8 @@ Core DataContract model.
 """
 from __future__ import annotations
 
+import os
+import tempfile
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -68,9 +70,8 @@ TYPE_FAMILIES: dict[str, set[str]] = {
 
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
-    if type_lower.startswith("timestamp[") and ", tz=" in type_lower:
-        unit = type_lower[len("timestamp["):].split(",", 1)[0].strip()
-        return f"timestamp[{unit}]"
+    if type_lower.startswith("timestamp["):
+        return "timestamp"
     if type_lower.startswith("decimal("):
         return "decimal"
     return type_lower
@@ -204,25 +205,7 @@ class DataContract(BaseModel):
         list[SchemaCheckReport]
             Un rapport par schema. success=True si tout est ok.
         """
-        import io
-        try:
-            import pyarrow.parquet as pq
-        except ImportError as exc:
-            raise ImportError(
-                "La vérification de schéma nécessite pyarrow. "
-                "Installe avec: pip install \"clinical-contract[pyarrow]\""
-            ) from exc
-
-        if isinstance(parquet_path, (bytes, bytearray)):
-            pq_schema = pq.read_schema(io.BytesIO(parquet_path))
-        else:
-            pq_schema = pq.read_schema(parquet_path)
-
-        # Construit un dict {nom_colonne: type_string} depuis le parquet
-        parquet_columns: dict[str, str] = {
-            pq_schema.field(i).name: str(pq_schema.field(i).type)
-            for i in range(len(pq_schema))
-        }
+        parquet_columns = self._read_parquet_columns(parquet_path)
 
         reports = []
         for schema_item in self.schema_:
@@ -275,6 +258,46 @@ class DataContract(BaseModel):
 
         return reports
 
+    @staticmethod
+    def _read_parquet_columns(parquet_path: str | bytes) -> dict[str, str]:
+        """
+        Retourne un mapping {column_name: type_name} lu depuis le parquet.
+
+        Utilise uniquement DuckDB.
+        Accepte un chemin fichier ou des bytes parquet.
+        """
+        try:
+            import duckdb
+        except ImportError as exc:
+            raise ImportError(
+                "La vérification de schéma nécessite duckdb. "
+                "Installe avec: pip install \"clinical-contract[duckdb]\""
+            ) from exc
+
+        temp_path: str | None = None
+        parquet_source = parquet_path
+
+        if isinstance(parquet_path, (bytes, bytearray)):
+            fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+            os.close(fd)
+            with open(temp_path, "wb") as handle:
+                handle.write(bytes(parquet_path))
+            parquet_source = temp_path
+
+        parquet_path_literal = str(parquet_source).replace("'", "''")
+        try:
+            with duckdb.connect() as conn:
+                rows = conn.execute(
+                    f"DESCRIBE SELECT * FROM read_parquet('{parquet_path_literal}')"
+                ).fetchall()
+            return {str(row[0]): str(row[1]) for row in rows}
+        finally:
+            if temp_path:
+                try:
+                    os.remove(temp_path)
+                except FileNotFoundError:
+                    pass
+
     # ---------------------------------------------------------------- #
     # check() — exécute les quality checks sur le parquet              #
     # ---------------------------------------------------------------- #
@@ -292,7 +315,7 @@ class DataContract(BaseModel):
         parquet_path : str | bytes
             Chemin vers le .parquet ou bytes bruts (PyScript).
         backend : str | BaseBackend
-            "auto" | "duckdb" | "polars" | "pyarrow"
+            "auto" | "duckdb"
 
         Returns
         -------
