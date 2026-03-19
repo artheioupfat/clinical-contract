@@ -100,6 +100,22 @@ schema:
 """
 
 
+def _write_parquet_ids(tmp_path, ids):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / "patients.parquet"
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+
+    with duckdb.connect() as conn:
+        conn.execute("CREATE TABLE patients (id VARCHAR)")
+        conn.executemany(
+            "INSERT INTO patients VALUES (?)",
+            [(value,) for value in ids],
+        )
+        conn.execute(f"COPY patients TO '{parquet_path_literal}' (FORMAT PARQUET)")
+
+    return parquet_file
+
+
 # ------------------------------------------------------------------ #
 # Tests validate_structure                                             #
 # ------------------------------------------------------------------ #
@@ -155,12 +171,7 @@ def test_load_contract_yaml_vide():
 # ------------------------------------------------------------------ #
 
 def test_check_tous_passes(tmp_path):
-    pytest.importorskip("duckdb")
-    import pyarrow as pa, pyarrow.parquet as pq
-
-    table = pa.table({"id": ["A001", "A002", "A003"]})
-    parquet_file = tmp_path / "patients.parquet"
-    pq.write_table(table, parquet_file)
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
 
     contract, _ = load_contract(YAML_COMPLET)
     report = contract.check(str(parquet_file), backend="duckdb")
@@ -172,13 +183,8 @@ def test_check_tous_passes(tmp_path):
 
 
 def test_check_echec_si_null(tmp_path):
-    pytest.importorskip("duckdb")
-    import pyarrow as pa, pyarrow.parquet as pq
-
     # Un id null → le check doit échouer
-    table = pa.table({"id": ["A001", None, "A003"]})
-    parquet_file = tmp_path / "patients.parquet"
-    pq.write_table(table, parquet_file)
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", None, "A003"])
 
     contract, _ = load_contract(YAML_COMPLET)
     report = contract.check(str(parquet_file), backend="duckdb")
@@ -190,6 +196,18 @@ def test_check_echec_si_null(tmp_path):
     assert failures[0].status == CheckStatus.failed
     assert failures[0].obtained == 1
     assert failures[0].expected == 0
+
+
+def test_check_tous_passes_depuis_bytes(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    parquet_bytes = parquet_file.read_bytes()
+
+    contract, _ = load_contract(YAML_COMPLET)
+    report = contract.check(parquet_bytes, backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+    assert len(report.passed()) == 1
 
 
 def test_check_backend_inconnu():
@@ -216,13 +234,7 @@ def test_check_sans_quality_rules():
 # ------------------------------------------------------------------ #
 
 def test_check_schema_colonne_optionnelle_absente(tmp_path):
-    pytest.importorskip("pyarrow")
-    import pyarrow as pa
-    import pyarrow.parquet as pq
-
-    table = pa.table({"id": ["A001", "A002"]})
-    parquet_file = tmp_path / "patients.parquet"
-    pq.write_table(table, parquet_file)
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
 
     contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
     reports = contract.check_schema(str(parquet_file))
@@ -234,10 +246,21 @@ def test_check_schema_colonne_optionnelle_absente(tmp_path):
     assert reports[0].success is True
 
 
+def test_check_schema_depuis_bytes(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
+    parquet_bytes = parquet_file.read_bytes()
+
+    contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
+    reports = contract.check_schema(parquet_bytes)
+    cols = {c.column: c for c in reports[0].columns}
+
+    assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["notes"].status == ColumnCheckStatus.optional_missing
+    assert reports[0].success is True
+
+
 def test_check_schema_timestamp_tz_compatible(tmp_path):
-    pytest.importorskip("pyarrow")
-    import pyarrow as pa
-    import pyarrow.parquet as pq
+    duckdb = pytest.importorskip("duckdb")
 
     yaml_timestamp_tz = """
 apiVersion: v1.0.0
@@ -261,11 +284,14 @@ schema:
         description: Horodatage
         required: true
 """
-    table = pa.table(
-        {"event_ts": pa.array([1_700_000_000_000_000], type=pa.timestamp("us", tz="Europe/Paris"))}
-    )
     parquet_file = tmp_path / "patients.parquet"
-    pq.write_table(table, parquet_file)
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+    with duckdb.connect() as conn:
+        conn.execute(
+            "CREATE TABLE patients AS "
+            "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts"
+        )
+        conn.execute(f"COPY patients TO '{parquet_path_literal}' (FORMAT PARQUET)")
 
     contract, _ = load_contract(yaml_timestamp_tz)
     reports = contract.check_schema(str(parquet_file))

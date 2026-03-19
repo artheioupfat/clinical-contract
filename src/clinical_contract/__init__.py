@@ -32,8 +32,6 @@ from .models import (
 )
 from .backends import (
     DuckDBBackend,
-    PolarsBackend,
-    PyArrowBackend,
     auto_backend,
     available_backends,
 )
@@ -55,8 +53,6 @@ __all__ = [
     "ColumnCheckStatus",
     "SchemaCheckReport",
     "DuckDBBackend",
-    "PolarsBackend",
-    "PyArrowBackend",
     "auto_backend",
     "available_backends",
 ]

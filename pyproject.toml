@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
+    "duckdb>=0.10",
 ]
 
 # La commande terminal
@@ -34,19 +35,13 @@ dependencies = [
 clinical-contract = "clinical_contract.cli:main"
 
 [project.optional-dependencies]
-duckdb = ["duckdb>=0.10", "pyarrow>=14.0"]
-polars = ["duckdb>=0.10", "polars>=0.20", "pyarrow>=14.0"]
-pyarrow = ["duckdb>=0.10", "pyarrow>=14.0"]
-all = ["duckdb>=0.10", "polars>=0.20", "pyarrow>=14.0"]
+duckdb = []
 dev = [
     "build>=1.2.0",
     "pytest>=8.0",
     "pytest-cov>=5.0",
     "ruff>=0.5.0",
     "twine>=5.1.0",
-    "duckdb>=0.10",
-    "polars>=0.20",
-    "pyarrow>=14.0",
 ]
 
 [tool.hatch.build.targets.wheel]

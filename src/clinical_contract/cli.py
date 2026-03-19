@@ -253,7 +253,7 @@ Usage :
 
   clinical-contract check <contract.yaml> <data.parquet> [backend]
       Exécute les quality checks du contrat sur le fichier parquet.
-      backend : auto (défaut) | duckdb | polars | pyarrow
+      backend : auto (défaut) | duckdb
 
 Exemples :
   clinical-contract validate my_contract.yaml
