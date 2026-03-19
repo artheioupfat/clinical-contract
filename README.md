@@ -331,15 +331,6 @@ ruff check src/
 
 ---
 
-## Roadmap
-
-- [ ] PyScript UI with drag-and-drop contract and Parquet upload (GitHub Pages)
-- [ ] Additional quality check types (regex, range, referential integrity)
-- [ ] Contract diffing — compare two versions of a contract
-- [ ] HTML report export
-- [ ] Integration with Great Expectations and dbt
-
----
 
 ## License
 
