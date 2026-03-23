@@ -142,7 +142,7 @@ class DataContract(BaseModel):
     name: str
     version: str
     status: str
-    description: Description
+    description: Description #permet de structurer la description en sous-champs (purpose, usage, limitations)
     schema_: list[SchemaItem] = Field(alias="schema")
 
     model_config = {"populate_by_name": True}
@@ -165,18 +165,36 @@ class DataContract(BaseModel):
             raw = {}
 
         fields = []
-        for field in REQUIRED_FIELDS:
+        for field in REQUIRED_FIELDS:  # On vient verifier si les champs existent 
             value = raw.get(field)
             present = value is not None
 
             # Valeur affichable dans le tableau
             if not present:
                 display = None
+
+            #On récupere le nombre de colonnes attendues dans le schema
             elif field == "schema":
                 n = len(value) if isinstance(value, list) else 0
                 display = f"{n} schema{'s' if n > 1 else ''}"
-            elif field == "description":
-                display = "présent"
+
+
+
+
+            #La description doit être composé de 3 sous-champs : purpose, usage, limitations
+            elif field == "description": 
+                # Vérification des sous-champs
+                subfields = ["purpose", "usage", "limitations"]
+                if isinstance(value, dict):
+                    missing_sub = [s for s in subfields if s not in value]
+                    display = "présent" if not missing_sub else f"manque {', '.join(missing_sub)}"
+                    present = present and not missing_sub
+                else:
+                    display = "invalide (non dict)"
+                    present = False
+                    display = "présent"
+
+            # Pour les autres champs, on affiche simplement leur valeur
             else:
                 display = str(value)
 
@@ -268,6 +286,7 @@ class DataContract(BaseModel):
         """
         try:
             import duckdb
+            print(duckdb.__version__)
         except ImportError as exc:
             raise ImportError(
                 "La vérification de schéma nécessite duckdb. "
