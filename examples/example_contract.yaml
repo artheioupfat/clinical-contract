@@ -1,9 +1,11 @@
-apiVersion: v1.0.0
+apiVersion: v3.1.0 #open data contract standard
 kind: DataContract
 id: export-contract
 name: Export Contract
-version: 1.0.0
+version: 1.0.0  #version du contrat
 status: active
+domain: healthcare
+dataProduct: parquet file
 description:
   purpose: "Export dataset contenant les événements médicaux et échantillons"
   usage: "Analytics et traitement downstream"

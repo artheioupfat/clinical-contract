@@ -1,6 +1,6 @@
 # clinical-contract
 
-> Validate YAML clinical data contracts against Parquet files — schema integrity, type checking, and SQL quality rules in a single command.
+> Ensure your data matches the expectations defined in YAML contracts — check schemas, data types, and quality rules automatically on Parquet files.
 
 
 
@@ -33,14 +33,13 @@ The library is DuckDB-first and is compatible with [PyScript](https://pyscript.n
 
 ## Installation
 
-Install with DuckDB included:
 
 ```bash
 pip install clinical-contract
 ```
 
 > `duckdb` is installed as a core dependency.  
-> `clinical-contract[duckdb]` is still available for backward compatibility.
+
 
 ---
 
@@ -50,7 +49,7 @@ pip install clinical-contract
 
 ```yaml
 # datacontract.yaml
-apiVersion: v1.0.0
+apiVersion: v3.1.0
 kind: DataContract
 id: export-contract
 name: Export Contract
@@ -62,7 +61,7 @@ description:
   limitations: "Historical data may contain legacy timestamps"
 
 schema:
-  - name: export
+  - name: S
     physicalType: TABLE
     description: Exported dataset containing patient event data
     properties:
@@ -102,18 +101,18 @@ clinical-contract validate datacontract.yaml
 ```
 📋  Validation de la structure : datacontract.yaml
 
-┌─────────────┬────────┬──────────────────┐
-│ Champ       │ Statut │ Valeur           │
-├─────────────┼────────┼──────────────────┤
-│ apiVersion  │ ✅     │ v1.0.0           │
-│ kind        │ ✅     │ DataContract     │
-│ id          │ ✅     │ export-contract  │
-│ name        │ ✅     │ Export Contract  │
-│ version     │ ✅     │ 1.0.0            │
-│ status      │ ✅     │ active           │
-│ description │ ✅     │ présent          │
-│ schema      │ ✅     │ 1 schema         │
-└─────────────┴────────┴──────────────────┘
+┌─────────────┬────────┬──────────────────────┐
+│ Champ       │ Statut │ Valeur               │
+├─────────────┼────────┼──────────────────────┤
+│ apiVersion  │ ✅     │ v1.0.0              │
+│ kind        │ ✅     │ DataContract        │
+│ id          │ ✅     │ export-contract     │
+│ name        │ ✅     │ Export Contract     │
+│ version     │ ✅     │ 1.0.0               │
+│ status      │ ✅     │ active              │
+│ description │ ✅     │ présent             │
+│ schema      │ ✅     │ 6 colonnes détectées│
+└─────────────┴────────┴──────────────────────┘
 
 ✅  Structure valide — tous les champs sont présents.
 ```
@@ -160,9 +159,17 @@ clinical-contract check datacontract.yaml export.parquet
 
 ### `clinical-contract validate <contract.yaml>`
 
-Checks that the YAML contract file contains all required top-level fields. Does not require a Parquet file. Useful as a pre-flight check before committing a contract to version control.
+The validate command verifies that a YAML contract file is correctly written and conforms to the Open Data Contract Standard v3.1.0.
+This ensures that all required fields are present and correctly structured.
 
-**Required fields:** `apiVersion`, `kind`, `id`, `name`, `version`, `status`, `description`, `schema`
+**Required top-level fields:** `apiVersion`, `kind`, `id`, `name`, `version`, `status`, `description`, `schema`
+
+**Expected sub-fields:**
+
+- description must include: `purpose`, `usage`, `limitations`
+- schema must include for each item: `name`, `physicalType`, `description`, `properties`
+- properties (inside each schema) must include: `name`, `logicalType`, `physicalType`, `description`
+
 
 **Exit codes:** `0` if valid, `1` if any field is missing.
 
@@ -173,14 +180,11 @@ Checks that the YAML contract file contains all required top-level fields. Does 
 Runs a full validation pipeline in three stages:
 
 1. **YAML structure** — same checks as `validate`
-2. **Schema compatibility** — verifies that required columns exist in the Parquet file with compatible types (optional columns may be absent). Quality checks are **blocked** if this step fails.
+2. **Schema compatibility** — verifies that required columns exist in the Parquet file with compatible types. Quality checks are **blocked** if this step fails.
 3. **Quality checks** — executes each SQL assertion and reports the result
 
 **Backend options:** `auto` (default), `duckdb`
 
-`auto` resolves to DuckDB.
-
-`required: false` columns are treated as optional in schema compatibility. If absent, they are reported as `optionnel` and do not fail the run.
 
 **Exit codes:** `0` if all checks pass, `1` if any check fails or a column is missing/mistyped, `2` if an execution error occurs.
 
@@ -239,35 +243,11 @@ for result in report.failed():
 
 ---
 
-## PyScript / Browser Usage
-
-`clinical-contract` is designed to work inside [PyScript](https://pyscript.net) with Pyodide. Pass raw bytes from a file upload instead of a file path:
-
-```html
-<script type="py" config='{"packages": ["clinical-contract", "duckdb"]}'>
-import js
-from clinical_contract import load_contract
-
-async def on_file_upload(event):
-    yaml_file = js.document.getElementById("yaml-input").files[0]
-    parquet_file = js.document.getElementById("parquet-input").files[0]
-    yaml_bytes = (await yaml_file.arrayBuffer()).to_bytes()
-    parquet_bytes = (await parquet_file.arrayBuffer()).to_bytes()
-
-    contract, raw = load_contract(yaml_bytes)
-    report = contract.check(parquet_bytes, backend="duckdb")
-
-    for result in report.results:
-        print(result.description, result.status)
-</script>
-```
-
----
 
 ## Contract Schema Reference
 
 ```yaml
-apiVersion: string        # Contract specification version (e.g. v1.0.0)
+apiVersion: string        # Contract specification version (e.g. v3.1.0)
 kind: DataContract        # Must be "DataContract"
 id: string                # Unique identifier for this contract
 name: string              # Human-readable name
@@ -312,11 +292,11 @@ source .venv/bin/activate
 # Install in editable mode with all dependencies
 uv pip install -e ".[dev]"
 
-# Run the test suite
-pytest tests/ -v
+#Installer les dépendances dev
+uv sync --extra dev
 
-# Lint
-ruff check src/
+#lancer les tests 
+pytest -v
 ```
 
 ---
@@ -325,3 +305,9 @@ ruff check src/
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+## Author
+
+**Arthur PRIGENT** — [GitHub](https://github.com/artheioupfat)

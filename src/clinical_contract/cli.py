@@ -126,7 +126,7 @@ def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
     # ── 2. Vérification schéma colonnes + types ──────────────────────
     print(f"\n── Vérification du schéma ──────────────────────────────────────\n")
     try:
-        schema_reports = contract.check_schema(str(parquet_file))
+        schema_reports = contract.check_schema(str(parquet_file)) #Appel à la def de la classe DataContract check_schema
     except Exception as exc:
         print(f"❌  Impossible de lire le schéma parquet :\n    {exc}\n")
         sys.exit(1)
