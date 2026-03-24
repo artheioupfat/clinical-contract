@@ -297,3 +297,66 @@ schema:
     reports = contract.check_schema(str(parquet_file))
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+
+
+def test_validate_structure_schema_missing_fields():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    # physicalType manquant
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "manquant" in schema_field.display_value
+
+
+
+
+def test_validate_structure_properties_invalid():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        # logicalType manquant
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
