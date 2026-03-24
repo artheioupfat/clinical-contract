@@ -173,10 +173,48 @@ class DataContract(BaseModel):
             if not present:
                 display = None
 
-            #On récupere le nombre de colonnes attendues dans le schema
+            #Permet de vérifier que le champ "schema" est une liste non vide et que chaque item contient les sous-champs requis
             elif field == "schema":
-                n = len(value) if isinstance(value, list) else 0
-                display = f"{n} schema{'s' if n > 1 else ''}"
+                if not isinstance(value, list) or len(value) == 0:
+                    present = False
+                    display = "vide ou invalide"
+                else:
+                    required_schema_fields = ["name", "physicalType", "description", "properties"]
+                    errors = []
+                    total_columns = 0
+
+                    for i, item in enumerate(value):
+                        if not isinstance(item, dict):
+                            errors.append(f"schema[{i}] invalide (non dict)")
+                            continue
+
+                        missing_schema_fields = [f for f in required_schema_fields if f not in item]
+                        if missing_schema_fields:
+                            errors.append(f"schema[{i}] manque {', '.join(missing_schema_fields)}")
+                            continue
+
+                        # Vérification des propriétés
+                        properties = item.get("properties")
+                        if not isinstance(properties, list) or len(properties) == 0:
+                            errors.append(f"schema[{i}].properties vide ou invalide")
+                        else:
+                            required_prop_fields = ["name", "logicalType", "physicalType", "description"]
+                            for j, prop in enumerate(properties):
+                                if not isinstance(prop, dict):
+                                    errors.append(f"schema[{i}].properties[{j}] invalide (non dict)")
+                                    continue
+                                missing_prop_fields = [f for f in required_prop_fields if f not in prop]
+                                if missing_prop_fields:
+                                    errors.append(f"schema[{i}].properties[{j}] manque {', '.join(missing_prop_fields)}")
+                                else:
+                                    total_columns += 1
+
+                    if errors:
+                        present = False
+                        display = f"{len(errors)} erreur(s)"
+                    else:
+                        present = True
+                        display = f"{total_columns} colonne{'s' if total_columns > 1 else ''} détectées"
 
 
 
@@ -192,7 +230,6 @@ class DataContract(BaseModel):
                 else:
                     display = "invalide (non dict)"
                     present = False
-                    display = "présent"
 
             # Pour les autres champs, on affiche simplement leur valeur
             else:
@@ -231,15 +268,16 @@ class DataContract(BaseModel):
 
             for prop in schema_item.properties:
                 parquet_type = parquet_columns.get(prop.name)
+                #On vient vérifier si la colonne existe dans le parquet.
 
-                if parquet_type is None:
+                if parquet_type is None: 
                     if prop.required:
                         # Colonne absente et obligatoire
                         column_results.append(ColumnCheckResult(
                             column=prop.name,
                             yaml_type=prop.logicalType,
                             parquet_type="—",
-                            status=ColumnCheckStatus.missing,
+                            status=ColumnCheckStatus.missing, #Colonne manquante
                         ))
                     else:
                         # Colonne absente mais optionnelle
@@ -247,8 +285,9 @@ class DataContract(BaseModel):
                             column=prop.name,
                             yaml_type=prop.logicalType,
                             parquet_type="—",
-                            status=ColumnCheckStatus.optional_missing,
+                            status=ColumnCheckStatus.optional_missing, #Colonne optionnelle manquante
                         ))
+
                 elif not _types_compatible(prop.logicalType, parquet_type):
                     # Colonne présente mais type incompatible
                     column_results.append(ColumnCheckResult(
@@ -262,9 +301,11 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type=parquet_type,
-                        status=ColumnCheckStatus.ok,
+                        status=ColumnCheckStatus.ok, #Colonne présente et type compatible
                     ))
 
+
+            #Le "column_results" contient le résultats de chaque colonne du schéma
             reports.append(SchemaCheckReport(
                 schema_name=schema_item.name,
                 success=all(
@@ -273,7 +314,7 @@ class DataContract(BaseModel):
                 ),
                 columns=column_results,
             ))
-
+        #On renvoie un rapport par schéma
         return reports
 
     @staticmethod

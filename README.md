@@ -311,12 +311,6 @@ source .venv/bin/activate
 
 # Install in editable mode with all dependencies
 uv pip install -e ".[dev]"
-
-# Run the test suite
-pytest tests/ -v
-
-# Lint
-ruff check src/
 ```
 
 ---
