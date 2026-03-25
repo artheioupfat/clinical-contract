@@ -198,7 +198,7 @@ class DataContract(BaseModel):
                         if not isinstance(properties, list) or len(properties) == 0:
                             errors.append(f"schema[{i}].properties vide ou invalide")
                         else:
-                            required_prop_fields = ["name", "logicalType", "physicalType", "description"]
+                            required_prop_fields = ["name", "logicalType", "description"]
                             for j, prop in enumerate(properties):
                                 if not isinstance(prop, dict):
                                     errors.append(f"schema[{i}].properties[{j}] invalide (non dict)")
