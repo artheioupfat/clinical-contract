@@ -66,6 +66,34 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Verify tag matches project version
+        run: |
+          python - <<'PY'
+          import os
+          import pathlib
+          import sys
+          import tomllib
+
+          ref = os.environ["GITHUB_REF"]
+          tag = ref.rsplit("/", 1)[-1]
+          if not tag.startswith("v"):
+              print(f"Invalid tag format: {tag}. Expected 'vX.Y.Z'.", file=sys.stderr)
+              raise SystemExit(1)
+
+          tag_version = tag[1:]
+          pyproject = pathlib.Path("pyproject.toml").read_text(encoding="utf-8")
+          project_version = tomllib.loads(pyproject)["project"]["version"]
+
+          if tag_version != project_version:
+              print(
+                  f"Tag/version mismatch: tag={tag_version}, pyproject={project_version}",
+                  file=sys.stderr,
+              )
+              raise SystemExit(1)
+
+          print(f"Tag {tag} matches pyproject version {project_version}.")
+          PY
+
       - name: Install build
         run: pip install build
 

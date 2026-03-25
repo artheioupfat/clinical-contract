@@ -62,9 +62,11 @@ class FieldValidation(BaseModel):
 
     @property
     def display_value(self) -> str:
+        if self.value:
+            return self.value
         if not self.present:
-            return "manquant"
-        return self.value or "présent"
+            return "missing"
+        return "present"
 
 
 class ValidateReport(BaseModel):

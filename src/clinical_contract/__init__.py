@@ -30,11 +30,6 @@ from .models import (
     ColumnCheckStatus,
     SchemaCheckReport,
 )
-from .backends import (
-    DuckDBBackend,
-    auto_backend,
-    available_backends,
-)
 
 __all__ = [
     "load_contract",
@@ -52,9 +47,6 @@ __all__ = [
     "ColumnCheckResult",
     "ColumnCheckStatus",
     "SchemaCheckReport",
-    "DuckDBBackend",
-    "auto_backend",
-    "available_backends",
 ]
 
 from importlib.metadata import version, PackageNotFoundError

@@ -212,21 +212,56 @@ def test_check_tous_passes_depuis_bytes(tmp_path):
 
 def test_check_backend_inconnu():
     contract, _ = load_contract(YAML_COMPLET)
-    with pytest.raises(ValueError, match="Backend inconnu"):
+    with pytest.raises(ValueError, match="Unknown backend"):
         contract.check("fake.parquet", backend="mysql")
 
 
 def test_check_sans_quality_rules():
-    class DummyBackend:
-        def run_query(self, sql: str, parquet_path: str | bytes, table_name: str) -> int:
-            return 0
-
     contract, _ = load_contract(YAML_SANS_QUALITY)
-    report = contract.check("unused.parquet", backend=DummyBackend())
+    report = contract.check("unused.parquet", backend="duckdb")
     assert report.success is True
     assert report.code == 0
     assert report.results == []
-    assert "Aucun quality check" in report.summary
+    assert "No quality checks" in report.summary
+
+
+def test_check_execution_error_returns_code_2(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+
+    yaml_sql_error = """
+apiVersion: v1.0.0
+kind: DataContract
+id: error-contract
+name: Error Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Tests unitaires"
+  limitations: "Aucune"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant
+        required: true
+        quality:
+          - type: sql
+            description: Trigger SQL error
+            query: "SELECT * FROM unknown_table"
+            mustBe: 0
+"""
+    contract, _ = load_contract(yaml_sql_error)
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is False
+    assert report.code == 2
+    assert len(report.errors()) == 1
+    assert "Execution errors" in report.summary
 
 
 # ------------------------------------------------------------------ #
@@ -329,7 +364,7 @@ schema:
     assert report.success is False
 
     schema_field = next(f for f in report.fields if f.field == "schema")
-    assert "manquant" in schema_field.display_value
+    assert "error(s)" in schema_field.display_value
 
 
 
@@ -360,3 +395,58 @@ schema:
     report = DataContract.validate_structure(raw)
 
     assert report.success is False
+
+
+def test_validate_structure_description_missing_subfields():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    desc_field = next(f for f in report.fields if f.field == "description")
+    assert "missing usage, limitations" == desc_field.display_value
+
+
+def test_validate_structure_description_not_object():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description: "oops"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    desc_field = next(f for f in report.fields if f.field == "description")
+    assert desc_field.display_value == "invalid (not an object)"
