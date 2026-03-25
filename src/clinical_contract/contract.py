@@ -66,6 +66,27 @@ TYPE_FAMILIES: dict[str, set[str]] = {
     "bytes":     {"binary", "large_binary"},
 }
 
+# Explicit integer-width logical types are matched strictly against DuckDB canonicals.
+STRICT_INTEGER_CANONICAL: dict[str, str] = {
+    "int8": "tinyint",
+    "tinyint": "tinyint",
+    "int16": "smallint",
+    "smallint": "smallint",
+    "int32": "integer",
+    "int64": "bigint",
+    "bigint": "bigint",
+    "uint8": "utinyint",
+    "utinyint": "utinyint",
+    "uint16": "usmallint",
+    "usmallint": "usmallint",
+    "uint32": "uinteger",
+    "uinteger": "uinteger",
+    "uint64": "ubigint",
+    "ubigint": "ubigint",
+}
+
+SUPPORTED_LOGICAL_TYPES = set(TYPE_FAMILIES.keys()) | set(STRICT_INTEGER_CANONICAL.keys())
+
 
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
@@ -76,10 +97,25 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
+def _canonical_integer_type(type_name: str) -> str:
+    return STRICT_INTEGER_CANONICAL.get(type_name, type_name)
+
+
+def _is_supported_logical_type(logical_type: str) -> bool:
+    return _normalize_type_name(logical_type) in SUPPORTED_LOGICAL_TYPES
+
+
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
-    """Retourne True si parquet_type appartient à la famille de yaml_type."""
+    """Return True if logical and parquet types are compatible."""
     yaml_lower = _normalize_type_name(yaml_type)
     parquet_lower = _normalize_type_name(parquet_type)
+
+    if yaml_lower in STRICT_INTEGER_CANONICAL:
+        return (
+            _canonical_integer_type(yaml_lower)
+            == _canonical_integer_type(parquet_lower)
+        )
+
     if yaml_lower == parquet_lower:
         return True
     return parquet_lower in TYPE_FAMILIES.get(yaml_lower, set())
@@ -256,11 +292,17 @@ class DataContract(BaseModel):
                                 if missing_prop_fields:
                                     errors.append(f"schema[{i}].properties[{j}] missing {', '.join(missing_prop_fields)}")
                                 else:
-                                    total_columns += 1
+                                    logical_type = prop.get("logicalType")
+                                    if not isinstance(logical_type, str) or not _is_supported_logical_type(logical_type):
+                                        errors.append(
+                                            f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
+                                        )
+                                    else:
+                                        total_columns += 1
 
                     if errors:
                         present = False
-                        display = f"{len(errors)} error(s)"
+                        display = f"{len(errors)} error(s): {errors[0]}"
                     else:
                         present = True
                         display = f"{total_columns} column{'s' if total_columns != 1 else ''} detected"

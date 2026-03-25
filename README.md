@@ -171,7 +171,7 @@ This ensures that all required fields are present and correctly structured.
 - properties (inside each schema) must include: `name`, `logicalType`, `physicalType`, `description`
 
 
-**Exit codes:** `0` if valid, `1` if any field is missing.
+**Exit codes:** `0` if valid, `1` if any required field is missing or invalid (including unsupported `logicalType`).
 
 ---
 
@@ -192,12 +192,19 @@ Runs a full validation pipeline in three stages:
 
 ## Type Mapping
 
-Types in the YAML contract are matched against Parquet types using a loose family-based comparison:
+Types in the YAML contract are matched with a hybrid strategy:
+
+- **Strict integer-width matching** for explicit integer types:
+  `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64`
+- **Family-based matching** for generic types like `integer`, `string`, `timestamp`, etc.
+
+`uint32` is accepted in YAML and normalized to DuckDB canonical `uinteger` before comparison.
 
 | YAML logical type | Compatible Parquet types |
 |---|---|
 | `string`, `text`, `varchar` | `string`, `large_string`, `utf8`, `large_utf8` |
-| `integer`, `int`, `int32`, `int64` | `int8`, `int16`, `int32`, `int64`, `uint8` … |
+| `integer`, `int` | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64`, `tinyint`, `smallint`, `integer`, `bigint`, `utinyint`, `usmallint`, `uinteger`, `ubigint` |
+| `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` | **Strict canonical match** (`int32` ↔ `integer`, `uint32` ↔ `uinteger`, etc.) |
 | `float`, `double`, `decimal` | `float32`, `float64`, `double`, `decimal128` |
 | `boolean`, `bool` | `bool`, `boolean` |
 | `date`, `date32` | `date32`, `date64` |
