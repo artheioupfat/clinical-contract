@@ -25,69 +25,34 @@ from .models import (
 # Mapping souple des types YAML → familles de types Parquet           #
 # ------------------------------------------------------------------ #
 
-TYPE_FAMILIES: dict[str, set[str]] = {
-    "string":    {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "text":      {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "varchar":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "integer":   {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int":       {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int32":     {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int64":     {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "float":     {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "double":    {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "decimal":   {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "boolean":   {"bool", "boolean"},
-    "bool":      {"bool", "boolean"},
-    "date":      {"date32", "date64", "date"},
-    "date32":    {"date32", "date64", "date"},
-    "datetime":  {
-        "timestamp", "timestamp with time zone", "timestamptz",
-        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
-    },
-    "timestamp": {
-        "timestamp", "timestamp with time zone", "timestamptz",
-        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
-    },
-    "binary":    {"binary", "large_binary"},
-    "bytes":     {"binary", "large_binary"},
-}
+TYPE_MAP: dict[str, set[str]] = {
+    # GENÉRIQUES
+    "string":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
+    "int":      {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
+                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
+    "float":    {"float16","float32","float64","double","real","decimal128","decimal"},
+    "datetime": {"timestamp","timestamp with time zone","timestamptz",
+                 "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
+                 "date32","date64","date"},
+    "boolean":  {"bool","boolean"},
+    "binary":   {"binary","large_binary"},
 
-# Explicit integer-width logical types are matched strictly against DuckDB canonicals.
-STRICT_INTEGER_CANONICAL: dict[str, str] = {
-    "int8": "tinyint",
-    "tinyint": "tinyint",
-    "int16": "smallint",
-    "smallint": "smallint",
-    "int32": "integer",
-    "int64": "bigint",
-    "bigint": "bigint",
-    "uint8": "utinyint",
-    "utinyint": "utinyint",
-    "uint16": "usmallint",
-    "usmallint": "usmallint",
-    "uint32": "uinteger",
-    "uinteger": "uinteger",
-    "uint64": "ubigint",
-    "ubigint": "ubigint",
+    # SPÉCIFIQUES
+    "int8":   {"tinyint"},
+    "int16":  {"smallint"},
+    "int32":  {"integer"},
+    "int64":  {"bigint"},
+    "uint8":  {"utinyint"},
+    "uint16": {"usmallint"},
+    "uint32": {"uinteger"},
+    "uint64": {"ubigint"},
+    "float32":{"float32"},
+    "float64":{"float64"},
+    "double": {"double"},
+    "date32": {"date32"},
+    "date64": {"date64"},
+    "date":   {"date"},
 }
-
-SUPPORTED_LOGICAL_TYPES = set(TYPE_FAMILIES.keys()) | set(STRICT_INTEGER_CANONICAL.keys())
 
 
 def _normalize_type_name(type_name: str) -> str:
@@ -104,23 +69,30 @@ def _canonical_integer_type(type_name: str) -> str:
 
 
 def _is_supported_logical_type(logical_type: str) -> bool:
-    return _normalize_type_name(logical_type) in SUPPORTED_LOGICAL_TYPES
+    logical_lower = logical_type.lower().strip()
+    if logical_lower.startswith("timestamp["):
+        logical_lower = "datetime"
+    if logical_lower.startswith("decimal("):
+        logical_lower = "float"
+    return logical_lower in TYPE_MAP
 
 
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
-    """Return True if logical and parquet types are compatible."""
-    yaml_lower = _normalize_type_name(yaml_type)
-    parquet_lower = _normalize_type_name(parquet_type)
+    """Return True if YAML type matches Parquet type based on TYPE_MAP."""
+    yaml_lower = yaml_type.lower().strip()
+    parquet_lower = parquet_type.lower().strip()
 
-    if yaml_lower in STRICT_INTEGER_CANONICAL:
-        return (
-            _canonical_integer_type(yaml_lower)
-            == _canonical_integer_type(parquet_lower)
-        )
+    # Normalisation
+    if yaml_lower.startswith("timestamp["):
+        yaml_lower = "datetime"
+    if yaml_lower.startswith("decimal("):
+        yaml_lower = "float"
 
-    if yaml_lower == parquet_lower:
-        return True
-    return parquet_lower in TYPE_FAMILIES.get(yaml_lower, set())
+    allowed_types = TYPE_MAP.get(yaml_lower)
+    if not allowed_types:
+        return False  # type YAML non supporté
+
+    return parquet_lower in allowed_types
 
 
 def _quote_identifier(identifier: str) -> str:
