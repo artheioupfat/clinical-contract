@@ -87,25 +87,25 @@ def cmd_validate(yaml_path: str) -> None:
 # Command: check                                                       #
 # ------------------------------------------------------------------ #
 
-def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
+def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     """
     1. Validate YAML structure
-    2. Validate required parquet columns (name + type)
+    2. Validate required data columns (name + type)
     3. Run SQL quality checks if schema is valid
     """
     yaml_file    = Path(yaml_path)
-    parquet_file = Path(parquet_path)
+    data_file = Path(data_path)
 
     if not yaml_file.exists():
         print(f"❌  YAML file not found: {yaml_path}")
         sys.exit(1)
-    if not parquet_file.exists():
-        print(f"❌  Parquet file not found: {parquet_path}")
+    if not data_file.exists():
+        print(f"❌  Data file not found: {data_path}")
         sys.exit(1)
 
     print("\n🔍  Contract check")
     print(f"    Contract: {yaml_file.name}")
-    print(f"    Parquet: {parquet_file.name}")
+    print(f"    Data file: {data_file.name}")
 
     # ── 1. YAML structure validation ────────────────────────────────
     raw = load_raw(yaml_file)
@@ -126,9 +126,9 @@ def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
     # ── 2. Schema validation (columns + types) ──────────────────────
     print("\n── Schema validation ────────────────────────────────────────────\n")
     try:
-        schema_reports = contract.check_schema(str(parquet_file))
+        schema_reports = contract.check_schema(str(data_file))
     except Exception as exc:
-        print(f"❌  Failed to read parquet schema:\n    {exc}\n")
+        print(f"❌  Failed to read data schema:\n    {exc}\n")
         sys.exit(1)
 
     schema_ok = True
@@ -166,7 +166,7 @@ def cmd_check(yaml_path: str, parquet_path: str, backend: str = "auto") -> None:
     # ── 3. SQL quality checks ────────────────────────────────────────
     print(f"── Quality checks ──────────────────────────────────────────────\n")
     try:
-        report = contract.check(str(parquet_file), backend=backend)
+        report = contract.check(str(data_file), backend=backend)
     except Exception as exc:
         print(f"❌  Error while running checks:\n    {exc}\n")
         sys.exit(1)
@@ -233,7 +233,7 @@ def main() -> None:
 
     elif command == "check":
         if len(args) < 3:
-            print("❌  Usage: clinical-contract check <contract.yaml> <data.parquet>")
+            print("❌  Usage: clinical-contract check <contract.yaml> <data_file>")
             sys.exit(1)
         backend = args[3] if len(args) > 3 else "auto"
         cmd_check(args[1], args[2], backend=backend)
@@ -252,12 +252,13 @@ Usage:
   clinical-contract validate <contract.yaml>
       Validate that required fields are present in the YAML contract.
 
-  clinical-contract check <contract.yaml> <data.parquet> [backend]
-      Run schema and quality checks against the parquet file.
+  clinical-contract check <contract.yaml> <data_file> [backend]
+      Run schema and quality checks against a parquet/csv file.
       backend: auto (default) | duckdb
 
 Examples:
   clinical-contract validate my_contract.yaml
   clinical-contract check my_contract.yaml patients.parquet
+  clinical-contract check my_contract.yaml patients.csv
   clinical-contract check my_contract.yaml patients.parquet duckdb
 """)

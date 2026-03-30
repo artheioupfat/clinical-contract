@@ -98,48 +98,63 @@ def _quote_identifier(identifier: str) -> str:
     return f'"{escaped}"'
 
 
+def _materialize_data_source(path_or_bytes: str | bytes) -> tuple[str, str | None, str]:
+    """
+    Return (file_path, temp_path_to_cleanup, extension).
+    Bytes are written to a temporary file with unknown extension (.bin)
+    so parquet/csv detection can be attempted safely.
+    """
+    if isinstance(path_or_bytes, (bytes, bytearray)):
+        fd, temp_path = tempfile.mkstemp(suffix=".bin")
+        os.close(fd)
+        with open(temp_path, "wb") as handle:
+            handle.write(bytes(path_or_bytes))
+        return temp_path, temp_path, ".bin"
+
+    file_path = str(path_or_bytes)
+    return file_path, None, Path(file_path).suffix.lower()
+
+
 def _read_data_source(path_or_bytes: str | bytes):
     """
     Retourne un mapping {col_name: type_name} pour Parquet ou CSV,
     et fournit un "chemin temporaire" si nécessaire pour DuckDB.
     """
-    # Gestion des bytes (PyScript)
-    if isinstance(path_or_bytes, (bytes, bytearray)):
-        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
-        os.close(fd)
-        with open(temp_path, "wb") as f:
-            f.write(bytes(path_or_bytes))
-        file_path = temp_path
-        cleanup = temp_path
-        ext = ".parquet"
-    else:
-        file_path = str(path_or_bytes)
-        cleanup = None
-        ext = Path(file_path).suffix.lower()
+    file_path, cleanup, ext = _materialize_data_source(path_or_bytes)
+    file_path_literal = file_path.replace("'", "''")
 
     try:
         with duckdb.connect() as conn:
             if ext == ".parquet":
-                rows = conn.execute(f"DESCRIBE SELECT * FROM read_parquet('{file_path}')").fetchall()
+                rows = conn.execute(
+                    f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
+                ).fetchall()
             elif ext == ".csv":
-                rows = conn.execute(f"DESCRIBE SELECT * FROM read_csv_auto('{file_path}')").fetchall()
+                rows = conn.execute(
+                    f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"
+                ).fetchall()
             else:
-                raise ValueError(f"Unsupported file type: {ext}")
+                try:
+                    rows = conn.execute(
+                        f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
+                    ).fetchall()
+                except Exception as parquet_exc:
+                    try:
+                        rows = conn.execute(
+                            f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"
+                        ).fetchall()
+                    except Exception as csv_exc:
+                        raise ValueError(
+                            "Unsupported or unreadable data source. "
+                            "Use a .parquet/.csv file, or valid parquet/csv bytes."
+                        ) from csv_exc
         return {str(r[0]): str(r[1]) for r in rows}
     finally:
         if cleanup:
-            try: os.remove(cleanup)
-            except FileNotFoundError: pass
-
-
-def _materialize_parquet_source(parquet_path: str | bytes) -> tuple[str, str | None]:
-    if isinstance(parquet_path, (bytes, bytearray)):
-        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
-        os.close(fd)
-        with open(temp_path, "wb") as handle:
-            handle.write(bytes(parquet_path))
-        return temp_path, temp_path
-    return str(parquet_path), None
+            try:
+                os.remove(cleanup)
+            except FileNotFoundError:
+                pass
 
 
 def _cleanup_temp_path(temp_path: str | None) -> None:
@@ -160,18 +175,38 @@ def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> i
             "Install with: pip install \"clinical-contract[duckdb]\""
         ) from exc
 
-    parquet_source, temp_path = _materialize_parquet_source(parquet_path)
-    parquet_path_literal = str(parquet_source).replace("'", "''")
-    ext = os.path.splitext(parquet_source)[1].lower()
+    source_path, temp_path, ext = _materialize_data_source(parquet_path)
+    source_path_literal = source_path.replace("'", "''")
 
     try:
         with duckdb.connect() as conn:
             if ext == ".parquet":
-                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_parquet('{parquet_path_literal}')")
+                conn.execute(
+                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                    f"SELECT * FROM read_parquet('{source_path_literal}')"
+                )
             elif ext == ".csv":
-                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_csv_auto('{parquet_path_literal}')")
+                conn.execute(
+                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                    f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+                )
             else:
-                raise ValueError(f"Unsupported file type: {ext}")
+                try:
+                    conn.execute(
+                        f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                        f"SELECT * FROM read_parquet('{source_path_literal}')"
+                    )
+                except Exception:
+                    try:
+                        conn.execute(
+                            f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                            f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+                        )
+                    except Exception as csv_exc:
+                        raise ValueError(
+                            "Unsupported or unreadable data source. "
+                            "Use a .parquet/.csv file, or valid parquet/csv bytes."
+                        ) from csv_exc
 
             result = conn.execute(sql).fetchone()
             return int(result[0] or 0)
@@ -392,33 +427,6 @@ class DataContract(BaseModel):
                 columns=column_results,
             ))
         return reports
-
-    @staticmethod
-    def _read_parquet_columns(parquet_path: str | bytes) -> dict[str, str]:
-        """
-        Retourne un mapping {column_name: type_name} lu depuis le parquet.
-
-        Utilise uniquement DuckDB.
-        Accepte un chemin fichier ou des bytes parquet.
-        """
-        try:
-            import duckdb
-        except ImportError as exc:
-            raise ImportError(
-                "Schema checking requires DuckDB. "
-                "Install with: pip install \"clinical-contract[duckdb]\""
-            ) from exc
-
-        parquet_source, temp_path = _materialize_parquet_source(parquet_path)
-        parquet_path_literal = parquet_source.replace("'", "''")
-        try:
-            with duckdb.connect() as conn:
-                rows = conn.execute(
-                    f"DESCRIBE SELECT * FROM read_parquet('{parquet_path_literal}')"
-                ).fetchall()
-            return {str(row[0]): str(row[1]) for row in rows}
-        finally:
-            _cleanup_temp_path(temp_path)
 
     # ---------------------------------------------------------------- #
     # check() — exécute les quality checks sur le parquet              #

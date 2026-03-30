@@ -116,6 +116,24 @@ def _write_parquet_ids(tmp_path, ids):
     return parquet_file
 
 
+def _write_csv_ids(tmp_path, ids, filename="patients.csv"):
+    duckdb = pytest.importorskip("duckdb")
+    csv_file = tmp_path / filename
+    csv_path_literal = str(csv_file).replace("'", "''")
+
+    with duckdb.connect() as conn:
+        conn.execute("CREATE TABLE patients (id VARCHAR)")
+        conn.executemany(
+            "INSERT INTO patients VALUES (?)",
+            [(value,) for value in ids],
+        )
+        conn.execute(
+            f"COPY patients TO '{csv_path_literal}' (HEADER, DELIMITER ',')"
+        )
+
+    return csv_file
+
+
 def _write_parquet_single_typed_column(tmp_path, table_name, column_name, duckdb_type):
     duckdb = pytest.importorskip("duckdb")
     parquet_file = tmp_path / f"{table_name}_{column_name}_{duckdb_type.lower()}.parquet"
@@ -225,6 +243,29 @@ def test_check_tous_passes_depuis_bytes(tmp_path):
     assert len(report.passed()) == 1
 
 
+def test_check_tous_passes_depuis_csv(tmp_path):
+    csv_file = _write_csv_ids(tmp_path, ["A001", "A002", "A003"])
+
+    contract, _ = load_contract(YAML_COMPLET)
+    report = contract.check(str(csv_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+    assert len(report.passed()) == 1
+
+
+def test_check_tous_passes_depuis_csv_bytes(tmp_path):
+    csv_file = _write_csv_ids(tmp_path, ["A001", "A002", "A003"])
+    csv_bytes = csv_file.read_bytes()
+
+    contract, _ = load_contract(YAML_COMPLET)
+    report = contract.check(csv_bytes, backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+    assert len(report.passed()) == 1
+
+
 def test_check_backend_inconnu():
     contract, _ = load_contract(YAML_COMPLET)
     with pytest.raises(ValueError, match="Unknown backend"):
@@ -309,6 +350,43 @@ def test_check_schema_depuis_bytes(tmp_path):
     assert reports[0].success is True
 
 
+def test_check_schema_depuis_csv(tmp_path):
+    csv_file = _write_csv_ids(tmp_path, ["A001", "A002"])
+
+    contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
+    reports = contract.check_schema(str(csv_file))
+    cols = {c.column: c for c in reports[0].columns}
+
+    assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["notes"].status == ColumnCheckStatus.optional_missing
+    assert reports[0].success is True
+
+
+def test_check_schema_depuis_csv_bytes(tmp_path):
+    csv_file = _write_csv_ids(tmp_path, ["A001", "A002"])
+    csv_bytes = csv_file.read_bytes()
+
+    contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
+    reports = contract.check_schema(csv_bytes)
+    cols = {c.column: c for c in reports[0].columns}
+
+    assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["notes"].status == ColumnCheckStatus.optional_missing
+    assert reports[0].success is True
+
+
+def test_check_schema_csv_path_with_single_quote(tmp_path):
+    csv_file = _write_csv_ids(tmp_path, ["A001", "A002"], filename="patients'2026.csv")
+
+    contract, _ = load_contract(YAML_OPTIONAL_COLUMN)
+    reports = contract.check_schema(str(csv_file))
+    cols = {c.column: c for c in reports[0].columns}
+
+    assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["notes"].status == ColumnCheckStatus.optional_missing
+    assert reports[0].success is True
+
+
 def test_check_schema_timestamp_tz_compatible(tmp_path):
     duckdb = pytest.importorskip("duckdb")
 
@@ -347,6 +425,36 @@ schema:
     reports = contract.check_schema(str(parquet_file))
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_csv_type_mismatch():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: csv-int-contract
+name: CSV Int Contract
+version: 1.0.0
+status: active
+description:
+  purpose: test
+  usage: test
+  limitations: none
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: int32
+        physicalType: INTEGER
+        description: id
+        required: true
+"""
+    contract, _ = load_contract(yaml_invalid)
+    reports = contract.check_schema(b"id\nA001\nA002\n")
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_check_schema_uint32_matches_uinteger(tmp_path):
@@ -607,5 +715,4 @@ schema:
     assert report.success is False
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert "schema[0].properties[0].logicalType unsupported" in schema_field.display_value
-
 

@@ -97,6 +97,19 @@ def _write_parquet_ids(tmp_path: Path, ids: list[str | None]) -> Path:
     return parquet_file
 
 
+def _write_csv_ids(tmp_path: Path, ids: list[str | None]) -> Path:
+    duckdb = pytest.importorskip("duckdb")
+    csv_file = tmp_path / "patients.csv"
+    csv_path_literal = str(csv_file).replace("'", "''")
+
+    with duckdb.connect() as conn:
+        conn.execute("CREATE TABLE patients (id VARCHAR)")
+        conn.executemany("INSERT INTO patients VALUES (?)", [(value,) for value in ids])
+        conn.execute(f"COPY patients TO '{csv_path_literal}' (HEADER, DELIMITER ',')")
+
+    return csv_file
+
+
 def _run_main(monkeypatch: pytest.MonkeyPatch, args: list[str]) -> None:
     monkeypatch.setattr(sys, "argv", ["clinical-contract", *args])
     cli.main()
@@ -164,6 +177,22 @@ def test_check_success_output(
     _run_main(monkeypatch, ["check", str(contract_path), str(parquet_path)])
     out = capsys.readouterr().out
     assert "Contract check" in out
+    assert "Data file" in out
+    assert "All checks passed." in out
+
+
+def test_check_success_output_csv(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    contract_path = _write_yaml(tmp_path, YAML_VALID)
+    csv_path = _write_csv_ids(tmp_path, ["A001", "A002", "A003"])
+
+    _run_main(monkeypatch, ["check", str(contract_path), str(csv_path)])
+    out = capsys.readouterr().out
+    assert "Contract check" in out
+    assert "Data file" in out
     assert "All checks passed." in out
 
 
