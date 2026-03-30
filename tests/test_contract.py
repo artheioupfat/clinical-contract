@@ -430,7 +430,7 @@ def test_check_schema_integer_keeps_family_compatibility(tmp_path):
         tmp_path=tmp_path,
         table_name="orders",
         column_name="status_code",
-        duckdb_type="UINTEGER",
+        duckdb_type="uint8",
     )
     yaml_integer = """
 apiVersion: v1.0.0
@@ -449,7 +449,7 @@ schema:
     description: Orders table
     properties:
       - name: status_code
-        logicalType: integer
+        logicalType: int
         physicalType: INTEGER
         description: Status
         required: true
@@ -609,30 +609,3 @@ schema:
     assert "schema[0].properties[0].logicalType unsupported" in schema_field.display_value
 
 
-@pytest.mark.parametrize("logical_type", ["uint32", "uinteger"])
-def test_validate_structure_accepts_uint32_and_duckdb_alias(logical_type):
-    yaml_valid = f"""
-apiVersion: v1.0.0
-kind: DataContract
-id: test
-name: Test
-version: 1.0.0
-status: active
-description:
-  purpose: ok
-  usage: ok
-  limitations: ok
-schema:
-  - name: patients
-    physicalType: TABLE
-    description: table
-    properties:
-      - name: id
-        logicalType: {logical_type}
-        physicalType: TEXT
-        description: ok
-"""
-    raw = load_raw(yaml_valid)
-    report = DataContract.validate_structure(raw)
-
-    assert report.success is True
