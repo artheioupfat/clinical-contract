@@ -116,6 +116,21 @@ def _write_parquet_ids(tmp_path, ids):
     return parquet_file
 
 
+def _write_parquet_single_typed_column(tmp_path, table_name, column_name, duckdb_type):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / f"{table_name}_{column_name}_{duckdb_type.lower()}.parquet"
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+
+    with duckdb.connect() as conn:
+        conn.execute(
+            f"CREATE TABLE {table_name} AS "
+            f"SELECT CAST(1 AS {duckdb_type}) AS {column_name}"
+        )
+        conn.execute(f"COPY {table_name} TO '{parquet_path_literal}' (FORMAT PARQUET)")
+
+    return parquet_file
+
+
 # ------------------------------------------------------------------ #
 # Tests validate_structure                                             #
 # ------------------------------------------------------------------ #
@@ -212,21 +227,56 @@ def test_check_tous_passes_depuis_bytes(tmp_path):
 
 def test_check_backend_inconnu():
     contract, _ = load_contract(YAML_COMPLET)
-    with pytest.raises(ValueError, match="Backend inconnu"):
+    with pytest.raises(ValueError, match="Unknown backend"):
         contract.check("fake.parquet", backend="mysql")
 
 
 def test_check_sans_quality_rules():
-    class DummyBackend:
-        def run_query(self, sql: str, parquet_path: str | bytes, table_name: str) -> int:
-            return 0
-
     contract, _ = load_contract(YAML_SANS_QUALITY)
-    report = contract.check("unused.parquet", backend=DummyBackend())
+    report = contract.check("unused.parquet", backend="duckdb")
     assert report.success is True
     assert report.code == 0
     assert report.results == []
-    assert "Aucun quality check" in report.summary
+    assert "No quality checks" in report.summary
+
+
+def test_check_execution_error_returns_code_2(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+
+    yaml_sql_error = """
+apiVersion: v1.0.0
+kind: DataContract
+id: error-contract
+name: Error Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Tests unitaires"
+  limitations: "Aucune"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant
+        required: true
+        quality:
+          - type: sql
+            description: Trigger SQL error
+            query: "SELECT * FROM unknown_table"
+            mustBe: 0
+"""
+    contract, _ = load_contract(yaml_sql_error)
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is False
+    assert report.code == 2
+    assert len(report.errors()) == 1
+    assert "Execution errors" in report.summary
 
 
 # ------------------------------------------------------------------ #
@@ -299,6 +349,118 @@ schema:
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
+def test_check_schema_uint32_matches_uinteger(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_uint32 = """
+apiVersion: v1.0.0
+kind: DataContract
+id: uint32-contract
+name: UInt32 Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: uint32
+        physicalType: UINTEGER
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_uint32)
+    reports = contract.check_schema(str(parquet_file))
+    col = reports[0].columns[0]
+
+    assert reports[0].success is True
+    assert col.status == ColumnCheckStatus.ok
+    assert col.parquet_type.lower() == "uinteger"
+
+
+def test_check_schema_uint32_rejects_ubigint(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UBIGINT",
+    )
+    yaml_uint32 = """
+apiVersion: v1.0.0
+kind: DataContract
+id: uint32-contract
+name: UInt32 Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: uint32
+        physicalType: UINTEGER
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_uint32)
+    reports = contract.check_schema(str(parquet_file))
+    col = reports[0].columns[0]
+
+    assert reports[0].success is False
+    assert col.status == ColumnCheckStatus.type_mismatch
+    assert col.parquet_type.lower() == "ubigint"
+
+
+def test_check_schema_integer_keeps_family_compatibility(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_integer = """
+apiVersion: v1.0.0
+kind: DataContract
+id: integer-contract
+name: Integer Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: integer
+        physicalType: INTEGER
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_integer)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
 
 
 def test_validate_structure_schema_missing_fields():
@@ -329,7 +491,7 @@ schema:
     assert report.success is False
 
     schema_field = next(f for f in report.fields if f.field == "schema")
-    assert "manquant" in schema_field.display_value
+    assert "error(s)" in schema_field.display_value
 
 
 
@@ -360,3 +522,117 @@ schema:
     report = DataContract.validate_structure(raw)
 
     assert report.success is False
+
+
+def test_validate_structure_description_missing_subfields():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    desc_field = next(f for f in report.fields if f.field == "description")
+    assert "missing usage, limitations" == desc_field.display_value
+
+
+def test_validate_structure_description_not_object():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description: "oops"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    desc_field = next(f for f in report.fields if f.field == "description")
+    assert desc_field.display_value == "invalid (not an object)"
+
+
+def test_validate_structure_unknown_logical_type_fails_early():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: unknown_type
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "schema[0].properties[0].logicalType unsupported" in schema_field.display_value
+
+
+@pytest.mark.parametrize("logical_type", ["uint32", "uinteger"])
+def test_validate_structure_accepts_uint32_and_duckdb_alias(logical_type):
+    yaml_valid = f"""
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: {logical_type}
+        physicalType: TEXT
+        description: ok
+"""
+    raw = load_raw(yaml_valid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True

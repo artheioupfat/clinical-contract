@@ -7,6 +7,8 @@ import os
 import tempfile
 from typing import Optional
 from pydantic import BaseModel, Field
+from pathlib import Path
+import duckdb
 
 from .models import (
     CheckStatus,
@@ -18,7 +20,6 @@ from .models import (
     SchemaCheckReport,
     ValidateReport,
 )
-from .backends import BaseBackend, auto_backend, BACKENDS
 
 # ------------------------------------------------------------------ #
 # Mapping souple des types YAML → familles de types Parquet           #
@@ -67,6 +68,27 @@ TYPE_FAMILIES: dict[str, set[str]] = {
     "bytes":     {"binary", "large_binary"},
 }
 
+# Explicit integer-width logical types are matched strictly against DuckDB canonicals.
+STRICT_INTEGER_CANONICAL: dict[str, str] = {
+    "int8": "tinyint",
+    "tinyint": "tinyint",
+    "int16": "smallint",
+    "smallint": "smallint",
+    "int32": "integer",
+    "int64": "bigint",
+    "bigint": "bigint",
+    "uint8": "utinyint",
+    "utinyint": "utinyint",
+    "uint16": "usmallint",
+    "usmallint": "usmallint",
+    "uint32": "uinteger",
+    "uinteger": "uinteger",
+    "uint64": "ubigint",
+    "ubigint": "ubigint",
+}
+
+SUPPORTED_LOGICAL_TYPES = set(TYPE_FAMILIES.keys()) | set(STRICT_INTEGER_CANONICAL.keys())
+
 
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
@@ -77,13 +99,114 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
+def _canonical_integer_type(type_name: str) -> str:
+    return STRICT_INTEGER_CANONICAL.get(type_name, type_name)
+
+
+def _is_supported_logical_type(logical_type: str) -> bool:
+    return _normalize_type_name(logical_type) in SUPPORTED_LOGICAL_TYPES
+
+
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
-    """Retourne True si parquet_type appartient à la famille de yaml_type."""
+    """Return True if logical and parquet types are compatible."""
     yaml_lower = _normalize_type_name(yaml_type)
     parquet_lower = _normalize_type_name(parquet_type)
+
+    if yaml_lower in STRICT_INTEGER_CANONICAL:
+        return (
+            _canonical_integer_type(yaml_lower)
+            == _canonical_integer_type(parquet_lower)
+        )
+
     if yaml_lower == parquet_lower:
         return True
     return parquet_lower in TYPE_FAMILIES.get(yaml_lower, set())
+
+
+def _quote_identifier(identifier: str) -> str:
+    escaped = identifier.replace('"', '""')
+    return f'"{escaped}"'
+
+
+def _read_data_source(path_or_bytes: str | bytes):
+    """
+    Retourne un mapping {col_name: type_name} pour Parquet ou CSV,
+    et fournit un "chemin temporaire" si nécessaire pour DuckDB.
+    """
+    # Gestion des bytes (PyScript)
+    if isinstance(path_or_bytes, (bytes, bytearray)):
+        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+        os.close(fd)
+        with open(temp_path, "wb") as f:
+            f.write(bytes(path_or_bytes))
+        file_path = temp_path
+        cleanup = temp_path
+        ext = ".parquet"
+    else:
+        file_path = str(path_or_bytes)
+        cleanup = None
+        ext = Path(file_path).suffix.lower()
+
+    try:
+        with duckdb.connect() as conn:
+            if ext == ".parquet":
+                rows = conn.execute(f"DESCRIBE SELECT * FROM read_parquet('{file_path}')").fetchall()
+            elif ext == ".csv":
+                rows = conn.execute(f"DESCRIBE SELECT * FROM read_csv_auto('{file_path}')").fetchall()
+            else:
+                raise ValueError(f"Unsupported file type: {ext}")
+        return {str(r[0]): str(r[1]) for r in rows}
+    finally:
+        if cleanup:
+            try: os.remove(cleanup)
+            except FileNotFoundError: pass
+
+
+def _materialize_parquet_source(parquet_path: str | bytes) -> tuple[str, str | None]:
+    if isinstance(parquet_path, (bytes, bytearray)):
+        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+        os.close(fd)
+        with open(temp_path, "wb") as handle:
+            handle.write(bytes(parquet_path))
+        return temp_path, temp_path
+    return str(parquet_path), None
+
+
+def _cleanup_temp_path(temp_path: str | None) -> None:
+    if not temp_path:
+        return
+    try:
+        os.remove(temp_path)
+    except FileNotFoundError:
+        pass
+
+
+def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> int:
+    try:
+        import duckdb
+    except ImportError as exc:
+        raise ImportError(
+            "DuckDB is required to execute quality checks. "
+            "Install with: pip install \"clinical-contract[duckdb]\""
+        ) from exc
+
+    parquet_source, temp_path = _materialize_parquet_source(parquet_path)
+    parquet_path_literal = str(parquet_source).replace("'", "''")
+    ext = os.path.splitext(parquet_source)[1].lower()
+
+    try:
+        with duckdb.connect() as conn:
+            if ext == ".parquet":
+                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_parquet('{parquet_path_literal}')")
+            elif ext == ".csv":
+                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_csv_auto('{parquet_path_literal}')")
+            else:
+                raise ValueError(f"Unsupported file type: {ext}")
+
+            result = conn.execute(sql).fetchone()
+            return int(result[0] or 0)
+    finally:
+        _cleanup_temp_path(temp_path)
 
 # Champs obligatoires au niveau racine du YAML
 REQUIRED_FIELDS = [
@@ -177,7 +300,7 @@ class DataContract(BaseModel):
             elif field == "schema":
                 if not isinstance(value, list) or len(value) == 0:
                     present = False
-                    display = "vide ou invalide"
+                    display = "empty or invalid"
                 else:
                     required_schema_fields = ["name", "physicalType", "description", "properties"]
                     errors = []
@@ -185,36 +308,42 @@ class DataContract(BaseModel):
 
                     for i, item in enumerate(value):
                         if not isinstance(item, dict):
-                            errors.append(f"schema[{i}] invalide (non dict)")
+                            errors.append(f"schema[{i}] invalid (not an object)")
                             continue
 
                         missing_schema_fields = [f for f in required_schema_fields if f not in item]
                         if missing_schema_fields:
-                            errors.append(f"schema[{i}] manque {', '.join(missing_schema_fields)}")
+                            errors.append(f"schema[{i}] missing {', '.join(missing_schema_fields)}")
                             continue
 
                         # Vérification des propriétés
                         properties = item.get("properties")
                         if not isinstance(properties, list) or len(properties) == 0:
-                            errors.append(f"schema[{i}].properties vide ou invalide")
+                            errors.append(f"schema[{i}].properties empty or invalid")
                         else:
-                            required_prop_fields = ["name", "logicalType", "physicalType", "description"]
+                            required_prop_fields = ["name", "logicalType", "description"]
                             for j, prop in enumerate(properties):
                                 if not isinstance(prop, dict):
-                                    errors.append(f"schema[{i}].properties[{j}] invalide (non dict)")
+                                    errors.append(f"schema[{i}].properties[{j}] invalid (not an object)")
                                     continue
                                 missing_prop_fields = [f for f in required_prop_fields if f not in prop]
                                 if missing_prop_fields:
-                                    errors.append(f"schema[{i}].properties[{j}] manque {', '.join(missing_prop_fields)}")
+                                    errors.append(f"schema[{i}].properties[{j}] missing {', '.join(missing_prop_fields)}")
                                 else:
-                                    total_columns += 1
+                                    logical_type = prop.get("logicalType")
+                                    if not isinstance(logical_type, str) or not _is_supported_logical_type(logical_type):
+                                        errors.append(
+                                            f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
+                                        )
+                                    else:
+                                        total_columns += 1
 
                     if errors:
                         present = False
-                        display = f"{len(errors)} erreur(s)"
+                        display = f"{len(errors)} error(s): {errors[0]}"
                     else:
                         present = True
-                        display = f"{total_columns} colonne{'s' if total_columns > 1 else ''} détectées"
+                        display = f"{total_columns} column{'s' if total_columns != 1 else ''} detected"
 
 
 
@@ -225,10 +354,10 @@ class DataContract(BaseModel):
                 subfields = ["purpose", "usage", "limitations"]
                 if isinstance(value, dict):
                     missing_sub = [s for s in subfields if s not in value]
-                    display = "présent" if not missing_sub else f"manque {', '.join(missing_sub)}"
+                    display = "present" if not missing_sub else f"missing {', '.join(missing_sub)}"
                     present = present and not missing_sub
                 else:
-                    display = "invalide (non dict)"
+                    display = "invalid (not an object)"
                     present = False
 
             # Pour les autres champs, on affiche simplement leur valeur
@@ -260,36 +389,20 @@ class DataContract(BaseModel):
         list[SchemaCheckReport]
             Un rapport par schema. success=True si tout est ok.
         """
-        parquet_columns = self._read_parquet_columns(parquet_path)
-
+        parquet_columns = _read_data_source(parquet_path)
         reports = []
         for schema_item in self.schema_:
             column_results = []
-
             for prop in schema_item.properties:
                 parquet_type = parquet_columns.get(prop.name)
-                #On vient vérifier si la colonne existe dans le parquet.
-
-                if parquet_type is None: 
-                    if prop.required:
-                        # Colonne absente et obligatoire
-                        column_results.append(ColumnCheckResult(
-                            column=prop.name,
-                            yaml_type=prop.logicalType,
-                            parquet_type="—",
-                            status=ColumnCheckStatus.missing, #Colonne manquante
-                        ))
-                    else:
-                        # Colonne absente mais optionnelle
-                        column_results.append(ColumnCheckResult(
-                            column=prop.name,
-                            yaml_type=prop.logicalType,
-                            parquet_type="—",
-                            status=ColumnCheckStatus.optional_missing, #Colonne optionnelle manquante
-                        ))
-
+                if parquet_type is None:
+                    column_results.append(ColumnCheckResult(
+                        column=prop.name,
+                        yaml_type=prop.logicalType,
+                        parquet_type="—",
+                        status=ColumnCheckStatus.missing if prop.required else ColumnCheckStatus.optional_missing,
+                    ))
                 elif not _types_compatible(prop.logicalType, parquet_type):
-                    # Colonne présente mais type incompatible
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
@@ -301,20 +414,13 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type=parquet_type,
-                        status=ColumnCheckStatus.ok, #Colonne présente et type compatible
+                        status=ColumnCheckStatus.ok,
                     ))
-
-
-            #Le "column_results" contient le résultats de chaque colonne du schéma
             reports.append(SchemaCheckReport(
                 schema_name=schema_item.name,
-                success=all(
-                    c.status in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
-                    for c in column_results
-                ),
+                success=all(c.status in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing} for c in column_results),
                 columns=column_results,
             ))
-        #On renvoie un rapport par schéma
         return reports
 
     @staticmethod
@@ -327,24 +433,14 @@ class DataContract(BaseModel):
         """
         try:
             import duckdb
-            print(duckdb.__version__)
         except ImportError as exc:
             raise ImportError(
-                "La vérification de schéma nécessite duckdb. "
-                "Installe avec: pip install \"clinical-contract[duckdb]\""
+                "Schema checking requires DuckDB. "
+                "Install with: pip install \"clinical-contract[duckdb]\""
             ) from exc
 
-        temp_path: str | None = None
-        parquet_source = parquet_path
-
-        if isinstance(parquet_path, (bytes, bytearray)):
-            fd, temp_path = tempfile.mkstemp(suffix=".parquet")
-            os.close(fd)
-            with open(temp_path, "wb") as handle:
-                handle.write(bytes(parquet_path))
-            parquet_source = temp_path
-
-        parquet_path_literal = str(parquet_source).replace("'", "''")
+        parquet_source, temp_path = _materialize_parquet_source(parquet_path)
+        parquet_path_literal = parquet_source.replace("'", "''")
         try:
             with duckdb.connect() as conn:
                 rows = conn.execute(
@@ -352,11 +448,7 @@ class DataContract(BaseModel):
                 ).fetchall()
             return {str(row[0]): str(row[1]) for row in rows}
         finally:
-            if temp_path:
-                try:
-                    os.remove(temp_path)
-                except FileNotFoundError:
-                    pass
+            _cleanup_temp_path(temp_path)
 
     # ---------------------------------------------------------------- #
     # check() — exécute les quality checks sur le parquet              #
@@ -365,7 +457,7 @@ class DataContract(BaseModel):
     def check(
         self,
         parquet_path: str | bytes,
-        backend: str | BaseBackend = "auto",
+        backend: str = "auto",
     ) -> ContractReport:
         """
         Exécute tous les quality checks du contrat sur le fichier parquet.
@@ -374,7 +466,7 @@ class DataContract(BaseModel):
         ----------
         parquet_path : str | bytes
             Chemin vers le .parquet ou bytes bruts (PyScript).
-        backend : str | BaseBackend
+        backend : str
             "auto" | "duckdb"
 
         Returns
@@ -384,21 +476,11 @@ class DataContract(BaseModel):
             code 1 — au moins un check échoue
             code 2 — au moins une erreur d'exécution
         """
-        # Résolution du backend
-        if isinstance(backend, str):
-            if backend == "auto":
-                _backend = auto_backend()
-            else:
-                cls = BACKENDS.get(backend)
-                if cls is None:
-                    raise ValueError(
-                        f"Backend inconnu : '{backend}'. "
-                        f"Choix possibles : {list(BACKENDS.keys())}"
-                    )
-                cls.ensure_available()
-                _backend = cls()
-        else:
-            _backend = backend
+        if backend not in {"auto", "duckdb"}:
+            raise ValueError(
+                f"Unknown backend: '{backend}'. "
+                "Allowed values: ['auto', 'duckdb']"
+            )
 
         results: list[QualityResult] = []
 
@@ -409,7 +491,7 @@ class DataContract(BaseModel):
 
                 for q in prop.quality:
                     try:
-                        obtained = _backend.run_query(
+                        obtained = _run_duckdb_query(
                             sql=q.query,
                             parquet_path=parquet_path,
                             table_name=schema_item.name,
@@ -446,16 +528,16 @@ class DataContract(BaseModel):
         all_ok     = not has_error and not has_failed
 
         if not results:
-            code, summary = 0, "Aucun quality check défini."
+            code, summary = 0, "No quality checks defined."
         elif all_ok:
-            code, summary = 0, "Tous les checks sont passés."
+            code, summary = 0, "All checks passed."
         elif has_error:
-            code, summary = 2, "Des erreurs d'exécution ont été rencontrées."
+            code, summary = 2, "Execution errors were encountered."
         else:
             n_fail = sum(1 for r in results if r.status == CheckStatus.failed)
             n_total = len(results)
             code    = 1
-            summary = f"{n_total - n_fail}/{n_total} checks passés."
+            summary = f"{n_total - n_fail}/{n_total} checks passed."
 
         return ContractReport(
             success=all_ok,
