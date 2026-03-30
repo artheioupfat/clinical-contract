@@ -64,8 +64,6 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
-def _canonical_integer_type(type_name: str) -> str:
-    return STRICT_INTEGER_CANONICAL.get(type_name, type_name)
 
 
 def _is_supported_logical_type(logical_type: str) -> bool:
