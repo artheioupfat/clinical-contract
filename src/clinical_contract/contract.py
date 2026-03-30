@@ -7,6 +7,8 @@ import os
 import tempfile
 from typing import Optional
 from pydantic import BaseModel, Field
+from pathlib import Path
+import duckdb
 
 from .models import (
     CheckStatus,
@@ -126,6 +128,40 @@ def _quote_identifier(identifier: str) -> str:
     return f'"{escaped}"'
 
 
+def _read_data_source(path_or_bytes: str | bytes):
+    """
+    Retourne un mapping {col_name: type_name} pour Parquet ou CSV,
+    et fournit un "chemin temporaire" si nécessaire pour DuckDB.
+    """
+    # Gestion des bytes (PyScript)
+    if isinstance(path_or_bytes, (bytes, bytearray)):
+        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
+        os.close(fd)
+        with open(temp_path, "wb") as f:
+            f.write(bytes(path_or_bytes))
+        file_path = temp_path
+        cleanup = temp_path
+        ext = ".parquet"
+    else:
+        file_path = str(path_or_bytes)
+        cleanup = None
+        ext = Path(file_path).suffix.lower()
+
+    try:
+        with duckdb.connect() as conn:
+            if ext == ".parquet":
+                rows = conn.execute(f"DESCRIBE SELECT * FROM read_parquet('{file_path}')").fetchall()
+            elif ext == ".csv":
+                rows = conn.execute(f"DESCRIBE SELECT * FROM read_csv_auto('{file_path}')").fetchall()
+            else:
+                raise ValueError(f"Unsupported file type: {ext}")
+        return {str(r[0]): str(r[1]) for r in rows}
+    finally:
+        if cleanup:
+            try: os.remove(cleanup)
+            except FileNotFoundError: pass
+
+
 def _materialize_parquet_source(parquet_path: str | bytes) -> tuple[str, str | None]:
     if isinstance(parquet_path, (bytes, bytearray)):
         fd, temp_path = tempfile.mkstemp(suffix=".parquet")
@@ -155,18 +191,20 @@ def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> i
         ) from exc
 
     parquet_source, temp_path = _materialize_parquet_source(parquet_path)
-    parquet_path_literal = parquet_source.replace("'", "''")
+    parquet_path_literal = str(parquet_source).replace("'", "''")
+    ext = os.path.splitext(parquet_source)[1].lower()
 
     try:
         with duckdb.connect() as conn:
-            conn.execute(
-                f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                f"SELECT * FROM read_parquet('{parquet_path_literal}')",
-            )
+            if ext == ".parquet":
+                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_parquet('{parquet_path_literal}')")
+            elif ext == ".csv":
+                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_csv_auto('{parquet_path_literal}')")
+            else:
+                raise ValueError(f"Unsupported file type: {ext}")
+
             result = conn.execute(sql).fetchone()
-        if not result or result[0] is None:
-            return 0
-        return int(result[0])
+            return int(result[0] or 0)
     finally:
         _cleanup_temp_path(temp_path)
 
@@ -351,36 +389,20 @@ class DataContract(BaseModel):
         list[SchemaCheckReport]
             Un rapport par schema. success=True si tout est ok.
         """
-        parquet_columns = self._read_parquet_columns(parquet_path)
-
+        parquet_columns = _read_data_source(parquet_path)
         reports = []
         for schema_item in self.schema_:
             column_results = []
-
             for prop in schema_item.properties:
                 parquet_type = parquet_columns.get(prop.name)
-                #On vient vérifier si la colonne existe dans le parquet.
-
-                if parquet_type is None: 
-                    if prop.required:
-                        # Colonne absente et obligatoire
-                        column_results.append(ColumnCheckResult(
-                            column=prop.name,
-                            yaml_type=prop.logicalType,
-                            parquet_type="—",
-                            status=ColumnCheckStatus.missing, #Colonne manquante
-                        ))
-                    else:
-                        # Colonne absente mais optionnelle
-                        column_results.append(ColumnCheckResult(
-                            column=prop.name,
-                            yaml_type=prop.logicalType,
-                            parquet_type="—",
-                            status=ColumnCheckStatus.optional_missing, #Colonne optionnelle manquante
-                        ))
-
+                if parquet_type is None:
+                    column_results.append(ColumnCheckResult(
+                        column=prop.name,
+                        yaml_type=prop.logicalType,
+                        parquet_type="—",
+                        status=ColumnCheckStatus.missing if prop.required else ColumnCheckStatus.optional_missing,
+                    ))
                 elif not _types_compatible(prop.logicalType, parquet_type):
-                    # Colonne présente mais type incompatible
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
@@ -392,20 +414,13 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type=parquet_type,
-                        status=ColumnCheckStatus.ok, #Colonne présente et type compatible
+                        status=ColumnCheckStatus.ok,
                     ))
-
-
-            #Le "column_results" contient le résultats de chaque colonne du schéma
             reports.append(SchemaCheckReport(
                 schema_name=schema_item.name,
-                success=all(
-                    c.status in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
-                    for c in column_results
-                ),
+                success=all(c.status in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing} for c in column_results),
                 columns=column_results,
             ))
-        #On renvoie un rapport par schéma
         return reports
 
     @staticmethod

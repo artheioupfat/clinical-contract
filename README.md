@@ -1,6 +1,6 @@
 # clinical-contract
 
-> Ensure your data matches the expectations defined in YAML contracts — check schemas, data types, and quality rules automatically on Parquet files.
+> Ensure your data matches the expectations defined in YAML contracts — check schemas, data types, and quality rules automatically on Parquet and CSV files.
 
 
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-`clinical-contract` is a data contract validation library designed for clinical and healthcare data pipelines. It bridges the gap between data documentation and data quality enforcement by allowing teams to define their data expectations in a human-readable YAML contract and automatically verify those expectations against real Parquet files.
+`clinical-contract` is a data contract validation library designed for clinical and healthcare data pipelines. It bridges the gap between data documentation and data quality enforcement by allowing teams to define their data expectations in a human-readable YAML contract and automatically verify those expectations against real Parquet and CSV files.
 
 A contract defines:
 - **Schema** — which columns exist, their logical and physical types
@@ -21,7 +21,7 @@ The library is DuckDB-first and is compatible with [PyScript](https://pyscript.n
 ## Features
 
 - **YAML contract validation** — verify that a contract file is structurally complete before running it against data
-- **Schema verification** — check that required columns exist in the Parquet file with compatible types
+- **Schema verification** — check that required columns exist in the Parquet or CSV file with compatible types
 - **SQL quality checks** — execute custom SQL assertions and report pass/fail with obtained vs expected values
 - **Flexible type mapping** — loose type family matching (`string`, `varchar`, `text` are treated as equivalent; `int32`, `int64`, `integer` likewise)
 - **DuckDB engine** — one execution path for schema checks and SQL quality checks
@@ -175,12 +175,13 @@ This ensures that all required fields are present and correctly structured.
 
 ---
 
-### `clinical-contract check <contract.yaml> <data.parquet> [backend]`
+### `clinical-contract check <contract.yaml> <data_file> [backend]`
 
-Runs a full validation pipeline in three stages:
+Runs a full validation pipeline in three stages against a **Parquet or CSV file**:
+
 
 1. **YAML structure** — same checks as `validate`
-2. **Schema compatibility** — verifies that required columns exist in the Parquet file with compatible types. Quality checks are **blocked** if this step fails.
+2. **Schema compatibility** — verifies that required columns exist in the Parquet or CSV file with compatible types. Quality checks are **blocked** if this step fails.
 3. **Quality checks** — executes each SQL assertion and reports the result
 
 **Backend options:** `auto` (default), `duckdb`
@@ -297,7 +298,7 @@ uv venv
 source .venv/bin/activate
 
 # Install in editable mode with all dependencies
-uv pip install -e ".[dev]"
+uv run pip install -e .
 
 #Installer les dépendances dev
 uv sync --extra dev
