@@ -294,17 +294,18 @@ git clone https://github.com/artheioupfat/clinical-contract.git
 cd clinical-contract
 
 # Create a virtual environment
-uv venv
+uv sync
+
 source .venv/bin/activate
 
-# Install in editable mode with all dependencies
-uv run pip install -e .
 
 #Installer les dépendances dev
 uv sync --extra dev
 
 #lancer les tests 
 pytest -v
+
+uv run pytest -v --cov=src/clinical_contract --cov-report=term-missing
 ```
 
 ---
