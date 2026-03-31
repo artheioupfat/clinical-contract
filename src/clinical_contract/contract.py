@@ -25,69 +25,69 @@ from .models import (
 # Mapping souple des types YAML → familles de types Parquet           #
 # ------------------------------------------------------------------ #
 
-TYPE_FAMILIES: dict[str, set[str]] = {
-    "string":    {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "text":      {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "varchar":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "integer":   {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int":       {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int32":     {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "int64":     {
-        "int8", "int16", "int32", "int64", "uint8", "uint16", "uint32", "uint64",
-        "tinyint", "smallint", "integer", "bigint",
-        "utinyint", "usmallint", "uinteger", "ubigint",
-    },
-    "float":     {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "double":    {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "decimal":   {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"},
-    "boolean":   {"bool", "boolean"},
-    "bool":      {"bool", "boolean"},
-    "date":      {"date32", "date64", "date"},
-    "date32":    {"date32", "date64", "date"},
-    "datetime":  {
-        "timestamp", "timestamp with time zone", "timestamptz",
-        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
-    },
-    "timestamp": {
-        "timestamp", "timestamp with time zone", "timestamptz",
-        "timestamp[ms]", "timestamp[us]", "timestamp[ns]", "timestamp[s]",
-    },
-    "binary":    {"binary", "large_binary"},
-    "bytes":     {"binary", "large_binary"},
+TYPE_MAP: dict[str, set[str]] = {
+    # GENÉRIQUES
+    "string":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
+    "int":      {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
+                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
+    "float":    {"float16","float32","float64","double","real","decimal128","decimal"},
+    "datetime": {"timestamp","timestamp with time zone","timestamptz",
+                 "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
+                 "date32","date64","date"},
+    "boolean":  {"bool","boolean"},
+    "binary":   {"binary","large_binary"},
+
+    # SPÉCIFIQUES
+    "int8":   {"tinyint"},
+    "int16":  {"smallint"},
+    "int32":  {"integer"},
+    "int64":  {"bigint"},
+    "uint8":  {"utinyint"},
+    "uint16": {"usmallint"},
+    "uint32": {"uinteger"},
+    "uint64": {"ubigint"},
+    "float32":{"float32"},
+    "float64":{"float64"},
+    "double": {"double"},
+    "date32": {"date32"},
+    "date64": {"date64"},
+    "date":   {"date"},
 }
 
-# Explicit integer-width logical types are matched strictly against DuckDB canonicals.
-STRICT_INTEGER_CANONICAL: dict[str, str] = {
-    "int8": "tinyint",
-    "tinyint": "tinyint",
-    "int16": "smallint",
-    "smallint": "smallint",
-    "int32": "integer",
-    "int64": "bigint",
-    "bigint": "bigint",
-    "uint8": "utinyint",
-    "utinyint": "utinyint",
-    "uint16": "usmallint",
-    "usmallint": "usmallint",
-    "uint32": "uinteger",
-    "uinteger": "uinteger",
-    "uint64": "ubigint",
-    "ubigint": "ubigint",
-}
 
-SUPPORTED_LOGICAL_TYPES = set(TYPE_FAMILIES.keys()) | set(STRICT_INTEGER_CANONICAL.keys())
+PARQUET_TO_LOGICAL_DISPLAY_MAP: dict[str, str] = {
+    "string": "string",
+    "large_string": "string",
+    "utf8": "string",
+    "large_utf8": "string",
+    "text": "string",
+    "varchar": "string",
+    "tinyint": "int8",
+    "smallint": "int16",
+    "integer": "int32",
+    "bigint": "int64",
+    "utinyint": "uint8",
+    "usmallint": "uint16",
+    "uinteger": "uint32",
+    "ubigint": "uint64",
+    "float16": "float32",
+    "float32": "float32",
+    "float64": "float64",
+    "real": "float32",
+    "double": "float64",
+    "decimal": "decimal",
+    "timestamp": "timestamp",
+    "timestamp with time zone": "timestamp with time zone",
+    "timestamptz": "timestamp with time zone",
+    "date32": "date",
+    "date64": "date",
+    "date": "date",
+    "bool": "boolean",
+    "boolean": "boolean",
+    "binary": "binary",
+    "large_binary": "binary",
+    "blob": "binary",
+}
 
 
 def _normalize_type_name(type_name: str) -> str:
@@ -99,28 +99,38 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
-def _canonical_integer_type(type_name: str) -> str:
-    return STRICT_INTEGER_CANONICAL.get(type_name, type_name)
 
 
 def _is_supported_logical_type(logical_type: str) -> bool:
-    return _normalize_type_name(logical_type) in SUPPORTED_LOGICAL_TYPES
+    logical_lower = logical_type.lower().strip()
+    if logical_lower.startswith("timestamp["):
+        logical_lower = "datetime"
+    if logical_lower.startswith("decimal("):
+        logical_lower = "float"
+    return logical_lower in TYPE_MAP
 
 
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
-    """Return True if logical and parquet types are compatible."""
-    yaml_lower = _normalize_type_name(yaml_type)
-    parquet_lower = _normalize_type_name(parquet_type)
+    """Return True if YAML type matches Parquet type based on TYPE_MAP."""
+    yaml_lower = yaml_type.lower().strip()
+    parquet_lower = parquet_type.lower().strip()
 
-    if yaml_lower in STRICT_INTEGER_CANONICAL:
-        return (
-            _canonical_integer_type(yaml_lower)
-            == _canonical_integer_type(parquet_lower)
-        )
+    # Normalisation
+    if yaml_lower.startswith("timestamp["):
+        yaml_lower = "datetime"
+    if yaml_lower.startswith("decimal("):
+        yaml_lower = "float"
 
-    if yaml_lower == parquet_lower:
-        return True
-    return parquet_lower in TYPE_FAMILIES.get(yaml_lower, set())
+    allowed_types = TYPE_MAP.get(yaml_lower)
+    if not allowed_types:
+        return False  # type YAML non supporté
+
+    return parquet_lower in allowed_types
+
+
+def _logical_type_for_display(parquet_type: str) -> str:
+    normalized = _normalize_type_name(parquet_type)
+    return PARQUET_TO_LOGICAL_DISPLAY_MAP.get(normalized, normalized)
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -128,48 +138,63 @@ def _quote_identifier(identifier: str) -> str:
     return f'"{escaped}"'
 
 
+def _materialize_data_source(path_or_bytes: str | bytes) -> tuple[str, str | None, str]:
+    """
+    Return (file_path, temp_path_to_cleanup, extension).
+    Bytes are written to a temporary file with unknown extension (.bin)
+    so parquet/csv detection can be attempted safely.
+    """
+    if isinstance(path_or_bytes, (bytes, bytearray)):
+        fd, temp_path = tempfile.mkstemp(suffix=".bin")
+        os.close(fd)
+        with open(temp_path, "wb") as handle:
+            handle.write(bytes(path_or_bytes))
+        return temp_path, temp_path, ".bin"
+
+    file_path = str(path_or_bytes)
+    return file_path, None, Path(file_path).suffix.lower()
+
+
 def _read_data_source(path_or_bytes: str | bytes):
     """
     Retourne un mapping {col_name: type_name} pour Parquet ou CSV,
     et fournit un "chemin temporaire" si nécessaire pour DuckDB.
     """
-    # Gestion des bytes (PyScript)
-    if isinstance(path_or_bytes, (bytes, bytearray)):
-        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
-        os.close(fd)
-        with open(temp_path, "wb") as f:
-            f.write(bytes(path_or_bytes))
-        file_path = temp_path
-        cleanup = temp_path
-        ext = ".parquet"
-    else:
-        file_path = str(path_or_bytes)
-        cleanup = None
-        ext = Path(file_path).suffix.lower()
+    file_path, cleanup, ext = _materialize_data_source(path_or_bytes)
+    file_path_literal = file_path.replace("'", "''")
 
     try:
         with duckdb.connect() as conn:
             if ext == ".parquet":
-                rows = conn.execute(f"DESCRIBE SELECT * FROM read_parquet('{file_path}')").fetchall()
+                rows = conn.execute(
+                    f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
+                ).fetchall()
             elif ext == ".csv":
-                rows = conn.execute(f"DESCRIBE SELECT * FROM read_csv_auto('{file_path}')").fetchall()
+                rows = conn.execute(
+                    f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"
+                ).fetchall()
             else:
-                raise ValueError(f"Unsupported file type: {ext}")
+                try:
+                    rows = conn.execute(
+                        f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
+                    ).fetchall()
+                except Exception as parquet_exc:
+                    try:
+                        rows = conn.execute(
+                            f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"
+                        ).fetchall()
+                    except Exception as csv_exc:
+                        raise ValueError(
+                            "Unsupported or unreadable data source. "
+                            "Use a .parquet/.csv file, or valid parquet/csv bytes."
+                        ) from csv_exc
         return {str(r[0]): str(r[1]) for r in rows}
     finally:
         if cleanup:
-            try: os.remove(cleanup)
-            except FileNotFoundError: pass
-
-
-def _materialize_parquet_source(parquet_path: str | bytes) -> tuple[str, str | None]:
-    if isinstance(parquet_path, (bytes, bytearray)):
-        fd, temp_path = tempfile.mkstemp(suffix=".parquet")
-        os.close(fd)
-        with open(temp_path, "wb") as handle:
-            handle.write(bytes(parquet_path))
-        return temp_path, temp_path
-    return str(parquet_path), None
+            try:
+                os.remove(cleanup)
+            except FileNotFoundError:
+                pass
 
 
 def _cleanup_temp_path(temp_path: str | None) -> None:
@@ -190,18 +215,38 @@ def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> i
             "Install with: pip install \"clinical-contract[duckdb]\""
         ) from exc
 
-    parquet_source, temp_path = _materialize_parquet_source(parquet_path)
-    parquet_path_literal = str(parquet_source).replace("'", "''")
-    ext = os.path.splitext(parquet_source)[1].lower()
+    source_path, temp_path, ext = _materialize_data_source(parquet_path)
+    source_path_literal = source_path.replace("'", "''")
 
     try:
         with duckdb.connect() as conn:
             if ext == ".parquet":
-                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_parquet('{parquet_path_literal}')")
+                conn.execute(
+                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                    f"SELECT * FROM read_parquet('{source_path_literal}')"
+                )
             elif ext == ".csv":
-                conn.execute(f"CREATE VIEW {_quote_identifier(table_name)} AS SELECT * FROM read_csv_auto('{parquet_path_literal}')")
+                conn.execute(
+                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                    f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+                )
             else:
-                raise ValueError(f"Unsupported file type: {ext}")
+                try:
+                    conn.execute(
+                        f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                        f"SELECT * FROM read_parquet('{source_path_literal}')"
+                    )
+                except Exception:
+                    try:
+                        conn.execute(
+                            f"CREATE VIEW {_quote_identifier(table_name)} AS "
+                            f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+                        )
+                    except Exception as csv_exc:
+                        raise ValueError(
+                            "Unsupported or unreadable data source. "
+                            "Use a .parquet/.csv file, or valid parquet/csv bytes."
+                        ) from csv_exc
 
             result = conn.execute(sql).fetchone()
             return int(result[0] or 0)
@@ -406,14 +451,14 @@ class DataContract(BaseModel):
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
-                        parquet_type=parquet_type,
+                        parquet_type=_logical_type_for_display(parquet_type),
                         status=ColumnCheckStatus.type_mismatch,
                     ))
                 else:
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
-                        parquet_type=parquet_type,
+                        parquet_type=_logical_type_for_display(parquet_type),
                         status=ColumnCheckStatus.ok,
                     ))
             reports.append(SchemaCheckReport(
@@ -422,33 +467,6 @@ class DataContract(BaseModel):
                 columns=column_results,
             ))
         return reports
-
-    @staticmethod
-    def _read_parquet_columns(parquet_path: str | bytes) -> dict[str, str]:
-        """
-        Retourne un mapping {column_name: type_name} lu depuis le parquet.
-
-        Utilise uniquement DuckDB.
-        Accepte un chemin fichier ou des bytes parquet.
-        """
-        try:
-            import duckdb
-        except ImportError as exc:
-            raise ImportError(
-                "Schema checking requires DuckDB. "
-                "Install with: pip install \"clinical-contract[duckdb]\""
-            ) from exc
-
-        parquet_source, temp_path = _materialize_parquet_source(parquet_path)
-        parquet_path_literal = parquet_source.replace("'", "''")
-        try:
-            with duckdb.connect() as conn:
-                rows = conn.execute(
-                    f"DESCRIBE SELECT * FROM read_parquet('{parquet_path_literal}')"
-                ).fetchall()
-            return {str(row[0]): str(row[1]) for row in rows}
-        finally:
-            _cleanup_temp_path(temp_path)
 
     # ---------------------------------------------------------------- #
     # check() — exécute les quality checks sur le parquet              #
