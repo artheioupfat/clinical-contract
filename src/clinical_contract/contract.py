@@ -55,6 +55,41 @@ TYPE_MAP: dict[str, set[str]] = {
 }
 
 
+PARQUET_TO_LOGICAL_DISPLAY_MAP: dict[str, str] = {
+    "string": "string",
+    "large_string": "string",
+    "utf8": "string",
+    "large_utf8": "string",
+    "text": "string",
+    "varchar": "string",
+    "tinyint": "int8",
+    "smallint": "int16",
+    "integer": "int32",
+    "bigint": "int64",
+    "utinyint": "uint8",
+    "usmallint": "uint16",
+    "uinteger": "uint32",
+    "ubigint": "uint64",
+    "float16": "float32",
+    "float32": "float32",
+    "float64": "float64",
+    "real": "float32",
+    "double": "float64",
+    "decimal": "decimal",
+    "timestamp": "timestamp",
+    "timestamp with time zone": "timestamp with time zone",
+    "timestamptz": "timestamp with time zone",
+    "date32": "date",
+    "date64": "date",
+    "date": "date",
+    "bool": "boolean",
+    "boolean": "boolean",
+    "binary": "binary",
+    "large_binary": "binary",
+    "blob": "binary",
+}
+
+
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
     if type_lower.startswith("timestamp["):
@@ -91,6 +126,11 @@ def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
         return False  # type YAML non supporté
 
     return parquet_lower in allowed_types
+
+
+def _logical_type_for_display(parquet_type: str) -> str:
+    normalized = _normalize_type_name(parquet_type)
+    return PARQUET_TO_LOGICAL_DISPLAY_MAP.get(normalized, normalized)
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -411,14 +451,14 @@ class DataContract(BaseModel):
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
-                        parquet_type=parquet_type,
+                        parquet_type=_logical_type_for_display(parquet_type),
                         status=ColumnCheckStatus.type_mismatch,
                     ))
                 else:
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
-                        parquet_type=parquet_type,
+                        parquet_type=_logical_type_for_display(parquet_type),
                         status=ColumnCheckStatus.ok,
                     ))
             reports.append(SchemaCheckReport(

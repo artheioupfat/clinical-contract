@@ -333,6 +333,7 @@ def test_check_schema_colonne_optionnelle_absente(tmp_path):
 
     cols = {c.column: c for c in reports[0].columns}
     assert cols["id"].status == ColumnCheckStatus.ok
+    assert cols["id"].parquet_type == "string"
     assert cols["notes"].status == ColumnCheckStatus.optional_missing
     assert reports[0].success is True
 
@@ -492,7 +493,7 @@ schema:
 
     assert reports[0].success is True
     assert col.status == ColumnCheckStatus.ok
-    assert col.parquet_type.lower() == "uinteger"
+    assert col.parquet_type.lower() == "uint32"
 
 
 def test_check_schema_uint32_rejects_ubigint(tmp_path):
@@ -530,7 +531,7 @@ schema:
 
     assert reports[0].success is False
     assert col.status == ColumnCheckStatus.type_mismatch
-    assert col.parquet_type.lower() == "ubigint"
+    assert col.parquet_type.lower() == "uint64"
 
 
 def test_check_schema_integer_keeps_family_compatibility(tmp_path):
@@ -715,4 +716,3 @@ schema:
     assert report.success is False
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert "schema[0].properties[0].logicalType unsupported" in schema_field.display_value
-
