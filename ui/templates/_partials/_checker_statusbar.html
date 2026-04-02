@@ -1,0 +1,16 @@
+<!-- Checker Status Bar -->
+<div class="flex items-center shrink-0 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+  <!-- Left: columns / rows -->
+  <span x-text="parquetInfo.columns + ' col'"></span>
+  <span class="mx-2" x-text="parquetInfo.rows.toLocaleString('fr-FR') + ' lignes'"></span>
+
+  <!-- Center: filename -->
+  <span class="flex-1 text-center" x-text="parquetFileName"></span>
+
+  <!-- Right: test results -->
+  <span class="flex items-center gap-1.5">
+    <span class="h-1.5 w-1.5 rounded-full"
+          :class="checkResults.length === 0 ? 'bg-gray-300 dark:bg-gray-600' : checkResults.every(r => r.result === 'success') ? 'bg-emerald-500' : 'bg-red-500'"></span>
+    <span x-text="checkResults.length > 0 ? checkResults.filter(r => r.result === 'success').length + '/' + checkResults.length + ' tests' : 'Non testé'"></span>
+  </span>
+</div>

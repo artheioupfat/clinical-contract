@@ -1,3 +1,20 @@
 <!-- Editor Panel -->
 {% include "_partials/_editor_toolbar.html" %}
-<div class="flex-1 min-h-0" x-ref="editorContainer" x-init="initEditor($refs.editorContainer)"></div>
+
+<div class="flex-1 min-h-0 relative" id="editor-wrapper">
+  <!-- Drop zone overlay (removed by JS when content loaded) -->
+  <div id="editor-dropzone" class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer z-10 bg-white dark:bg-surface-800 transition-colors"
+       onclick="document.querySelector('[x-ref=yamlFileInput]').click()">
+    <div id="editor-dropbox" class="flex flex-col items-center gap-2 rounded border-2 border-dashed border-gray-400 dark:border-gray-500 p-8 transition-all">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="h-8 w-8 text-gray-400 dark:text-gray-500">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+      </svg>
+      <p class="text-xs text-gray-400 dark:text-gray-500">Glisser votre contract YAML ici</p>
+    </div>
+  </div>
+
+  <!-- CodeMirror mounts here -->
+  <div id="editor-container" class="h-full w-full" style="display:none"></div>
+</div>
+
+{% include "_partials/_editor_statusbar.html" %}

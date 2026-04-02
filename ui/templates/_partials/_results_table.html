@@ -1,8 +1,30 @@
-<!-- Results Table (HyperUI pattern) -->
-<div class="flex-1 min-h-0 overflow-auto">
-  <table class="min-w-full divide-y-2 divide-gray-200 dark:divide-gray-700 text-xs">
+<!-- Results Table with integrated drop zone -->
+<div class="flex-1 min-h-0 overflow-auto"
+     x-data="{ dragging: false }"
+     @dragover.prevent="dragging = true"
+     @dragleave.prevent="dragging = false"
+     @drop.prevent="dragging = false; handleDrop($event)">
+
+  <input type="file" accept=".parquet" x-ref="parquetDropInput" @change="handleFileSelect($event)" class="hidden">
+
+  <!-- Empty state: drop zone -->
+  <div x-show="checkResults.length === 0" class="flex flex-col items-center justify-center h-full cursor-pointer transition-colors"
+       :class="dragging && 'bg-accent-500/5'"
+       @click="$refs.parquetDropInput.click()">
+    <div class="flex flex-col items-center gap-2 rounded border-2 border-dashed p-8 transition-all"
+         :class="dragging ? 'border-accent-500 bg-accent-500/5' : 'border-gray-400 dark:border-gray-500'">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"
+           class="h-8 w-8 transition-colors" :class="dragging ? 'text-accent-500' : 'text-gray-400 dark:text-gray-500'">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 7.5h-.75A2.25 2.25 0 0 0 4.5 9.75v7.5a2.25 2.25 0 0 0 2.25 2.25h7.5a2.25 2.25 0 0 0 2.25-2.25v-7.5a2.25 2.25 0 0 0-2.25-2.25h-.75m0-3-3-3m0 0-3 3m3-3v11.25m6-2.25h.75a2.25 2.25 0 0 1 2.25 2.25v7.5a2.25 2.25 0 0 1-2.25 2.25h-7.5a2.25 2.25 0 0 1-2.25-2.25v-.75" />
+      </svg>
+      <p class="text-xs transition-colors" :class="dragging ? 'text-accent-600 dark:text-accent-400' : 'text-gray-400 dark:text-gray-500'" x-text="parquetFileName || 'Glissez un fichier Parquet ici'"></p>
+    </div>
+  </div>
+
+  <!-- Table (visible when results exist) -->
+  <table x-show="checkResults.length > 0" class="min-w-full divide-y-2 divide-gray-200 dark:divide-gray-700 text-sm">
     <thead class="ltr:text-left rtl:text-right">
-      <tr class="*:font-medium *:text-gray-900 dark:*:text-white">
+      <tr class="*:font-medium *:text-gray-600 dark:*:text-gray-400">
         <th class="px-3 py-2 whitespace-nowrap">Colonne</th>
         <th class="px-3 py-2 whitespace-nowrap">Type attendu</th>
         <th class="px-3 py-2 whitespace-nowrap">Erreur</th>
@@ -14,12 +36,12 @@
 
     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
       <template x-for="row in checkResults" :key="row.column + row.error">
-        <tr class="*:text-gray-900 *:first:font-medium dark:*:text-white">
-          <td class="px-3 py-2 whitespace-nowrap font-mono" x-text="row.column"></td>
-          <td class="px-3 py-2 whitespace-nowrap font-mono" x-text="row.expected_type"></td>
+        <tr class="*:text-gray-900 *:first:font-medium dark:*:text-white hover:bg-surface-50 dark:hover:bg-surface-700/30 transition-colors">
+          <td class="px-3 py-2 whitespace-nowrap tabular-nums" x-text="row.column"></td>
+          <td class="px-3 py-2 whitespace-nowrap tabular-nums" x-text="row.expected_type"></td>
           <td class="px-3 py-2 whitespace-nowrap" x-text="row.error || '—'"></td>
-          <td class="px-3 py-2 whitespace-nowrap font-mono text-right" x-text="row.obtained"></td>
-          <td class="px-3 py-2 whitespace-nowrap font-mono text-right" x-text="row.expected"></td>
+          <td class="px-3 py-2 whitespace-nowrap tabular-nums text-right" x-text="row.obtained"></td>
+          <td class="px-3 py-2 whitespace-nowrap tabular-nums text-right" x-text="row.expected"></td>
           <td class="px-3 py-2 whitespace-nowrap text-center">
             <span class="inline-block h-2 w-2 rounded-full"
                   :class="row.result === 'success' ? 'bg-emerald-500' : 'bg-red-500'">

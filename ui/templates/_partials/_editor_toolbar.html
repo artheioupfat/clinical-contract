@@ -1,30 +1,37 @@
 <!-- Editor Toolbar -->
 <div class="flex items-center border-b border-surface-200 dark:border-surface-700 px-3 py-1">
-  <h2 class="text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mr-auto">Editor</h2>
+  <h2 class="text-xs font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-400 mr-auto">Editor</h2>
 
   <input type="file" accept=".yaml,.yml" x-ref="yamlFileInput" @change="importYaml($event)" class="hidden">
 
   <span class="inline-flex gap-0.5">
-    <button @click="validate()"
-            class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-      <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+    <button @click="newContract()"
+            class="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
+      <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      Tester
+      Nouveau
     </button>
     <button @click="$refs.yamlFileInput.click()"
-            class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-      <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            class="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
+      <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
       </svg>
       Importer
     </button>
     <button @click="exportYaml()"
-            class="inline-flex items-center gap-1.5 rounded px-2 py-1 text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
-      <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            class="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
+      <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 7.5 12 3m0 0 4.5 4.5M12 3v13.5" />
       </svg>
       Exporter
+    </button>
+    <button @click="validate()"
+            class="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 hover:bg-accent-500/10 transition-colors">
+      <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+      </svg>
+      Tester
     </button>
   </span>
 </div>

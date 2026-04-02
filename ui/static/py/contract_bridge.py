@@ -38,11 +38,10 @@ def check(yaml_content, file_bytes):
 window.pyValidate = create_proxy(validate)
 window.pyCheck = create_proxy(check)
 
-# Signal ready in status bar
-indicator = document.getElementById("pyscript-indicator")
-status_el = document.getElementById("pyscript-status")
-if indicator:
-    indicator.classList.remove("bg-gray-300", "dark:bg-gray-600")
-    indicator.classList.add("bg-emerald-500")
-if status_el:
-    status_el.textContent = "PyScript OK"
+# Signal ready in header icon
+spinner = document.getElementById("pyscript-spinner")
+icon = document.getElementById("pyscript-icon")
+if spinner:
+    spinner.classList.add("hidden")
+if icon:
+    icon.classList.remove("hidden")

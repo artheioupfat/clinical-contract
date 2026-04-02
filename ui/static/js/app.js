@@ -1,101 +1,142 @@
-const DEFAULT_YAML = `apiVersion: v3.1.0 #open data contract standard
+const NEW_CONTRACT_YAML = `apiVersion: v3.1.0
 kind: DataContract
-id: export-contract
-name: Export Contract
-version: 1.0.0  #version du contrat
-status: active
+id: my-contract
+name: My Contract
+version: 1.0.0
+status: draft
 domain: healthcare
 dataProduct: parquet file
 description:
-  purpose: "Export dataset contenant les événements médicaux et échantillons"
-  usage: "Analytics et traitement downstream"
-  limitations: "Les données historiques peuvent contenir des timestamps legacy"
+  purpose: ""
+  usage: ""
+  limitations: ""
 
 schema:
-  - name: export
+  - name: table_name
     physicalType: TABLE
-    description: Dataset exporté contenant les données patient
+    description: ""
     properties:
-      - name: IPP
+      - name: column_name
         logicalType: string
         physicalType: TEXT
-        description: Identifiant patient permanent
+        description: ""
         required: true
-        quality:
-          - type: sql
-            description: IPP ne doit pas être null
-            query: "SELECT COUNT(*) FROM export WHERE IPP IS NULL"
-            mustBe: 0
-          - type: sql
-            description: IPP doit faire entre 35 et 37 caractères
-            query: "SELECT COUNT(*) FROM export WHERE LENGTH(IPP) NOT BETWEEN 35 AND 37"
-            mustBe: 0
+`;
 
-      - name: DATE_EVENEMENT
-        logicalType: "timestamp[us, tz=Europe/Paris]"
-        physicalType: DATE
-        description: Date de l'événement médical
-        required: true
-        quality:
-          - type: sql
-            description: Pas de dates dans le futur
-            query: "SELECT COUNT(*) FROM export WHERE DATE_EVENEMENT > CURRENT_DATE"
-            mustBe: 0`;
+// --- CodeMirror (vanilla JS, no Alpine) ---
+let cmEditor = null;
 
+function initCodeMirror() {
+  const el = document.getElementById("editor-container");
+  if (!el || cmEditor) return;
+
+  const isDark = document.documentElement.classList.contains("dark");
+  cmEditor = CodeMirror(el, {
+    value: "",
+    mode: "yaml",
+    theme: isDark ? "material-darker" : "default",
+    lineNumbers: true,
+    tabSize: 2,
+    lineWrapping: false,
+    inputStyle: "textarea",
+    styleActiveLine: true,
+  });
+  cmEditor.setSize("100%", "100%");
+
+  // Dark mode sync
+  new MutationObserver(() => {
+    const dark = document.documentElement.classList.contains("dark");
+    cmEditor.setOption("theme", dark ? "material-darker" : "default");
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+}
+
+function loadYamlInEditor(content) {
+  // Hide drop zone first, show editor container
+  const dz = document.getElementById("editor-dropzone");
+  const container = document.getElementById("editor-container");
+  if (dz) dz.style.display = "none";
+  if (container) container.style.display = "block";
+
+  // Create or update editor
+  if (!cmEditor) initCodeMirror();
+  cmEditor.setValue(content);
+  cmEditor.refresh();
+  cmEditor.focus();
+}
+
+// Drop zone drag & drop
+document.addEventListener("DOMContentLoaded", () => {
+  const dz = document.getElementById("editor-dropzone");
+  if (!dz) return;
+  const box = document.getElementById("editor-dropbox");
+  function dzOn() {
+    dz.style.backgroundColor = "rgba(20, 184, 166, 0.05)";
+    if (box) { box.style.borderColor = "#14b8a6"; box.style.backgroundColor = "rgba(20, 184, 166, 0.05)"; }
+  }
+  function dzOff() {
+    dz.style.backgroundColor = "";
+    if (box) { box.style.borderColor = ""; box.style.backgroundColor = ""; }
+  }
+  dz.addEventListener("dragover", (e) => { e.preventDefault(); dzOn(); });
+  dz.addEventListener("dragleave", dzOff);
+  dz.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dzOff();
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith(".yaml") || file.name.endsWith(".yml"))) {
+      const reader = new FileReader();
+      reader.onload = (ev) => loadYamlInEditor(ev.target.result);
+      reader.readAsText(file);
+    }
+  });
+});
+
+// --- Alpine.js state ---
 document.addEventListener("alpine:init", () => {
   Alpine.data("appState", () => ({
-    editor: null,
     yamlValid: null,
+    yamlFileName: "",
 
-    // Checker (Phase 4)
+    // Checker
     parquetFile: null,
-    parquetFileName: "export_2026.parquet",
-    parquetInfo: { columns: 6, rows: 1453 },
-    checkResults: [
-      { column: "IPP", expected_type: "string", error: "", result: "success", obtained: 0, expected: 0 },
-      { column: "IPP", expected_type: "string", error: "IPP doit faire entre 35 et 37 caractères", result: "fail", obtained: 12, expected: 0 },
-      { column: "DATE_EVENEMENT", expected_type: "timestamp", error: "", result: "success", obtained: 0, expected: 0 },
-      { column: "DATE_EVENEMENT", expected_type: "timestamp", error: "Pas de dates dans le futur", result: "success", obtained: 0, expected: 0 },
-      { column: "CODE_ANALYSE", expected_type: "string", error: "Colonne manquante", result: "fail", obtained: 1, expected: 0 },
-    ],
+    parquetFileName: "",
+    parquetInfo: { columns: 0, rows: 0 },
+    checkResults: [],
 
     get yamlContent() {
-      return this.editor ? this.editor.getValue() : "";
+      return cmEditor ? cmEditor.getValue() : "";
     },
 
     get lineCount() {
-      return this.editor ? this.editor.lineCount() : 0;
+      return cmEditor ? cmEditor.lineCount() : 0;
     },
 
-    initEditor(el) {
-      const isDark = document.documentElement.classList.contains("dark");
+    get editorReady() {
+      return cmEditor && cmEditor.getValue().length > 0;
+    },
 
-      const editor = CodeMirror(el, {
-        value: DEFAULT_YAML,
-        mode: "yaml",
-        theme: isDark ? "material-darker" : "default",
-        lineNumbers: true,
-        tabSize: 2,
-        lineWrapping: false,
-        inputStyle: "textarea",
-        styleActiveLine: true,
-        readOnly: false,
-      });
+    newContract() {
+      this.yamlFileName = "";
+      loadYamlInEditor(NEW_CONTRACT_YAML);
+    },
 
-      editor.setSize("100%", "100%");
-      editor.refresh();
+    importYaml(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      this.yamlFileName = file.name;
+      const reader = new FileReader();
+      reader.onload = (e) => loadYamlInEditor(e.target.result);
+      reader.readAsText(file);
+    },
 
-      // Force focus to confirm editability
-      setTimeout(() => { editor.refresh(); }, 100);
-
-      this.editor = editor;
-
-      // Dark mode sync
-      const htmlEl = document.documentElement;
-      new MutationObserver(() => {
-        const dark = htmlEl.classList.contains("dark");
-        editor.setOption("theme", dark ? "material-darker" : "default");
-      }).observe(htmlEl, { attributes: true, attributeFilter: ["class"] });
+    handleYamlDrop(event) {
+      const file = event.dataTransfer.files[0];
+      if (file && (file.name.endsWith(".yaml") || file.name.endsWith(".yml"))) {
+        this.yamlFileName = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => loadYamlInEditor(e.target.result);
+        reader.readAsText(file);
+      }
     },
 
     validate() {
@@ -107,22 +148,12 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
-    importYaml(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.editor.setValue(e.target.result);
-      };
-      reader.readAsText(file);
-    },
-
     exportYaml() {
       const blob = new Blob([this.yamlContent], { type: "text/yaml" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "datacontract.yaml";
+      a.download = this.yamlFileName || "datacontract.yaml";
       a.click();
       URL.revokeObjectURL(url);
     },

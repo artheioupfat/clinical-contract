@@ -1,0 +1,15 @@
+<!-- Editor Status Bar -->
+<div class="flex items-center border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+  <!-- Left: line count -->
+  <span x-text="lineCount + ' lignes'"></span>
+
+  <!-- Center: filename -->
+  <span class="flex-1 text-center" x-text="yamlFileName"></span>
+
+  <!-- Right: validity -->
+  <span class="flex items-center gap-1">
+    <span class="h-1.5 w-1.5 rounded-full"
+          :class="yamlValid === true ? 'bg-emerald-500' : yamlValid === false ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'"></span>
+    <span x-text="yamlValid === true ? 'Valide' : yamlValid === false ? 'Invalide' : 'Non testé'"></span>
+  </span>
+</div>

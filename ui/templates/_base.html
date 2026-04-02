@@ -89,9 +89,19 @@
     {% block content %}{% endblock %}
   </main>
 
-  {% include "_partials/_statusbar.html" %}
 
   <script type="py" src="static/py/contract_bridge.py" config='{"packages":["pyyaml"]}'></script>
+  <script>
+    // Fallback: stop spinner after 15s if PyScript fails to load
+    setTimeout(function() {
+      var s = document.getElementById('pyscript-spinner');
+      var i = document.getElementById('pyscript-icon');
+      if (s && !s.classList.contains('hidden')) {
+        s.classList.add('hidden');
+        if (i) i.classList.remove('hidden');
+      }
+    }, 15000);
+  </script>
 
 </body>
 
