@@ -4,7 +4,7 @@
 
   <input type="file" accept=".yaml,.yml" x-ref="yamlFileInput" @change="importYaml($event)" class="hidden">
 
-  <span class="inline-flex gap-0.5">
+  <span class="inline-flex gap-0.5 transition-opacity" :class="$store.py.ready ? '' : 'opacity-40 pointer-events-none'">
     <button @click="newContract()"
             class="inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
       <svg class="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

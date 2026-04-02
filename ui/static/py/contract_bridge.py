@@ -38,10 +38,11 @@ def check(yaml_content, file_bytes):
 window.pyValidate = create_proxy(validate)
 window.pyCheck = create_proxy(check)
 
-# Signal ready in header icon
+# Signal ready
 spinner = document.getElementById("pyscript-spinner")
 icon = document.getElementById("pyscript-icon")
 if spinner:
     spinner.classList.add("hidden")
 if icon:
     icon.classList.remove("hidden")
+window.Alpine.store("py").ready = True

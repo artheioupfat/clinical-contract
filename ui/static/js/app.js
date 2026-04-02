@@ -93,6 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // --- Alpine.js state ---
 document.addEventListener("alpine:init", () => {
+  Alpine.store("py", { ready: false });
   Alpine.data("appState", () => ({
     yamlValid: null,
     yamlFileName: "",
