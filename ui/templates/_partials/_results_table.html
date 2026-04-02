@@ -1,0 +1,32 @@
+<!-- Results Table (HyperUI pattern) -->
+<div class="flex-1 min-h-0 overflow-auto">
+  <table class="min-w-full divide-y-2 divide-gray-200 dark:divide-gray-700 text-xs">
+    <thead class="ltr:text-left rtl:text-right">
+      <tr class="*:font-medium *:text-gray-900 dark:*:text-white">
+        <th class="px-3 py-2 whitespace-nowrap">Colonne</th>
+        <th class="px-3 py-2 whitespace-nowrap">Type attendu</th>
+        <th class="px-3 py-2 whitespace-nowrap">Erreur</th>
+        <th class="px-3 py-2 whitespace-nowrap text-right">Obtenu</th>
+        <th class="px-3 py-2 whitespace-nowrap text-right">Attendu</th>
+        <th class="px-3 py-2 whitespace-nowrap text-center">Resultat</th>
+      </tr>
+    </thead>
+
+    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+      <template x-for="row in checkResults" :key="row.column + row.error">
+        <tr class="*:text-gray-900 *:first:font-medium dark:*:text-white">
+          <td class="px-3 py-2 whitespace-nowrap font-mono" x-text="row.column"></td>
+          <td class="px-3 py-2 whitespace-nowrap font-mono" x-text="row.expected_type"></td>
+          <td class="px-3 py-2 whitespace-nowrap" x-text="row.error || '—'"></td>
+          <td class="px-3 py-2 whitespace-nowrap font-mono text-right" x-text="row.obtained"></td>
+          <td class="px-3 py-2 whitespace-nowrap font-mono text-right" x-text="row.expected"></td>
+          <td class="px-3 py-2 whitespace-nowrap text-center">
+            <span class="inline-block h-2 w-2 rounded-full"
+                  :class="row.result === 'success' ? 'bg-emerald-500' : 'bg-red-500'">
+            </span>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</div>

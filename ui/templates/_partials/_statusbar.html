@@ -1,0 +1,35 @@
+<!-- Status Bar -->
+<footer class="flex items-center justify-between border-t border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-3 py-1 text-[11px] text-gray-400 dark:text-gray-500">
+
+  <!-- Left: Editor info -->
+  <div class="flex items-center gap-3">
+    <span x-data="appState()">
+      <span x-text="lineCount + ' lignes'"></span>
+    </span>
+    <template x-if="typeof yamlValid !== 'undefined'">
+      <span class="flex items-center gap-1"
+            x-data="appState()">
+        <span class="h-1.5 w-1.5 rounded-full" :class="yamlValid ? 'bg-emerald-500' : yamlValid === false ? 'bg-red-500' : 'bg-gray-300 dark:bg-gray-600'"></span>
+        <span x-text="yamlValid ? 'Valide' : yamlValid === false ? 'Invalide' : ''"></span>
+      </span>
+    </template>
+  </div>
+
+  <!-- Center: PyScript status -->
+  <div class="flex items-center gap-1.5">
+    <span class="h-1.5 w-1.5 rounded-full bg-gray-300 dark:bg-gray-600" id="pyscript-indicator"></span>
+    <span id="pyscript-status">PyScript</span>
+  </div>
+
+  <!-- Right: Parquet info -->
+  <div class="flex items-center gap-3" x-data="appState()">
+    <template x-if="parquetFileName">
+      <div class="flex items-center gap-3">
+        <span x-text="parquetFileName"></span>
+        <span x-text="parquetInfo.columns + ' col'"></span>
+        <span x-text="parquetInfo.rows.toLocaleString('fr-FR') + ' lignes'"></span>
+      </div>
+    </template>
+  </div>
+
+</footer>

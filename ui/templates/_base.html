@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr"
+      x-data="{ dark: localStorage.getItem('theme') === 'dark' }"
+      x-init="$watch('dark', val => { localStorage.setItem('theme', val ? 'dark' : 'light') })"
+      :class="{ 'dark': dark }">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>clinical-contract</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            surface: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              700: '#1e293b',
+              800: '#0f172a',
+              900: '#020617',
+            },
+            accent: {
+              400: '#2dd4bf',
+              500: '#14b8a6',
+              600: '#0d9488',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5/lib/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5/theme/material-darker.min.css">
+  <style>
+    /* CodeMirror integration */
+    .CodeMirror {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 13px;
+      height: 100%;
+      background: #ffffff;
+    }
+    .cm-s-material-darker.CodeMirror { background: #0f172a; }
+    .cm-s-material-darker .CodeMirror-gutters { background: #0f172a; border-right: 1px solid #1e293b; }
+    .cm-s-material-darker .CodeMirror-linenumber { color: #475569; }
+    .cm-s-material-darker .CodeMirror-cursor { border-left: 2px solid #2dd4bf; }
+    .cm-s-material-darker .CodeMirror-selected { background: #1e293b; }
+    .cm-s-material-darker .CodeMirror-activeline-background { background: rgba(30, 41, 59, 0.5); }
+    .CodeMirror-cursor { border-left: 2px solid #0d9488; }
+    .CodeMirror-focused .CodeMirror-cursor { border-left: 2px solid #0d9488; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/lib/codemirror.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/mode/yaml/yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5/addon/selection/active-line.min.js"></script>
+
+  <!-- PyScript -->
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.11.1/core.css">
+  <script type="module" src="https://pyscript.net/releases/2024.11.1/core.js"></script>
+
+  <!-- App -->
+  <script src="static/js/app.js" defer></script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body class="font-sans bg-surface-50 dark:bg-surface-900 text-gray-900 dark:text-gray-100 h-screen flex flex-col overflow-hidden antialiased">
+
+  {% include "_partials/_header.html" %}
+
+  <main class="flex-1 flex overflow-hidden">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "_partials/_statusbar.html" %}
+
+  <script type="py" src="static/py/contract_bridge.py" config='{"packages":["pyyaml"]}'></script>
+
+</body>
+
+</html>
