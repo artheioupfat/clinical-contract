@@ -1,0 +1,6 @@
+[project]
+name = "clinical-contract-ui"
+version = "0.1.0"
+description = "Static web UI for clinical-contract data contract editor"
+requires-python = ">=3.10"
+dependencies = ["staticjinja>=5.0", "livereload>=2.6"]
