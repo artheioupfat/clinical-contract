@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>clinical-contract web checker</title>
+    <style>[x-cloak]{display:none!important}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2025.3.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2025.3.1/core.js"></script>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body class="bg-slate-100 text-slate-800 antialiased">
+    <div x-data="clinicalApp()" x-init="init()" class="h-screen overflow-hidden">
+      <div class="mx-4 my-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-3">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base font-semibold tracking-tight">clinical-contract</h1>
+                <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">beta</span>
+              </div>
+              <p class="text-xs text-slate-500">Static YAML + parquet/csv checker powered by PyScript</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-500">Static web UI</span>
+          </div>
+        </header>
+
+        <main class="min-h-0 flex-1">
+          <div class="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[1fr_0.95fr]">
+            <section class="min-h-0 border-b border-slate-200 lg:border-b-0 lg:border-r">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-eyebrow">Editor</div>
+                  <div class="panel-title" x-text="yamlName || 'contract.yaml'"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="rounded-full border px-2 py-1 text-xs" :class="validateBadgeClass()" x-text="validateBadgeText()"></span>
+                  <button
+                    type="button"
+                    @click="validateContract()"
+                    :disabled="busy || !pythonReady"
+                    class="toolbar-btn toolbar-btn--accent"
+                  >
+                    Validate
+                  </button>
+                </div>
+              </div>
+              <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">
+                <div class="editor-gutter" aria-hidden="true">
+                  <template x-for="line in lineNumbers" :key="line">
+                    <div class="editor-line-number" x-text="line"></div>
+                  </template>
+                </div>
+                <textarea
+                  id="yaml-editor"
+                  x-model="yamlText"
+                  @scroll="syncEditorScroll($event)"
+                  spellcheck="false"
+                  class="editor-textarea"
+                  placeholder="Drop a YAML data contract here or click Import."
+                ></textarea>
+              </div>
+            </section>
+
+            <section class="min-h-0">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-eyebrow">Checker</div>
+                  <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="data-stats" x-show="dataStatsText()" x-cloak x-text="dataStatsText()"></div>
+                  <label class="toolbar-btn cursor-pointer">
+                    Load data
+                    <input x-ref="dataInput" type="file" class="hidden" accept=".parquet,.csv" @change="pickDataFile($event)" />
+                  </label>
+                  <button type="button" @click="runCheck()" :disabled="busy || !pythonReady || !dataFile" class="toolbar-btn toolbar-btn--success">Run checks</button>
+                </div>
+              </div>
+
+              <div class="checker-body">
+                <div
+                  class="dropzone"
+                  :class="draggingData ? 'dropzone--active' : ''"
+                  @dblclick="$refs.dataInput.click()"
+                  @dragenter.prevent="draggingData = true"
+                  @dragover.prevent="draggingData = true"
+                  @dragleave.prevent="draggingData = false"
+                  @drop.prevent="dropData($event)"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16.5v1.25A2.25 2.25 0 006.25 20h11.5A2.25 2.25 0 0020 17.75V16.5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-sm font-medium text-slate-700">Drag &amp; drop parquet or csv here</div>
+                      <div class="text-xs text-slate-500">Or use “Load data” to pick a local file.</div>
+                    </div>
+                  </div>
+                  <div class="text-xs text-slate-400" x-text="dataFileName || 'No file selected'"></div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-3">
+                  <div class="metric-card">
+                    <div class="metric-label">Structure</div>
+                    <div class="metric-value" x-text="structureSummary"></div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-label">Schema</div>
+                    <div class="metric-value" x-text="schemaSummary"></div>
+                  </div>
+                  <div class="metric-card">
+                    <div class="metric-label">Quality</div>
+                    <div class="metric-value" x-text="qualitySummary"></div>
+                  </div>
+                </div>
+
+                <div class="results-shell">
+                  <div class="results-tabs">
+                    <button type="button" class="result-tab" :class="activeTab === 'validate' ? 'result-tab--active' : ''" @click="activeTab = 'validate'">Validate</button>
+                    <button type="button" class="result-tab" :class="activeTab === 'schema' ? 'result-tab--active' : ''" @click="activeTab = 'schema'">Schema</button>
+                    <button type="button" class="result-tab" :class="activeTab === 'quality' ? 'result-tab--active' : ''" @click="activeTab = 'quality'">Quality</button>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'validate'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Field</th>
+                          <th>Status</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="validateRows.length === 0">
+                          <tr><td colspan="3" class="empty-row">No validation result yet.</td></tr>
+                        </template>
+                        <template x-for="row in validateRows" :key="row.field">
+                          <tr>
+                            <td x-text="row.field"></td>
+                            <td x-text="row.status_icon"></td>
+                            <td x-text="row.value"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'schema'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Schema</th>
+                          <th>Column</th>
+                          <th>Expected</th>
+                          <th>Detected</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="schemaRows.length === 0">
+                          <tr><td colspan="5" class="empty-row">No schema result yet.</td></tr>
+                        </template>
+                        <template x-for="(row, idx) in schemaRows" :key="`${row.schema_name}-${row.column}-${idx}`">
+                          <tr>
+                            <td x-text="row.schema_name"></td>
+                            <td x-text="row.column"></td>
+                            <td x-text="row.yaml_type"></td>
+                            <td x-text="row.parquet_type"></td>
+                            <td x-text="row.status_icon"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'quality'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Schema</th>
+                          <th>Column</th>
+                          <th>Rule</th>
+                          <th>Obtained</th>
+                          <th>Expected</th>
+                          <th>Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="qualityRows.length === 0">
+                          <tr><td colspan="6" class="empty-row">No quality result yet.</td></tr>
+                        </template>
+                        <template x-for="(row, idx) in qualityRows" :key="`${row.property_name}-${idx}`">
+                          <tr>
+                            <td x-text="row.schema_name"></td>
+                            <td x-text="row.property_name"></td>
+                            <td x-text="row.description"></td>
+                            <td x-text="row.obtained"></td>
+                            <td x-text="row.expected"></td>
+                            <td>
+                              <span class="inline-flex items-center gap-2" :class="row.status === 'passed' ? 'text-emerald-600' : row.status === 'failed' ? 'text-rose-600' : 'text-amber-600'">
+                                <span class="h-2.5 w-2.5 rounded-full" :class="row.status === 'passed' ? 'bg-emerald-500' : row.status === 'failed' ? 'bg-rose-500' : 'bg-amber-500'"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <footer class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
+          <div class="flex items-center gap-3">
+            <span x-text="pythonReady ? 'Python ready' : 'Loading Python runtime…'"></span>
+            <span>•</span>
+            <span x-text="yamlText.split('\n').length + ' lines'"></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span x-text="statusText"></span>
+            <span class="inline-flex items-center gap-2" :class="busy ? 'text-emerald-600' : 'text-slate-500'">
+              <span class="h-2 w-2 rounded-full" :class="busy ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+              <span x-text="busy ? 'Running' : 'Idle'"></span>
+            </span>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <script type="py" src="./python/bridge.py" config="./pyscript.toml"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

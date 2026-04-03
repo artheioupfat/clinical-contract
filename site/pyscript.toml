@@ -1,0 +1,7 @@
+packages = ["pyyaml", "duckdb", "pydantic"]
+
+[files]
+"./python/clinical_contract/__init__.py" = "./clinical_contract/__init__.py"
+"./python/clinical_contract/contract.py" = "./clinical_contract/contract.py"
+"./python/clinical_contract/loader.py" = "./clinical_contract/loader.py"
+"./python/clinical_contract/models.py" = "./clinical_contract/models.py"
