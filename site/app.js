@@ -24,9 +24,12 @@ document.addEventListener('alpine:init', () => {
     },
 
     async init() {
-      window.addEventListener('clinical-python-ready', () => {
+      window.addEventListener('clinical-python-ready', async () => {
         this.pythonReady = true;
         this.statusText = 'Python runtime ready';
+        if (this.dataFile) {
+          await this.analyzeDataFile(this.dataFile);
+        }
       });
 
       try {
@@ -44,40 +47,24 @@ document.addEventListener('alpine:init', () => {
       const gutter = event.target.previousElementSibling;
       if (gutter) gutter.scrollTop = event.target.scrollTop;
     },
-
-    resetYaml() {
-      this.yamlText = [
-        'apiVersion: v3.1.0',
-        'kind: DataContract',
-        'id: export',
-        'name: Export Contract',
-        'version: 1.0.0',
-        'status: active',
-        'description:',
-        '  purpose: "Describe your dataset"',
-        '  usage: "Explain how it should be used"',
-        '  limitations: "Document known caveats"',
-        'schema:',
-        '  - name: export',
-        '    physicalType: TABLE',
-        '    description: Main exported table',
-        '    properties:',
-        '      - name: ID',
-        '        logicalType: string',
-        '        physicalType: TEXT',
-        '        description: Identifier',
-        '        required: true',
-      ].join('\n');
-      this.yamlName = 'datacontract.yaml';
-      this.clearResults();
-      this.statusText = 'New contract template loaded';
-    },
-
     async importYaml(event) {
       const file = event.target.files?.[0];
       if (!file) return;
       await this.handleYamlFile(file);
       event.target.value = '';
+    },
+
+    downloadYaml() {
+      const blob = new Blob([this.yamlText || ''], { type: 'text/yaml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = this.yamlName || 'contract.yaml';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      this.statusText = `Downloaded ${link.download}`;
     },
 
     async dropYaml(event) {
@@ -93,15 +80,22 @@ document.addEventListener('alpine:init', () => {
       this.statusText = `Loaded ${file.name}`;
     },
 
-    exportYaml() {
-      const blob = new Blob([this.yamlText], { type: 'text/yaml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = this.yamlName || 'datacontract.yaml';
-      link.click();
-      URL.revokeObjectURL(url);
-      this.statusText = 'YAML exported';
+    async analyzeDataFile(file) {
+      this.dataColumns = null;
+      this.dataRows = null;
+      if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) return;
+      try {
+        const buffer = await file.arrayBuffer();
+        const payload = JSON.parse(window.pyAnalyzeDataFile(buffer));
+        this.dataColumns = payload.columns;
+        this.dataRows = payload.rows;
+        if (payload.summary) this.statusText = payload.summary;
+      } catch (error) {
+        console.error(error);
+        this.dataColumns = null;
+        this.dataRows = null;
+        this.statusText = `Data analysis error: ${error.message}`;
+      }
     },
 
     async pickDataFile(event) {
@@ -110,7 +104,7 @@ document.addEventListener('alpine:init', () => {
       this.dataFile = file;
       this.dataFileName = file.name;
       this.statusText = `Loaded ${file.name}`;
-      await this.analyzeDataFile();
+      await this.analyzeDataFile(file);
       event.target.value = '';
     },
 
@@ -121,43 +115,12 @@ document.addEventListener('alpine:init', () => {
       this.dataFile = file;
       this.dataFileName = file.name;
       this.statusText = `Loaded ${file.name}`;
-      await this.analyzeDataFile();
-    },
-
-
-    async analyzeDataFile() {
-      this.dataColumns = null;
-      this.dataRows = null;
-      if (!this.pythonReady || !this.dataFile) return;
-      try {
-        const buffer = await this.dataFile.arrayBuffer();
-        const payload = JSON.parse(window.pyAnalyzeDataFile(buffer));
-        this.dataColumns = payload.columns;
-        this.dataRows = payload.rows;
-        if (payload.summary) this.statusText = payload.summary;
-      } catch (error) {
-        console.error(error);
-        this.statusText = `Data analysis error: ${error.message}`;
-      }
-    },
-
-    validateBadgeText() {
-      if (!this.validateRows.length) return 'Not checked';
-      return this.validateRows.every((row) => row.present) ? 'Valid' : 'Invalid';
-    },
-
-    validateBadgeClass() {
-      if (!this.validateRows.length) return 'border-slate-200 text-slate-500';
-      return this.validateRows.every((row) => row.present)
-        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-        : 'border-rose-200 bg-rose-50 text-rose-700';
+      await this.analyzeDataFile(file);
     },
 
     dataStatsText() {
-      if (this.dataColumns == null && this.dataRows == null) return '';
-      const cols = this.dataColumns == null ? '—' : this.dataColumns;
-      const rows = this.dataRows == null ? '—' : this.dataRows;
-      return `Col: ${cols}   Rows: ${rows}`;
+      if (this.dataColumns === null || this.dataRows === null) return '';
+      return `Col : ${this.dataColumns}    Rows : ${this.dataRows}`;
     },
 
     clearResults() {
