@@ -17,6 +17,21 @@ document.addEventListener('alpine:init', () => {
     schemaSummary: 'Not run',
     qualitySummary: 'Not run',
     statusText: 'Ready',
+    logoVariant: 'neutral',
+    logoErrored: false,
+
+    get logoSrc() {
+      if (this.logoErrored) return '';
+      if (this.logoVariant === 'green') return './logo/phare_vert.png';
+      if (this.logoVariant === 'red') return './logo/phare_red.png';
+      return './logo/phare.png';
+    },
+
+    get logoAlt() {
+      if (this.logoVariant === 'green') return 'Green lighthouse';
+      if (this.logoVariant === 'red') return 'Red lighthouse';
+      return 'Lighthouse';
+    },
 
     get lineNumbers() {
       const count = Math.max(1, this.yamlText.split('\n').length);
@@ -47,6 +62,20 @@ document.addEventListener('alpine:init', () => {
       const gutter = event.target.previousElementSibling;
       if (gutter) gutter.scrollTop = event.target.scrollTop;
     },
+
+    handleLogoError(event) {
+      this.logoErrored = true;
+      if (event?.target) event.target.style.display = 'none';
+    },
+
+    setLogoSuccess() {
+      this.logoVariant = 'green';
+    },
+
+    setLogoFailure() {
+      this.logoVariant = 'red';
+    },
+
     async importYaml(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -130,6 +159,7 @@ document.addEventListener('alpine:init', () => {
       this.structureSummary = 'Not run';
       this.schemaSummary = 'Not run';
       this.qualitySummary = 'Not run';
+      this.logoVariant = 'neutral';
     },
 
     async validateContract() {
@@ -147,9 +177,12 @@ document.addEventListener('alpine:init', () => {
         this.schemaSummary = 'Not run';
         this.qualitySummary = 'Not run';
         this.statusText = payload.success ? 'Validation passed' : 'Validation failed';
+        if (payload.success) this.setLogoSuccess();
+        else this.setLogoFailure();
       } catch (error) {
         console.error(error);
         this.statusText = `Validation error: ${error.message}`;
+        this.setLogoFailure();
       } finally {
         this.busy = false;
       }
@@ -183,16 +216,21 @@ document.addEventListener('alpine:init', () => {
         if (!payload.validate?.success) {
           this.activeTab = 'validate';
           this.statusText = payload.error || 'YAML validation failed';
+          this.setLogoFailure();
         } else if (!payload.schema_success) {
           this.activeTab = 'schema';
           this.statusText = payload.error || 'Schema validation failed';
+          this.setLogoFailure();
         } else {
           this.activeTab = 'quality';
           this.statusText = payload.report_summary || 'Checks completed';
+          if (payload.report_success) this.setLogoSuccess();
+          else this.setLogoFailure();
         }
       } catch (error) {
         console.error(error);
         this.statusText = `Execution error: ${error.message}`;
+        this.setLogoFailure();
       } finally {
         this.busy = false;
       }
