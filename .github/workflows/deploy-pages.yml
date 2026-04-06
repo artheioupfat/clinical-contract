@@ -2,7 +2,7 @@ name: Deploy Pages (Symlink Attempt)
 
 on:
   push:
-    branches: [web]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

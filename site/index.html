@@ -61,6 +61,22 @@
           </div>
         </header>
 
+        <div
+          class="border-b border-slate-200 bg-slate-50/70 px-4 py-2"
+          :class="switchOn ? 'border-slate-700 bg-slate-900/50' : ''"
+          x-show="showRuntimeProgress"
+          x-transition.opacity.duration.250ms
+          x-cloak
+        >
+          <div class="mb-1 flex items-center justify-between text-[11px] font-medium">
+            <span x-text="runtimeProgressLabel"></span>
+            <span x-text="`${runtimeProgress}%`"></span>
+          </div>
+          <div class="runtime-progress-track">
+            <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>
+          </div>
+        </div>
+
         <main class="min-h-0 flex-1">
           <div class="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[1fr_0.95fr]">
             <section class="min-h-0 border-b border-slate-200 lg:border-b-0 lg:border-r">

@@ -247,6 +247,26 @@ body {
   white-space: pre;
 }
 
+.runtime-progress-track {
+  position: relative;
+  height: 0.55rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: rgb(226 232 240);
+}
+
+.runtime-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 9999px;
+  background: rgb(37 99 235);
+  transition: width 220ms linear;
+}
+
 .theme-dark {
   border-color: rgb(37 61 104) !important;
   background: rgb(9 18 38) !important;
@@ -385,4 +405,12 @@ body {
 
 .theme-dark .text-slate-800 {
   color: rgb(226 232 240) !important;
+}
+
+.theme-dark .runtime-progress-track {
+  background: rgb(30 41 59);
+}
+
+.theme-dark .runtime-progress-fill {
+  background: rgb(56 189 248);
 }
