@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>clinical-contract web checker</title>
+    <title>clinical-contract</title>
     <style>[x-cloak]{display:none!important}</style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs" defer></script>
@@ -16,8 +16,13 @@
       <div class="mx-4 my-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-3">
           <div class="flex items-center gap-3">
-            <div class="flex h-14 w-24 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
-              <img src="./logo/brest.svg" alt="Brest logo" class="h-12 w-60 object-contain" onerror="this.style.display='none'; this.parentElement.classList.add('bg-emerald-100','text-emerald-700'); this.parentElement.innerHTML='CC';">
+            <div class="flex h-20 w-24 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+              <img
+                :src="logoSrc"
+                :alt="logoAlt"
+                class="h-16 w-20 object-contain"
+                @error="handleLogoError"
+              >
             </div>
             <div>
               <div class="flex items-center gap-2">
