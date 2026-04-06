@@ -1,3 +1,4 @@
+interpreter = "0.26.4"
 packages = ["pyyaml", "duckdb", "pydantic"]
 
 [files]
