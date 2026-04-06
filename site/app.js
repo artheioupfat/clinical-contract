@@ -18,6 +18,10 @@ document.addEventListener('alpine:init', () => {
     qualitySummary: 'Not run',
     statusText: 'Ready',
     switchOn: false,
+    runtimeProgress: 0,
+    showRuntimeProgress: true,
+    runtimeProgressInterval: null,
+    runtimeBridgePoll: null,
     logoVariant: 'neutral',
     logoErrored: false,
 
@@ -39,16 +43,31 @@ document.addEventListener('alpine:init', () => {
       return Array.from({ length: count }, (_, i) => i + 1);
     },
 
+    get runtimeProgressLabel() {
+      if (this.pythonReady) return 'Python runtime ready';
+      return 'Loading Python runtime…';
+    },
+
     async init() {
       this.initThemeSwitch();
+      this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
-        this.pythonReady = true;
-        this.statusText = 'Python runtime ready';
+        this.onPythonRuntimeReady();
         if (this.dataFile) {
           await this.analyzeDataFile(this.dataFile);
         }
       });
+
+      this.runtimeBridgePoll = window.setInterval(() => {
+        if (this.pythonReady) return;
+        if (typeof window.pyValidateContract === 'function') {
+          this.onPythonRuntimeReady();
+        }
+      }, 250);
+      if (typeof window.pyValidateContract === 'function') {
+        this.onPythonRuntimeReady();
+      }
 
       try {
         const response = await fetch('./examples/example_contract.yaml');
@@ -59,6 +78,55 @@ document.addEventListener('alpine:init', () => {
       } catch (_err) {
         this.yamlText = '# Write or drop a YAML contract here';
       }
+    },
+
+    startRuntimeProgress() {
+      if (this.runtimeProgressInterval) {
+        window.clearInterval(this.runtimeProgressInterval);
+      }
+      this.runtimeProgress = 0;
+      this.showRuntimeProgress = true;
+      this.runtimeProgressInterval = window.setInterval(() => {
+        if (this.pythonReady) return;
+        if (this.runtimeProgress >= 92) return;
+        const step = this.runtimeProgress < 50 ? 3 : this.runtimeProgress < 80 ? 2 : 1;
+        this.runtimeProgress = Math.min(92, this.runtimeProgress + step);
+      }, 120);
+    },
+
+    finishRuntimeProgress() {
+      if (this.runtimeProgressInterval) {
+        window.clearInterval(this.runtimeProgressInterval);
+        this.runtimeProgressInterval = null;
+      }
+      const complete = () => {
+        this.runtimeProgress = 100;
+        window.setTimeout(() => {
+          this.showRuntimeProgress = false;
+        }, 450);
+      };
+      if (this.runtimeProgress >= 100) {
+        complete();
+        return;
+      }
+      const finisher = window.setInterval(() => {
+        this.runtimeProgress = Math.min(100, this.runtimeProgress + 4);
+        if (this.runtimeProgress >= 100) {
+          window.clearInterval(finisher);
+          complete();
+        }
+      }, 16);
+    },
+
+    onPythonRuntimeReady() {
+      if (this.pythonReady) return;
+      this.pythonReady = true;
+      this.statusText = 'Python runtime ready';
+      if (this.runtimeBridgePoll) {
+        window.clearInterval(this.runtimeBridgePoll);
+        this.runtimeBridgePoll = null;
+      }
+      this.finishRuntimeProgress();
     },
 
     initThemeSwitch() {
