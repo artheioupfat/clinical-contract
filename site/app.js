@@ -152,6 +152,47 @@ document.addEventListener('alpine:init', () => {
       return `Col : ${this.dataColumns}    Rows : ${this.dataRows}`;
     },
 
+    tabDotClass(state) {
+      if (state === 'passed') return 'bg-emerald-500';
+      if (state === 'failed') return 'bg-rose-500';
+      return 'bg-slate-400';
+    },
+
+    get validateTabState() {
+      if (!this.validateRows.length) return 'idle';
+      return this.validateRows.some((row) => row.status === 'failed') ? 'failed' : 'passed';
+    },
+
+    get schemaTabState() {
+      if (!this.schemaRows.length) return 'idle';
+      return this.schemaRows.some((row) => row.status === 'failed') ? 'failed' : 'passed';
+    },
+
+    get qualityTabState() {
+      if (!this.qualityRows.length) return 'idle';
+      return this.qualityRows.some((row) => row.status === 'failed' || row.status === 'error')
+        ? 'failed'
+        : 'passed';
+    },
+
+    normalizeValidateRows(rows) {
+      return (rows || []).map((row) => ({
+        ...row,
+        status: row.present ? 'passed' : 'failed',
+      }));
+    },
+
+    normalizeSchemaRows(rows) {
+      return (rows || []).map((row) => {
+        const rawStatus = String(row.status || '').toLowerCase();
+        const passed = rawStatus === 'ok' || rawStatus === 'optional_missing';
+        return {
+          ...row,
+          status: passed ? 'passed' : 'failed',
+        };
+      });
+    },
+
     clearResults() {
       this.validateRows = [];
       this.schemaRows = [];
@@ -172,7 +213,7 @@ document.addEventListener('alpine:init', () => {
       this.statusText = 'Validating contract…';
       try {
         const payload = JSON.parse(window.pyValidateContract(this.yamlText));
-        this.validateRows = payload.fields || [];
+        this.validateRows = this.normalizeValidateRows(payload.fields || []);
         this.structureSummary = payload.success ? 'Valid structure' : 'Structure issues';
         this.schemaSummary = 'Not run';
         this.qualitySummary = 'Not run';
@@ -205,8 +246,8 @@ document.addEventListener('alpine:init', () => {
         const buffer = await this.dataFile.arrayBuffer();
         const payload = JSON.parse(window.pyRunContractCheck(this.yamlText, buffer));
 
-        this.validateRows = payload.validate?.fields || [];
-        this.schemaRows = payload.schema_rows || [];
+        this.validateRows = this.normalizeValidateRows(payload.validate?.fields || []);
+        this.schemaRows = this.normalizeSchemaRows(payload.schema_rows || []);
         this.qualityRows = payload.quality_rows || [];
 
         this.structureSummary = payload.validate?.success ? 'Valid structure' : 'Structure issues';
