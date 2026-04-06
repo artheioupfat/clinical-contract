@@ -32,7 +32,7 @@ jobs:
           set -euo pipefail
           echo "Inspecting site/python directory..."
           ls -la site/python
-          if [ -L site/python/clinical_contract/site/index.html ]; then
+          if [ -L site/python/clinical_contract ]; then
             echo "Detected symlink: site/python/clinical_contract"
             echo "Target: $(readlink site/python/clinical_contract)"
           else
