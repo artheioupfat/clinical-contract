@@ -122,9 +122,24 @@
 
                 <div class="results-shell">
                   <div class="results-tabs">
-                    <button type="button" class="result-tab" :class="activeTab === 'validate' ? 'result-tab--active' : ''" @click="activeTab = 'validate'">Validate</button>
-                    <button type="button" class="result-tab" :class="activeTab === 'schema' ? 'result-tab--active' : ''" @click="activeTab = 'schema'">Schema</button>
-                    <button type="button" class="result-tab" :class="activeTab === 'quality' ? 'result-tab--active' : ''" @click="activeTab = 'quality'">Quality</button>
+                    <button type="button" class="result-tab" :class="activeTab === 'validate' ? 'result-tab--active' : ''" @click="activeTab = 'validate'">
+                      <span class="inline-flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full" :class="tabDotClass(validateTabState)"></span>
+                        <span>Validate</span>
+                      </span>
+                    </button>
+                    <button type="button" class="result-tab" :class="activeTab === 'schema' ? 'result-tab--active' : ''" @click="activeTab = 'schema'">
+                      <span class="inline-flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full" :class="tabDotClass(schemaTabState)"></span>
+                        <span>Schema</span>
+                      </span>
+                    </button>
+                    <button type="button" class="result-tab" :class="activeTab === 'quality' ? 'result-tab--active' : ''" @click="activeTab = 'quality'">
+                      <span class="inline-flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full" :class="tabDotClass(qualityTabState)"></span>
+                        <span>Quality</span>
+                      </span>
+                    </button>
                   </div>
 
                   <div class="results-table-wrap" x-show="activeTab === 'validate'" x-cloak>
@@ -143,7 +158,12 @@
                         <template x-for="row in validateRows" :key="row.field">
                           <tr>
                             <td x-text="row.field"></td>
-                            <td x-text="row.status_icon"></td>
+                            <td>
+                              <span class="inline-flex items-center gap-2" :class="row.status === 'passed' ? 'text-emerald-600' : 'text-rose-600'">
+                                <span class="h-2.5 w-2.5 rounded-full" :class="row.status === 'passed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
                             <td x-text="row.value"></td>
                           </tr>
                         </template>
@@ -172,7 +192,12 @@
                             <td x-text="row.column"></td>
                             <td x-text="row.yaml_type"></td>
                             <td x-text="row.parquet_type"></td>
-                            <td x-text="row.status_icon"></td>
+                            <td>
+                              <span class="inline-flex items-center gap-2" :class="row.status === 'passed' ? 'text-emerald-600' : 'text-rose-600'">
+                                <span class="h-2.5 w-2.5 rounded-full" :class="row.status === 'passed' ? 'bg-emerald-500' : 'bg-rose-500'"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
                           </tr>
                         </template>
                       </tbody>
