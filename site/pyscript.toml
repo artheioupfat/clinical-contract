@@ -1,4 +1,4 @@
-interpreter = "0.26.4"
+interpreter = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs"
 packages = ["pyyaml", "duckdb", "pydantic"]
 
 [files]
