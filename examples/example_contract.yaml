@@ -1,20 +1,18 @@
-apiVersion: v3.1.0 #open data contract standard
+apiVersion: v3.1.0
 kind: DataContract
-id: export-contract
+id: export
 name: Export Contract
-version: 1.0.0  #version du contrat
+version: 1.0.0
 status: active
-domain: healthcare
-dataProduct: parquet file
 description:
-  purpose: "Export dataset contenant les événements médicaux et échantillons"
-  usage: "Analytics et traitement downstream"
-  limitations: "Les données historiques peuvent contenir des timestamps legacy"
+  purpose: "Export dataset containing medical event and sampling information"
+  usage: "Used for analytics and downstream processing"
+  limitations: "Historical data may contain legacy timestamps"
 
 schema:
   - name: export
     physicalType: TABLE
-    description: Dataset exporté contenant les données patient
+    description: Exported dataset containing patient event and laboratory sampling data
     properties:
       - name: IPP
         logicalType: string
@@ -23,21 +21,45 @@ schema:
         required: true
         quality:
           - type: sql
-            description: IPP ne doit pas être null
-            query: "SELECT COUNT(*) FROM export WHERE IPP IS NULL"
-            mustBe: 0
-          - type: sql
-            description: IPP doit faire entre 35 et 37 caractères
+            description: IPP must be between 35 and 37 characters
             query: "SELECT COUNT(*) FROM export WHERE LENGTH(IPP) NOT BETWEEN 35 AND 37"
             mustBe: 0
 
-      - name: DATE_EVENEMENT
-        logicalType: timestamp[us, tz=Europe/Paris]
-        physicalType: DATE
-        description: Date de l'événement médical
+      - name: IEP
+        logicalType: string
+        physicalType: TEXT
+        description: Identifiant d'épisode patient
+        required: true
+
+      - name: EVENT_TIME
+        logicalType: datetime
+        physicalType: TIMESTAMP
+        description: Timestamp of the recorded event
         required: true
         quality:
           - type: sql
-            description: Pas de dates dans le futur
-            query: "SELECT COUNT(*) FROM export WHERE DATE_EVENEMENT > CURRENT_DATE"
+            description: EVENT_TIME must be after 1925-01-01
+            query: "SELECT COUNT(*) FROM export WHERE EVENT_TIME < TIMESTAMP '1925-01-01 00:00:00'"
             mustBe: 0
+
+
+team:
+  name: CDC Brest
+  description: Clinical data center CHU Brest
+  members:
+    - name: arthur.prigent@chu-brest.fr
+      role: Data Scientist
+    - name: sacha.schutz@chu-brest.fr
+      role: Doctor
+    - name: alexis.gouraton@chu-brest.fr
+      role: Data Scientist
+    - name: artur.lamard@chu-brest.fr
+      role: Data Engineer
+    - name: lucas.bourenuf@chu-brest.fr
+      role: Administrator System
+    - name: bertrand.borel@chu-brest.fr
+      role: Data Scientist
+    - name: nathan.foulquier@chu-brest.fr
+      role: Data Scientist
+    - name: basile.fuchs@chu-brest.fr
+      role: Doctor
