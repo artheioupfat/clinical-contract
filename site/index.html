@@ -12,8 +12,11 @@
     <link rel="stylesheet" href="./app.css" />
   </head>
   <body class="bg-slate-100 text-slate-800 antialiased">
-    <div x-data="clinicalApp()" x-init="init()" class="h-screen overflow-hidden">
-      <div class="mx-4 my-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div x-data="clinicalApp()" x-init="init()" class="h-screen overflow-hidden" :class="switchOn ? 'bg-black' : ''">
+      <div
+        class="mx-4 my-4 flex h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+        :class="switchOn ? 'theme-dark page-night' : ''"
+      >
         <header class="flex items-center justify-between border-b border-slate-200 bg-slate-50/90 px-4 py-3">
           <div class="flex items-center gap-3">
             <div class="flex h-20 w-24 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
@@ -30,6 +33,31 @@
                 <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">beta</span>
               </div>
             </div>
+          </div>
+
+          <div class="flex items-center justify-center space-x-2">
+            <input id="theme-switch" type="checkbox" name="theme-switch" class="hidden" :checked="switchOn">
+
+            <button
+              x-ref="switchButton"
+              type="button"
+              @click="toggleThemeSwitch()"
+              :class="switchOn ? 'bg-blue-600' : 'bg-neutral-200'"
+              class="relative inline-flex h-6 w-10 rounded-full py-0.5 focus:outline-none"
+              x-cloak
+            >
+              <span :class="switchOn ? 'translate-x-[18px]' : 'translate-x-0.5'" class="h-5 w-5 rounded-full bg-white shadow-md duration-200 ease-in-out"></span>
+            </button>
+
+            <label
+              @click="$refs.switchButton.click(); $refs.switchButton.focus()"
+              for="theme-switch"
+              :class="{ 'text-blue-600': switchOn, 'text-gray-500': !switchOn }"
+              class="select-none text-sm font-medium"
+              x-cloak
+            >
+              <span x-text="switchOn ? 'Light' : 'Dark'"></span>
+            </label>
           </div>
         </header>
 

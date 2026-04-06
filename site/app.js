@@ -17,6 +17,7 @@ document.addEventListener('alpine:init', () => {
     schemaSummary: 'Not run',
     qualitySummary: 'Not run',
     statusText: 'Ready',
+    switchOn: false,
     logoVariant: 'neutral',
     logoErrored: false,
 
@@ -39,6 +40,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     async init() {
+      this.initThemeSwitch();
+
       window.addEventListener('clinical-python-ready', async () => {
         this.pythonReady = true;
         this.statusText = 'Python runtime ready';
@@ -55,6 +58,23 @@ document.addEventListener('alpine:init', () => {
         }
       } catch (_err) {
         this.yamlText = '# Write or drop a YAML contract here';
+      }
+    },
+
+    initThemeSwitch() {
+      try {
+        this.switchOn = localStorage.getItem('clinical-ui-dark') === '1';
+      } catch (_error) {
+        this.switchOn = false;
+      }
+    },
+
+    toggleThemeSwitch() {
+      this.switchOn = !this.switchOn;
+      try {
+        localStorage.setItem('clinical-ui-dark', this.switchOn ? '1' : '0');
+      } catch (_error) {
+        // Ignore storage failures.
       }
     },
 
