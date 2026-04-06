@@ -41,3 +41,25 @@ schema:
             description: EVENT_TIME must be after 1925-01-01
             query: "SELECT COUNT(*) FROM export WHERE EVENT_TIME < TIMESTAMP '1925-01-01 00:00:00'"
             mustBe: 0
+
+
+team:
+  name: CDC Brest
+  description: Clinical data center CHU Brest
+  members:
+    - name: arthur.prigent@chu-brest.fr
+      role: Data Scientist
+    - name: sacha.schutz@chu-brest.fr
+      role: Doctor
+    - name: alexis.gouraton@chu-brest.fr
+      role: Data Scientist
+    - name: artur.lamard@chu-brest.fr
+      role: Data Engineer
+    - name: lucas.bourenuf@chu-brest.fr
+      role: Administrator System
+    - name: bertrand.borel@chu-brest.fr
+      role: Data Scientist
+    - name: nathan.foulquier@chu-brest.fr
+      role: Data Scientist
+    - name: basile.fuchs@chu-brest.fr
+      role: Doctor

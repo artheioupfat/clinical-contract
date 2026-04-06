@@ -70,10 +70,10 @@ document.addEventListener('alpine:init', () => {
       }
 
       try {
-        const response = await fetch('./examples/example_contract.yaml');
+        const response = await fetch('./examples/contract.yaml');
         if (response.ok) {
           this.yamlText = await response.text();
-          this.yamlName = 'example_contract.yaml';
+          this.yamlName = 'example.yaml';
         }
       } catch (_err) {
         this.yamlText = '# Write or drop a YAML contract here';
