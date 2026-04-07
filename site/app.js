@@ -13,6 +13,15 @@ document.addEventListener('alpine:init', () => {
     validateRows: [],
     schemaRows: [],
     qualityRows: [],
+    previewColumns: [],
+    previewRows: [],
+    previewTotalRows: 0,
+    previewPage: 1,
+    previewPageSize: 50,
+    previewTotalPages: 0,
+    previewLoading: false,
+    previewError: '',
+    previewHandle: null,
     statusText: 'Ready',
     switchOn: false,
     runtimeProgress: 0,
@@ -52,8 +61,11 @@ document.addEventListener('alpine:init', () => {
       window.addEventListener('clinical-python-ready', async () => {
         this.onPythonRuntimeReady();
         if (this.dataFile) {
-          await this.analyzeDataFile(this.dataFile);
+          await this.refreshDataInsights();
         }
+      });
+      window.addEventListener('beforeunload', () => {
+        this.releasePreviewSession();
       });
 
       this.runtimeBridgePoll = window.setInterval(() => {
@@ -194,12 +206,12 @@ document.addEventListener('alpine:init', () => {
       this.statusText = `Loaded ${file.name}`;
     },
 
-    async analyzeDataFile(file) {
+    async analyzeDataFile(file, dataBuffer = null) {
       this.dataColumns = null;
       this.dataRows = null;
       if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) return;
       try {
-        const buffer = await file.arrayBuffer();
+        const buffer = dataBuffer || (await file.arrayBuffer());
         const payload = JSON.parse(window.pyAnalyzeDataFile(buffer));
         this.dataColumns = payload.columns;
         this.dataRows = payload.rows;
@@ -212,13 +224,116 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
+    async refreshDataInsights() {
+      if (!this.dataFile) return;
+      try {
+        const buffer = await this.dataFile.arrayBuffer();
+        await this.analyzeDataFile(this.dataFile, buffer);
+        await this.preparePreview(this.dataFile, buffer);
+      } catch (error) {
+        console.error(error);
+        this.statusText = `Data loading error: ${error.message}`;
+      }
+    },
+
+    releasePreviewSession() {
+      if (!this.previewHandle || !window.pyReleaseDataPreview) return;
+      try {
+        window.pyReleaseDataPreview(this.previewHandle);
+      } catch (error) {
+        console.error(error);
+      }
+      this.previewHandle = null;
+    },
+
+    clearPreviewData() {
+      this.previewColumns = [];
+      this.previewRows = [];
+      this.previewTotalRows = 0;
+      this.previewPage = 1;
+      this.previewTotalPages = 0;
+      this.previewLoading = false;
+      this.previewError = '';
+    },
+
+    async preparePreview(file, dataBuffer = null) {
+      this.releasePreviewSession();
+      this.clearPreviewData();
+
+      if (!this.pythonReady || !file || !window.pyPrepareDataPreview) return;
+
+      try {
+        const buffer = dataBuffer || (await file.arrayBuffer());
+        const payload = JSON.parse(window.pyPrepareDataPreview(buffer, file.name || ''));
+        if (payload.error) {
+          this.previewError = payload.error;
+          this.statusText = `Preview error: ${payload.error}`;
+          return;
+        }
+
+        this.previewHandle = payload.handle || null;
+        this.previewColumns = payload.columns || [];
+        this.previewTotalRows = payload.total_rows || 0;
+        this.previewPageSize = payload.page_size || 50;
+        this.previewTotalPages = payload.total_pages || 0;
+
+        if (this.previewHandle) {
+          await this.loadPreviewPage(1);
+        }
+      } catch (error) {
+        console.error(error);
+        this.previewError = error.message;
+        this.statusText = `Preview error: ${error.message}`;
+      }
+    },
+
+    async loadPreviewPage(page) {
+      if (!this.previewHandle || !window.pyFetchDataPreviewPage) return;
+      this.previewLoading = true;
+      this.previewError = '';
+      try {
+        const payload = JSON.parse(
+          window.pyFetchDataPreviewPage(this.previewHandle, page, this.previewPageSize)
+        );
+        if (payload.error) {
+          this.previewRows = [];
+          this.previewError = payload.error;
+          this.statusText = `Preview error: ${payload.error}`;
+          return;
+        }
+        this.previewColumns = payload.columns || this.previewColumns;
+        this.previewRows = payload.rows || [];
+        this.previewPage = payload.page || 1;
+        this.previewPageSize = payload.page_size || this.previewPageSize;
+        this.previewTotalRows = payload.total_rows || 0;
+        this.previewTotalPages = payload.total_pages || 0;
+      } catch (error) {
+        console.error(error);
+        this.previewRows = [];
+        this.previewError = error.message;
+        this.statusText = `Preview error: ${error.message}`;
+      } finally {
+        this.previewLoading = false;
+      }
+    },
+
+    goPreviewPrev() {
+      if (this.previewLoading || this.previewPage <= 1) return;
+      this.loadPreviewPage(this.previewPage - 1);
+    },
+
+    goPreviewNext() {
+      if (this.previewLoading || this.previewPage >= this.previewTotalPages) return;
+      this.loadPreviewPage(this.previewPage + 1);
+    },
+
     async pickDataFile(event) {
       const file = event.target.files?.[0];
       if (!file) return;
       this.dataFile = file;
       this.dataFileName = file.name;
       this.statusText = `Loaded ${file.name}`;
-      await this.analyzeDataFile(file);
+      await this.refreshDataInsights();
       event.target.value = '';
     },
 
@@ -229,7 +344,7 @@ document.addEventListener('alpine:init', () => {
       this.dataFile = file;
       this.dataFileName = file.name;
       this.statusText = `Loaded ${file.name}`;
-      await this.analyzeDataFile(file);
+      await this.refreshDataInsights();
     },
 
     dataStatsText() {
@@ -238,8 +353,8 @@ document.addEventListener('alpine:init', () => {
     },
 
     tabDotClass(state) {
-      if (state === 'passed') return 'bg-emerald-500';
-      if (state === 'failed') return 'bg-rose-500';
+      if (state === 'passed' || state === 'success') return 'bg-emerald-500';
+      if (state === 'failed' || state === 'error') return 'bg-rose-500';
       return 'bg-slate-400';
     },
 
@@ -258,6 +373,41 @@ document.addEventListener('alpine:init', () => {
       return this.qualityRows.some((row) => row.status === 'failed' || row.status === 'error')
         ? 'failed'
         : 'passed';
+    },
+
+    get previewTabState() {
+      if (this.previewError) return 'error';
+      if (!this.previewHandle) return 'idle';
+      return 'success';
+    },
+
+    get previewStartRow() {
+      if (!this.previewTotalRows || !this.previewRows.length) return 0;
+      return (this.previewPage - 1) * this.previewPageSize + 1;
+    },
+
+    get previewEndRow() {
+      if (!this.previewTotalRows || !this.previewRows.length) return 0;
+      return this.previewStartRow + this.previewRows.length - 1;
+    },
+
+    get previewPageItems() {
+      const total = this.previewTotalPages;
+      const current = this.previewPage;
+      if (!total || total <= 0) return [];
+      if (total <= 7) return Array.from({ length: total }, (_, idx) => idx + 1);
+
+      const pages = new Set([1, total, current - 1, current, current + 1]);
+      const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+      const items = [];
+      for (let i = 0; i < sorted.length; i += 1) {
+        const page = sorted[i];
+        if (i > 0 && page - sorted[i - 1] > 1) {
+          items.push('ellipsis');
+        }
+        items.push(page);
+      }
+      return items;
     },
 
     normalizeValidateRows(rows) {

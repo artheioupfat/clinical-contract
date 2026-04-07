@@ -112,6 +112,7 @@ body {
   display: flex;
   height: calc(100% - 67px);
   min-height: 0;
+  min-width: 0;
   flex-direction: column;
   gap: 0.9rem;
   padding: 1rem;
@@ -161,6 +162,7 @@ body {
 .results-shell {
   display: flex;
   min-height: 0;
+  min-width: 0;
   flex: 1;
   flex-direction: column;
   overflow: hidden;
@@ -192,6 +194,7 @@ body {
 
 .results-table-wrap {
   min-height: 0;
+  min-width: 0;
   flex: 1;
   overflow: auto;
 }

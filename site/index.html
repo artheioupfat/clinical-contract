@@ -61,25 +61,9 @@
           </div>
         </header>
 
-        <div
-          class="border-b border-slate-200 bg-slate-50/70 px-4 py-2"
-          :class="switchOn ? 'border-slate-700 bg-slate-900/50' : ''"
-          x-show="showRuntimeProgress"
-          x-transition.opacity.duration.250ms
-          x-cloak
-        >
-          <div class="mb-1 flex items-center justify-between text-[11px] font-medium">
-            <span x-text="runtimeProgressLabel"></span>
-            <span x-text="`${runtimeProgress}%`"></span>
-          </div>
-          <div class="runtime-progress-track">
-            <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>
-          </div>
-        </div>
-
         <main class="min-h-0 flex-1">
           <div class="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[1fr_0.95fr]">
-            <section class="min-h-0 border-b border-slate-200 lg:border-b-0 lg:border-r">
+            <section class="min-h-0 min-w-0 border-b border-slate-200 lg:border-b-0 lg:border-r">
               <div class="panel-head">
                 <div>
                   <div class="panel-eyebrow">Editor</div>
@@ -124,7 +108,7 @@
               </div>
             </section>
 
-            <section class="min-h-0">
+            <section class="min-h-0 min-w-0">
               <div class="panel-head">
                 <div>
                   <div class="panel-eyebrow">Checker</div>
@@ -183,6 +167,16 @@
                         <span class="h-2.5 w-2.5 rounded-full" :class="tabDotClass(qualityTabState)"></span>
                         <span>Quality</span>
                       </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="result-tab ml-auto"
+                      :class="activeTab === 'preview' ? 'result-tab--active' : ''"
+                      @click="activeTab = 'preview'"
+                      x-show="dataFile"
+                      x-cloak
+                    >
+                      <span>Preview</span>
                     </button>
                   </div>
 
@@ -282,11 +276,134 @@
                       </tbody>
                     </table>
                   </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'preview'" x-cloak>
+                    <div class="flex h-full flex-col">
+                      <div class="overflow-x-auto">
+                        <div class="inline-block min-w-full">
+                          <div class="overflow-hidden">
+                            <table class="min-w-full divide-y divide-neutral-200">
+                              <thead>
+                                <tr class="text-neutral-500">
+                                  <template x-if="previewColumns.length === 0">
+                                    <th class="px-5 py-3 text-xs font-medium text-left uppercase">Data preview</th>
+                                  </template>
+                                  <template x-for="(columnName, idx) in previewColumns" :key="`preview-col-${idx}`">
+                                    <th class="px-5 py-3 text-xs font-medium text-left uppercase" x-text="columnName"></th>
+                                  </template>
+                                </tr>
+                              </thead>
+                              <tbody class="divide-y divide-neutral-200">
+                                <template x-if="previewLoading">
+                                  <tr class="text-neutral-800">
+                                    <td class="px-5 py-4 text-sm whitespace-nowrap" :colspan="Math.max(1, previewColumns.length)">Loading preview page...</td>
+                                  </tr>
+                                </template>
+                                <template x-if="!previewLoading && previewError">
+                                  <tr class="text-rose-700">
+                                    <td class="px-5 py-4 text-sm" :colspan="Math.max(1, previewColumns.length)" x-text="previewError"></td>
+                                  </tr>
+                                </template>
+                                <template x-if="!previewLoading && !previewError && previewRows.length === 0">
+                                  <tr class="text-neutral-800">
+                                    <td class="px-5 py-4 text-sm whitespace-nowrap" :colspan="Math.max(1, previewColumns.length)">No preview rows yet. Load a data file to inspect rows.</td>
+                                  </tr>
+                                </template>
+                                <template x-for="(row, rowIdx) in previewRows" :key="`preview-row-${rowIdx}`">
+                                  <tr class="text-neutral-800">
+                                    <template x-for="(cell, cellIdx) in row" :key="`preview-cell-${rowIdx}-${cellIdx}`">
+                                      <td class="px-5 py-4 text-sm whitespace-nowrap" x-text="cell === null ? 'null' : String(cell)"></td>
+                                    </template>
+                                  </tr>
+                                </template>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="mt-auto flex items-center justify-between w-full h-16 px-3 border-t border-neutral-200" x-show="!previewError" x-cloak>
+                        <p class="pl-2 text-sm text-gray-700">
+                          Showing
+                          <span class="font-medium" x-text="previewStartRow"></span>
+                          to
+                          <span class="font-medium" x-text="previewEndRow"></span>
+                          of
+                          <span class="font-medium" x-text="previewTotalRows"></span>
+                          results
+                        </p>
+                        <nav>
+                          <ul class="flex items-center text-sm leading-tight bg-white border divide-x rounded h-9 text-neutral-500 divide-neutral-200 border-neutral-200">
+                            <li class="h-full">
+                              <button
+                                type="button"
+                                class="relative inline-flex items-center h-full px-3 ml-0 rounded-l group hover:text-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                                @click="goPreviewPrev()"
+                                :disabled="previewLoading || previewPage <= 1 || previewTotalPages === 0"
+                              >
+                                <span>Previous</span>
+                              </button>
+                            </li>
+                            <template x-for="(item, idx) in previewPageItems" :key="`preview-page-${idx}-${item}`">
+                              <li class="hidden h-full md:block">
+                                <template x-if="item === 'ellipsis'">
+                                  <div class="relative inline-flex items-center h-full px-2.5 group">
+                                    <span>...</span>
+                                  </div>
+                                </template>
+                                <template x-if="item !== 'ellipsis'">
+                                  <button
+                                    type="button"
+                                    class="relative inline-flex items-center h-full px-3 group hover:text-neutral-900"
+                                    :class="Number(item) === previewPage ? 'text-neutral-900 bg-gray-50' : ''"
+                                    @click="loadPreviewPage(Number(item))"
+                                    :disabled="previewLoading"
+                                  >
+                                    <span x-text="item"></span>
+                                    <span
+                                      class="box-content absolute bottom-0 w-0 h-px -mx-px duration-200 ease-out translate-y-px border-transparent bg-neutral-900 group-hover:border-l group-hover:border-r group-hover:border-neutral-900 left-1/2 group-hover:left-0 group-hover:w-full"
+                                      :class="Number(item) === previewPage ? 'left-0 w-full border-l border-r border-neutral-900' : ''"
+                                    ></span>
+                                  </button>
+                                </template>
+                              </li>
+                            </template>
+                            <li class="h-full">
+                              <button
+                                type="button"
+                                class="relative inline-flex items-center h-full px-3 rounded-r group hover:text-neutral-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                                @click="goPreviewNext()"
+                                :disabled="previewLoading || previewPage >= previewTotalPages || previewTotalPages === 0"
+                              >
+                                <span>Next</span>
+                              </button>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>
           </div>
         </main>
+
+        <div
+          class="border-t border-slate-200 bg-slate-50/70 px-4 py-2"
+          :class="switchOn ? 'border-slate-700 bg-slate-900/50' : ''"
+          x-show="showRuntimeProgress"
+          x-transition.opacity.duration.250ms
+          x-cloak
+        >
+          <div class="mb-1 flex items-center justify-between text-[11px] font-medium">
+            <span x-text="runtimeProgressLabel"></span>
+            <span x-text="`${runtimeProgress}%`"></span>
+          </div>
+          <div class="runtime-progress-track">
+            <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>
+          </div>
+        </div>
 
         <footer class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
           <div class="flex items-center gap-3">
