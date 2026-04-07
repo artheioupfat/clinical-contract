@@ -1,0 +1,147 @@
+.theme-dark {
+  border-color: rgb(37 61 104) !important;
+  background: rgb(9 18 38) !important;
+  color: rgb(226 232 240);
+}
+
+.page-night {
+  box-shadow: 0 24px 64px rgba(3, 10, 25, 0.72);
+}
+
+.theme-dark header {
+  border-bottom-color: rgb(37 61 104) !important;
+  background: rgb(11 25 52) !important;
+}
+
+.theme-dark main > .grid > section:first-child {
+  border-color: rgb(37 61 104) !important;
+}
+
+.theme-dark footer {
+  border-top-color: rgb(37 61 104) !important;
+  background: rgb(11 25 52) !important;
+  color: rgb(191 219 254) !important;
+}
+
+.theme-dark .panel-head {
+  border-bottom-color: rgb(37 61 104);
+}
+
+.theme-dark .panel-eyebrow {
+  color: rgb(125 211 252);
+}
+
+.theme-dark .panel-title {
+  color: rgb(239 246 255);
+}
+
+.theme-dark .toolbar-btn {
+  border-color: rgb(59 94 154);
+  background: rgb(15 33 70);
+  color: rgb(219 234 254);
+}
+
+.theme-dark .toolbar-btn:hover:not(:disabled) {
+  border-color: rgb(125 211 252);
+  background: rgb(21 46 97);
+}
+
+.theme-dark .editor-wrap {
+  background: linear-gradient(180deg, rgb(11 25 52) 0%, rgb(8 17 37) 100%);
+}
+
+.theme-dark .editor-gutter {
+  border-right-color: rgb(37 61 104);
+  background: rgb(11 25 52);
+  color: rgb(125 211 252);
+}
+
+.theme-dark .editor-textarea {
+  color: rgb(226 232 240);
+}
+
+.theme-dark .editor-textarea::placeholder {
+  color: rgb(96 165 250);
+}
+
+.theme-dark .dropzone {
+  border-color: rgb(59 94 154);
+  background: rgb(14 30 63);
+}
+
+.theme-dark .dropzone--active {
+  border-color: rgb(16 185 129);
+  background: rgb(6 78 59);
+}
+
+.theme-dark .results-shell {
+  border-color: rgb(37 61 104);
+}
+
+.theme-dark .results-tabs {
+  border-bottom-color: rgb(37 61 104);
+  background: rgb(11 25 52);
+}
+
+.theme-dark .result-tab {
+  color: rgb(191 219 254);
+}
+
+.theme-dark .result-tab--active {
+  background: rgb(21 46 97);
+  color: rgb(239 246 255);
+  box-shadow: inset 0 0 0 1px rgb(96 165 250);
+}
+
+.theme-dark .results-table thead th {
+  background: rgb(11 25 52);
+  border-bottom-color: rgb(37 61 104);
+  color: rgb(191 219 254);
+}
+
+.theme-dark .results-table tbody td {
+  border-bottom-color: rgb(37 61 104);
+  color: rgb(226 232 240);
+}
+
+.theme-dark .results-table tbody tr:hover {
+  background: rgb(21 46 97);
+}
+
+.theme-dark .empty-row {
+  color: rgb(125 211 252) !important;
+}
+
+.theme-dark .data-stats {
+  border-color: rgb(59 94 154);
+  background: rgb(14 30 63);
+  color: rgb(191 219 254);
+}
+
+.theme-dark .text-slate-700 {
+  color: rgb(241 245 249) !important;
+}
+
+.theme-dark .text-slate-500 {
+  color: rgb(191 219 254) !important;
+}
+
+.theme-dark .text-slate-400 {
+  color: rgb(125 211 252) !important;
+}
+
+.theme-dark .bg-slate-100 {
+  background: rgb(21 46 97) !important;
+}
+
+.theme-dark .text-slate-800 {
+  color: rgb(226 232 240) !important;
+}
+
+.theme-dark .runtime-progress-track {
+  background: rgb(30 41 59);
+}
+
+.theme-dark .runtime-progress-fill {
+  background: rgb(56 189 248);
+}

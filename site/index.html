@@ -9,7 +9,8 @@
     <script src="https://unpkg.com/alpinejs" defer></script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
-    <link rel="stylesheet" href="./app.css" />
+    <link rel="stylesheet" href="./css/base.css" />
+    <link rel="stylesheet" href="./css/theme-dark.css" />
   </head>
   <body class="bg-slate-100 text-slate-800 antialiased">
     <div x-data="clinicalApp()" x-init="init()" class="h-screen overflow-hidden" :class="switchOn ? 'bg-black' : ''">
@@ -421,6 +422,11 @@
     </div>
 
     <script type="py" src="./python/bridge.py" config="./pyscript.toml"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/runtime.js"></script>
+    <script src="./js/editor.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/results.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
