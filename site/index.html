@@ -100,9 +100,14 @@
                 </div>
                 <textarea
                   id="yaml-editor"
+                  x-ref="yamlEditor"
                   x-model="yamlText"
                   @scroll="syncEditorScroll($event)"
+                  @keydown="handleEditorKeydown($event)"
                   spellcheck="false"
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
                   class="editor-textarea"
                   placeholder="Drop a YAML data contract here."
                 ></textarea>
