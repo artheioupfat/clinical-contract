@@ -35,3 +35,7 @@ htmlcov/
 
 #test_file
 test_file/
+
+
+#fichier test
+test.py
