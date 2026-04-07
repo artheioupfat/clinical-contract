@@ -47,8 +47,8 @@ TYPE_MAP: dict[str, set[str]] = {
     "uint32": {"uinteger"},
     "uint64": {"ubigint"},
     "float32":{"float32"},
-    "float64":{"float64"},
-    "double": {"double"},
+    "float64":{"float64","double"},
+    "double": {"double","float64"},
     "date32": {"date32"},
     "date64": {"date64"},
     "date":   {"date"},
@@ -113,7 +113,7 @@ def _is_supported_logical_type(logical_type: str) -> bool:
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
     """Return True if YAML type matches Parquet type based on TYPE_MAP."""
     yaml_lower = yaml_type.lower().strip()
-    parquet_lower = parquet_type.lower().strip()
+    parquet_lower = _normalize_type_name(parquet_type)
 
     # Normalisation
     if yaml_lower.startswith("timestamp["):
