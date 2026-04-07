@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import json
-from collections import defaultdict
 
 from pyscript import ffi, window
 
 from clinical_contract.loader import load_contract, load_raw
 from clinical_contract.contract import DataContract, _materialize_data_source, _cleanup_temp_path
-from clinical_contract.models import CheckStatus, ColumnCheckStatus
 
 
 def _buffer_to_bytes(buffer_proxy):
@@ -29,7 +27,6 @@ def _validate_payload(raw_text: str):
                 "field": field.field,
                 "present": field.present,
                 "value": field.display_value,
-                "status_icon": field.status_icon,
             }
             for field in report.fields
         ],
@@ -87,11 +84,6 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
 
     schema_rows = []
     schema_success = True
-    logical_type_by_property = {}
-    for schema_item in contract.schema_:
-        for prop in schema_item.properties:
-            logical_type_by_property[prop.name] = prop.logicalType
-
     for schema_report in schema_reports:
         if not schema_report.success:
             schema_success = False
@@ -103,7 +95,6 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
                     "yaml_type": column.yaml_type,
                     "parquet_type": column.parquet_type,
                     "status": column.status.value,
-                    "status_icon": column.status_icon,
                 }
             )
 
@@ -126,12 +117,10 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
             {
                 "schema_name": result.schema_name,
                 "property_name": result.property_name,
-                "logical_type": logical_type_by_property.get(result.property_name, ""),
                 "description": result.description,
                 "status": result.status.value,
                 "obtained": result.obtained if result.obtained is not None else "error",
                 "expected": result.expected,
-                "error_message": result.error_message or "",
             }
         )
 

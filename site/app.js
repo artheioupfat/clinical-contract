@@ -13,9 +13,6 @@ document.addEventListener('alpine:init', () => {
     validateRows: [],
     schemaRows: [],
     qualityRows: [],
-    structureSummary: 'Not run',
-    schemaSummary: 'Not run',
-    qualitySummary: 'Not run',
     statusText: 'Ready',
     switchOn: false,
     runtimeProgress: 0,
@@ -237,7 +234,7 @@ document.addEventListener('alpine:init', () => {
 
     dataStatsText() {
       if (this.dataColumns === null || this.dataRows === null) return '';
-      return `Col : ${this.dataColumns}    Rows : ${this.dataRows}`;
+      return `Cols: ${this.dataColumns}    Rows: ${this.dataRows}`;
     },
 
     tabDotClass(state) {
@@ -285,9 +282,6 @@ document.addEventListener('alpine:init', () => {
       this.validateRows = [];
       this.schemaRows = [];
       this.qualityRows = [];
-      this.structureSummary = 'Not run';
-      this.schemaSummary = 'Not run';
-      this.qualitySummary = 'Not run';
       this.logoVariant = 'neutral';
     },
 
@@ -302,9 +296,6 @@ document.addEventListener('alpine:init', () => {
       try {
         const payload = JSON.parse(window.pyValidateContract(this.yamlText));
         this.validateRows = this.normalizeValidateRows(payload.fields || []);
-        this.structureSummary = payload.success ? 'Valid structure' : 'Structure issues';
-        this.schemaSummary = 'Not run';
-        this.qualitySummary = 'Not run';
         this.statusText = payload.success ? 'Validation passed' : 'Validation failed';
         if (payload.success) this.setLogoSuccess();
         else this.setLogoFailure();
@@ -337,10 +328,6 @@ document.addEventListener('alpine:init', () => {
         this.validateRows = this.normalizeValidateRows(payload.validate?.fields || []);
         this.schemaRows = this.normalizeSchemaRows(payload.schema_rows || []);
         this.qualityRows = payload.quality_rows || [];
-
-        this.structureSummary = payload.validate?.success ? 'Valid structure' : 'Structure issues';
-        this.schemaSummary = payload.schema_success ? 'Schema valid' : 'Schema issues';
-        this.qualitySummary = payload.report_summary || (payload.quality_rows?.length ? 'Checks finished' : 'No quality checks');
 
         if (!payload.validate?.success) {
           this.activeTab = 'validate';

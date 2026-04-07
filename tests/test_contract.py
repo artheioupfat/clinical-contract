@@ -195,7 +195,7 @@ def test_load_contract_depuis_bytes():
 
 
 def test_load_contract_yaml_vide():
-    with pytest.raises(ValueError, match="YAML est vide"):
+    with pytest.raises(ValueError, match="YAML content is empty"):
         load_contract(b"")
 
 

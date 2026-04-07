@@ -1,4 +1,4 @@
-name: Deploy Pages (Symlink Attempt)
+name: Deploy Pages
 
 on:
   push:
@@ -27,35 +27,32 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Preflight symlink check
+      - name: Build Pages artifact
         run: |
           set -euo pipefail
-          echo "Inspecting site/python directory..."
-          ls -la site/python
-          if [ -L site/python/clinical_contract ]; then
-            echo "Detected symlink: site/python/clinical_contract"
-            echo "Target: $(readlink site/python/clinical_contract)"
-          else
-            echo "::warning::site/python/clinical_contract is not a symlink."
+          rm -rf site_dist
+          cp -R site site_dist
+
+          rm -rf site_dist/python/clinical_contract
+          mkdir -p site_dist/python/clinical_contract
+          cp src/clinical_contract/__init__.py site_dist/python/clinical_contract/
+          cp src/clinical_contract/contract.py site_dist/python/clinical_contract/
+          cp src/clinical_contract/loader.py site_dist/python/clinical_contract/
+          cp src/clinical_contract/models.py site_dist/python/clinical_contract/
+          cp src/clinical_contract/py.typed site_dist/python/clinical_contract/
+
+          if find site_dist -type l | grep -q .; then
+            echo "::error::Symlinks detected in site_dist. Refusing deploy."
+            find site_dist -type l -print
+            exit 1
           fi
 
-      - name: Upload Pages artifact (site/)
+      - name: Upload Pages artifact
         id: upload
-        continue-on-error: true
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site_dist
 
       - name: Deploy to GitHub Pages
         id: deployment
-        if: steps.upload.outcome == 'success'
-        continue-on-error: true
         uses: actions/deploy-pages@v4
-
-      - name: Fail fast if symlink deployment is rejected
-        if: steps.upload.outcome != 'success' || steps.deployment.outcome == 'failure'
-        run: |
-          echo "::error::GitHub Pages artifacts do not support symlinks; switch to copied package strategy."
-          echo "Upload outcome: ${{ steps.upload.outcome }}"
-          echo "Deploy outcome: ${{ steps.deployment.outcome }}"
-          exit 1
