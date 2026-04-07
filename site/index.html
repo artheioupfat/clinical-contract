@@ -291,20 +291,14 @@
         <footer class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500">
           <div class="flex items-center gap-3">
             <span
-              class="rounded-full px-2 py-0.5 font-semibold uppercase tracking-[0.18em]"
+              class="rounded-full px-2 py-0.5 font-semibold tracking-[0.18em]"
               :class="pythonReady ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'"
-              x-text="pythonReady ? 'python ready' : 'python loading'"
+              x-text="pythonReady ? 'Python ready' : 'Python loading'"
             ></span>
-            <span>•</span>
+            
             <span x-text="yamlText.split('\n').length + ' lines'"></span>
           </div>
-          <div class="flex items-center gap-3">
-            <span x-text="statusText"></span>
-            <span class="inline-flex items-center gap-2" :class="busy ? 'text-emerald-600' : 'text-slate-500'">
-              <span class="h-2 w-2 rounded-full" :class="busy ? 'bg-emerald-500' : 'bg-slate-300'"></span>
-              <span x-text="busy ? 'Running' : 'Idle'"></span>
-            </span>
-          </div>
+
         </footer>
       </div>
     </div>
