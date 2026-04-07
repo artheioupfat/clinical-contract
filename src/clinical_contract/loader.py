@@ -46,10 +46,10 @@ def load_contract(source: str | Path | bytes) -> tuple[DataContract, dict]:
     """
     raw = _read_yaml_source(source)
     if raw is None:
-        raise ValueError("Le YAML est vide.")
+        raise ValueError("YAML content is empty.")
     if not isinstance(raw, dict):
         raise ValueError(
-            "Le contenu YAML racine doit être un objet (mapping clé/valeur)."
+            "YAML root content must be an object (key/value mapping)."
         )
 
     return DataContract(**raw), raw
