@@ -288,19 +288,14 @@
                       <div class="overflow-x-auto">
                         <div class="inline-block min-w-full">
                           <div class="overflow-hidden">
-                            <table class="min-w-full table-fixed divide-y divide-neutral-200 preview-table preview-data-table">
+                            <table class="min-w-full divide-y divide-neutral-200">
                               <thead>
                                 <tr class="text-neutral-500">
                                   <template x-if="previewColumns.length === 0">
                                     <th class="px-5 py-3 text-xs font-medium text-left uppercase">Data preview</th>
                                   </template>
                                   <template x-for="(columnName, idx) in previewColumns" :key="`preview-col-${idx}`">
-                                    <th
-                                      class="px-4 py-3 text-xs font-medium text-left uppercase preview-th"
-                                      :class="idx === 0 ? 'preview-th--first' : ''"
-                                      :title="columnName"
-                                      x-text="columnName"
-                                    ></th>
+                                    <th class="px-5 py-3 text-xs font-medium text-left uppercase" x-text="columnName"></th>
                                   </template>
                                 </tr>
                               </thead>
@@ -323,13 +318,7 @@
                                 <template x-for="(row, rowIdx) in previewRows" :key="`preview-row-${rowIdx}`">
                                   <tr class="text-neutral-800">
                                     <template x-for="(cell, cellIdx) in row" :key="`preview-cell-${rowIdx}-${cellIdx}`">
-                                      <td class="px-4 py-3 text-sm preview-td" :class="cellIdx === 0 ? 'preview-td--first' : ''">
-                                        <div
-                                          class="preview-cell"
-                                          :title="cell === null ? 'null' : String(cell)"
-                                          x-text="cell === null ? 'null' : String(cell)"
-                                        ></div>
-                                      </td>
+                                      <td class="px-5 py-4 text-sm whitespace-nowrap" x-text="cell === null ? 'null' : String(cell)"></td>
                                     </template>
                                   </tr>
                                 </template>
