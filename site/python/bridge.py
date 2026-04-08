@@ -3,9 +3,6 @@ from __future__ import annotations
 import json
 import uuid
 
-
-import micropip
-await micropip.install("pytz")
 from pyscript import ffi, window
 
 from clinical_contract.loader import load_contract, load_raw

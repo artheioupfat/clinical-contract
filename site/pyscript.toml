@@ -1,5 +1,5 @@
 interpreter = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs"
-packages = ["pyyaml", "duckdb", "pydantic", "micropip"]
+packages = ["pyyaml", "duckdb", "pydantic"]
 
 
 [files]
