@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 import uuid
 
+
+import micropip
+await micropip.install("pytz")
 from pyscript import ffi, window
 
 from clinical_contract.loader import load_contract, load_raw
@@ -24,37 +27,34 @@ def _buffer_to_bytes(buffer_proxy):
 def _safe_path_literal(source_path: str) -> str:
     return source_path.replace("'", "''")
 
+def _quote_identifier(identifier: str) -> str:
+    escaped = str(identifier).replace('"', '""')
+    return f'"{escaped}"'
+
 
 def _resolve_source_relation(conn, source_path_literal: str, ext: str, file_name: str = "") -> tuple[str, list[tuple]]:
     preferred_ext = file_name.lower().rsplit(".", 1)[-1] if "." in file_name else ""
 
-    read_specs = []
     if preferred_ext == "parquet" or ext == ".parquet":
-        read_specs.extend(
-            [
-                ("parquet", f"read_parquet('{source_path_literal}')"),
-                ("csv", f"read_csv_auto('{source_path_literal}')"),
-            ]
-        )
+        read_specs = [
+            ("parquet", f"read_parquet('{source_path_literal}')"),
+        ]
     elif preferred_ext == "csv" or ext == ".csv":
-        read_specs.extend(
-            [
-                ("csv", f"read_csv_auto('{source_path_literal}')"),
-                ("parquet", f"read_parquet('{source_path_literal}')"),
-            ]
-        )
+        read_specs = [
+            ("csv", f"read_csv_auto('{source_path_literal}')"),
+        ]
     else:
-        read_specs.extend(
-            [
-                ("parquet", f"read_parquet('{source_path_literal}')"),
-                ("csv", f"read_csv_auto('{source_path_literal}')"),
-            ]
-        )
+        read_specs = [
+            ("parquet", f"read_parquet('{source_path_literal}')"),
+            ("csv", f"read_csv_auto('{source_path_literal}')"),
+        ]
 
     errors: list[str] = []
     for reader_name, relation_sql in read_specs:
         try:
-            describe_rows = conn.execute(f"DESCRIBE SELECT * FROM {relation_sql}").fetchall()
+            describe_rows = conn.execute(
+                f"DESCRIBE SELECT * FROM {relation_sql}"
+            ).fetchall()
             return relation_sql, describe_rows
         except Exception as exc:
             errors.append(f"{reader_name}: {exc}")
@@ -188,10 +188,14 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
         }
     )
 
+def _get_query_columns(conn, relation_sql: str) -> list[str]:
+    cursor = conn.execute(f"SELECT * FROM {relation_sql} LIMIT 0")
+    if not cursor.description:
+        return []
+    return [str(desc[0]) for desc in cursor.description]
 
 
-
-def py_analyze_data_file(data_buffer) -> str:
+def py_analyze_data_file(data_buffer, file_name: str = "") -> str:
     data_bytes = _buffer_to_bytes(data_buffer)
     source_path, temp_path, ext = _materialize_data_source(data_bytes)
     source_path_literal = _safe_path_literal(source_path)
@@ -199,20 +203,20 @@ def py_analyze_data_file(data_buffer) -> str:
     try:
         import duckdb
         with duckdb.connect() as conn:
-            relation_sql, describe_rows = _resolve_source_relation(conn, source_path_literal, ext)
+            relation_sql, _ = _resolve_source_relation(conn, source_path_literal, ext, file_name=file_name)
+            query_columns = _get_query_columns(conn, relation_sql)
             count_row = conn.execute(
                 f"SELECT COUNT(*) FROM {relation_sql}"
             ).fetchone()
 
-        payload = {
-            "columns": len(describe_rows),
-            "rows": int(count_row[0] or 0),
-            "summary": f"Detected {len(describe_rows)} column(s) and {int(count_row[0] or 0)} row(s)",
-        }
+            payload = {
+                "columns": len(query_columns),
+                "rows": int(count_row[0] or 0),
+                "summary": f"Detected {len(query_columns)} column(s) and {int(count_row[0] or 0)} row(s)",
+            }
         return json.dumps(payload)
     finally:
         _cleanup_temp_path(temp_path)
-
 
 def py_prepare_data_preview(data_buffer, file_name: str = "") -> str:
     data_bytes = _buffer_to_bytes(data_buffer)
@@ -222,13 +226,14 @@ def py_prepare_data_preview(data_buffer, file_name: str = "") -> str:
     try:
         import duckdb
         with duckdb.connect() as conn:
-            relation_sql, describe_rows = _resolve_source_relation(
+            relation_sql, _ = _resolve_source_relation(
                 conn, source_path_literal, ext, file_name=file_name
             )
+            query_columns = _get_query_columns(conn, relation_sql)
             count_row = conn.execute(f"SELECT COUNT(*) FROM {relation_sql}").fetchone()
 
-        total_rows = int(count_row[0] or 0)
-        columns = [str(row[0]) for row in describe_rows]
+            total_rows = int(count_row[0] or 0)
+            columns = query_columns
         handle = uuid.uuid4().hex
         _PREVIEW_SESSIONS[handle] = {
             "source_relation": relation_sql,
@@ -297,8 +302,17 @@ def py_fetch_data_preview_page(handle: str, page: int = 1, page_size: int = 50) 
 
         import duckdb
         with duckdb.connect() as conn:
+            if columns:
+                select_list = ", ".join(
+                    f"CAST({_quote_identifier(col)} AS VARCHAR) AS {_quote_identifier(col)}"
+                    for col in columns
+                )
+            else:
+                select_list = "*"
+
             rows = conn.execute(
-                f"SELECT * FROM {source_relation} LIMIT {safe_page_size} OFFSET {offset}"
+                f"SELECT {select_list} FROM {source_relation} "
+                f"LIMIT {safe_page_size} OFFSET {offset}"
             ).fetchall()
 
         serializable_rows = [[_to_jsonable(value) for value in row] for row in rows]
