@@ -7,7 +7,7 @@ window.ClinicalModules.data = {
     if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) return;
     try {
       const buffer = dataBuffer || (await file.arrayBuffer());
-      const payload = JSON.parse(window.pyAnalyzeDataFile(buffer));
+      const payload = JSON.parse(window.pyAnalyzeDataFile(buffer, file.name || ''));
       this.dataColumns = payload.columns;
       this.dataRows = payload.rows;
       if (payload.summary) this.statusText = payload.summary;
@@ -90,6 +90,9 @@ window.ClinicalModules.data = {
       const payload = JSON.parse(
         window.pyFetchDataPreviewPage(this.previewHandle, page, this.previewPageSize)
       );
+      console.log("preview payload", payload);
+      console.log("preview rows", payload.rows);
+      console.log("preview first row", payload.rows?.[0]);
       if (payload.error) {
         this.previewRows = [];
         this.previewError = payload.error;
