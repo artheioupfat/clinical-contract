@@ -1,6 +1,7 @@
 interpreter = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs"
 packages = ["pyyaml", "duckdb", "pydantic"]
 
+
 [files]
 "./python/clinical_contract/__init__.py" = "./clinical_contract/__init__.py"
 "./python/clinical_contract/contract.py" = "./clinical_contract/contract.py"
