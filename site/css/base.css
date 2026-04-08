@@ -270,27 +270,3 @@ body {
   transition: width 220ms linear;
 }
 
-
-.preview-table {
-  table-layout: fixed;
-  width: 100%;
-}
-
-.preview-th,
-.preview-td {
-  width: 10rem;
-  max-width: 10rem;
-}
-
-.preview-th--first,
-.preview-td--first {
-  width: 16rem;
-  max-width: 16rem;
-}
-
-.preview-cell {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
