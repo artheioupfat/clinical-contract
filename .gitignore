@@ -1,29 +1,43 @@
-# Python artifacts
+# Python bytecode
 __pycache__/
 *.py[cod]
 *.so
 
-# Packaging
-*.egg-info/
-dist/
+# Packaging / build artifacts
 build/
+dist/
 .eggs/
+*.egg-info/
+*.egg
 *.whl
+pip-wheel-metadata/
 
 # Virtual environments
 .venv/
 venv/
 env/
 
-# Tooling caches
+# Test / coverage
 .pytest_cache/
-.ruff_cache/
-.mypy_cache/
 .coverage
+.coverage.*
+coverage.xml
 htmlcov/
 
-# Lock and local tool cache
+# Tooling caches
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.nox/
+.tox/
+.pyre/
+
+# Local caches
 .uv-cache/
+
+# Frontend artifacts
+node_modules/
+site_dist/
 
 # IDE
 .vscode/
@@ -32,10 +46,6 @@ htmlcov/
 # OS
 .DS_Store
 
-
-#test_file
+# Local scratch files
 test_file/
-
-
-#fichier test
 test.py

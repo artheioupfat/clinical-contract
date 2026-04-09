@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>clinical-contract | Documentation</title>
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+    <script src="https://unpkg.com/alpinejs" defer></script>
+    <link rel="icon" type="image/png" href="./logo/phare.png" />
+    <link rel="stylesheet" href="./css/tailwind.css" />
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <div x-data="siteShell('docs')" x-init="initThemeSwitch()" class="app-root app-root--page" :class="switchOn ? 'app-root--dark' : ''">
+      <div class="app-frame page-frame" :class="switchOn ? 'theme-dark page-night' : ''">
+        <header class="app-header">
+          <div class="brand">
+            <div class="logo-box">
+              <img src="./logo/phare.png" alt="Lighthouse" class="logo-image" />
+            </div>
+            <div class="brand-row">
+              <h1 class="brand-title">clinical-contract</h1>
+              <span class="beta-pill">beta</span>
+            </div>
+          </div>
+
+          <nav class="site-nav" aria-label="Primary">
+            <a href="./index.html" :class="navLinkClass('home')">Home</a>
+            <a href="./editor.html" :class="navLinkClass('editor')">Editor</a>
+            <a href="./docs.html" :class="navLinkClass('docs')">Docs</a>
+          </nav>
+
+          <div class="theme-toggle">
+            <input id="theme-switch" type="checkbox" name="theme-switch" class="sr-only" :checked="switchOn" />
+            <button
+              x-ref="switchButton"
+              type="button"
+              @click="toggleThemeSwitch()"
+              :class="switchOn ? 'theme-switch theme-switch--on' : 'theme-switch theme-switch--off'"
+              x-cloak
+            >
+              <span :class="switchOn ? 'theme-switch__thumb theme-switch__thumb--on' : 'theme-switch__thumb theme-switch__thumb--off'"></span>
+            </button>
+            <label
+              @click="$refs.switchButton.click(); $refs.switchButton.focus()"
+              for="theme-switch"
+              :class="switchOn ? 'theme-switch-label theme-switch-label--on' : 'theme-switch-label theme-switch-label--off'"
+              x-cloak
+            >
+              <span x-text="switchOn ? 'Light' : 'Dark'"></span>
+            </label>
+          </div>
+        </header>
+
+        <main class="flex-1">
+          <section class="mx-auto max-w-5xl px-6 py-12">
+            <h2 class="text-3xl font-semibold tracking-tight text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Documentation</h2>
+            <p class="mt-3 text-base text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+              clinical-contract validates YAML contracts and checks data files with a DuckDB-only engine.
+              This page covers the practical model and execution flow.
+            </p>
+          </section>
+
+          <section class="mx-auto grid max-w-5xl gap-6 px-6 pb-8">
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">What clinical-contract does</h3>
+              <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+                <li>Validates required YAML structure before any file scan.</li>
+                <li>Checks schema compatibility between YAML logical types and dataset columns.</li>
+                <li>Executes quality SQL rules and reports pass/fail/error statuses.</li>
+              </ul>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Contract YAML structure</h3>
+              <pre class="mt-4 overflow-auto rounded-xl bg-slate-950 p-4 text-xs leading-6 text-slate-100"><code>dataset: export
+description: Export contract
+qualityRules:
+  - schema: export
+    properties:
+      - name: IPP
+        logicalType: string
+        quality:
+          - id: ipp_not_null
+            query: SELECT COUNT(*) FROM export WHERE IPP IS NULL
+            expected: 0
+      - name: DATE_EVENEMENT
+        logicalType: timestamp</code></pre>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Type mapping policy</h3>
+              <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+                <li>Strict matching for explicit integer widths (`int8..int64`, `uint8..uint64`).</li>
+                <li>Broad family matching for generic types (`integer`, `string`, `datetime`, `boolean`, `float`, `binary`).</li>
+                <li>Unsupported `logicalType` fails early during contract validation.</li>
+              </ul>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Validate then Check flow</h3>
+              <ol class="mt-3 list-decimal space-y-2 pl-5 text-sm text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+                <li><strong>Validate:</strong> verifies mandatory YAML fields and shapes.</li>
+                <li><strong>Schema:</strong> compares expected logical types and detected dataset types.</li>
+                <li><strong>Quality:</strong> runs SQL checks and aggregates result statuses.</li>
+              </ol>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Data format support</h3>
+              <p class="mt-3 text-sm text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+                The browser playground supports <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs" :class="switchOn ? 'bg-slate-800 text-slate-100' : ''">.parquet</code>
+                and <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs" :class="switchOn ? 'bg-slate-800 text-slate-100' : ''">.csv</code> uploads.
+                Preview uses page-by-page DuckDB queries (50 rows/page).
+              </p>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" :class="switchOn ? 'border-slate-700 bg-slate-900' : ''">
+              <h3 class="text-lg font-semibold text-slate-900" :class="switchOn ? 'text-slate-50' : ''">Browser limitations</h3>
+              <ul class="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-600" :class="switchOn ? 'text-slate-300' : ''">
+                <li>PyScript/Pyodide has a cold start delay before runtime is ready.</li>
+                <li>Very large files increase in-browser memory and query latency.</li>
+                <li>Use CLI for heavy production-scale workloads and CI automation.</li>
+              </ul>
+            </article>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="./js/constants.js"></script>
+    <script src="./js/site-shell.js"></script>
+  </body>
+</html>

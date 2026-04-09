@@ -1,0 +1,11 @@
+{
+  "name": "clinical-contract-site",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "build:site:css": "tailwindcss -c tailwind.config.js -i ./site/css/tailwind.input.css -o ./site/css/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.16"
+  }
+}

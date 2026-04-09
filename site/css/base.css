@@ -52,6 +52,12 @@ body {
   overflow: hidden;
 }
 
+.app-root--page {
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
+}
+
 .app-root--dark {
   background: #000;
 }
@@ -68,6 +74,11 @@ body {
   box-shadow: 0 10px 30px rgba(2, 6, 23, 0.05);
 }
 
+.page-frame {
+  height: auto;
+  min-height: calc(100vh - 2rem);
+}
+
 .app-header {
   display: flex;
   align-items: center;
@@ -76,6 +87,37 @@ body {
   border-bottom: 1px solid var(--line);
   background: rgba(248, 250, 252, 0.9);
   padding: 0.75rem 1rem;
+}
+
+.site-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-muted);
+  padding: 0.2rem;
+}
+
+.site-nav-link {
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+.site-nav-link:hover {
+  color: #0f172a;
+  background: #eef2ff;
+}
+
+.site-nav-link--active {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .brand {
@@ -724,6 +766,42 @@ body {
   color: #94a3b8;
 }
 
+.editor-preview-live {
+  margin-top: 1.25rem;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.9rem;
+  background: #0f172a;
+}
+
+.editor-preview-live__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #334155;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #cbd5e1;
+}
+
+.editor-preview-live__viewport {
+  height: 28rem;
+  overflow: hidden;
+  background: #0b1220;
+}
+
+.editor-preview-live__frame {
+  width: 160%;
+  height: 160%;
+  border: 0;
+  transform: scale(0.625);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
 .runtime-progress {
   border-top: 1px solid var(--line);
   background: rgba(248, 250, 252, 0.7);
@@ -803,6 +881,13 @@ body {
   .app-header,
   .panel-head {
     flex-wrap: wrap;
+  }
+
+  .site-nav {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow: auto;
   }
 
   .toolbar-actions {
