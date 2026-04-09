@@ -91,7 +91,6 @@ window.ClinicalModules.editor = {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    this.statusText = `Downloaded ${link.download}`;
   },
 
   async dropYaml(event) {
@@ -104,6 +103,5 @@ window.ClinicalModules.editor = {
     this.yamlText = await file.text();
     this.yamlName = file.name;
     this.clearResults();
-    this.statusText = `Loaded ${file.name}`;
   },
 };
