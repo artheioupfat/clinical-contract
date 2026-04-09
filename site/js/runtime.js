@@ -42,7 +42,6 @@ window.ClinicalModules.runtime = {
   onPythonRuntimeReady() {
     if (this.pythonReady) return;
     this.pythonReady = true;
-    this.statusText = 'Python runtime ready';
     if (this.runtimeBridgePoll) {
       window.clearInterval(this.runtimeBridgePoll);
       this.runtimeBridgePoll = null;

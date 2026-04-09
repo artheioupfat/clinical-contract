@@ -1,4 +1,7 @@
 document.addEventListener('alpine:init', () => {
+  const constants = window.ClinicalConstants || {};
+  const messages = constants.messages || {};
+  const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
   const runtime = modules.runtime || {};
@@ -24,12 +27,12 @@ document.addEventListener('alpine:init', () => {
     previewRows: [],
     previewTotalRows: 0,
     previewPage: 1,
-    previewPageSize: 50,
+    previewPageSizeDefault: previewPageSize,
+    previewPageSize: previewPageSize,
     previewTotalPages: 0,
     previewLoading: false,
     previewError: '',
     previewHandle: null,
-    statusText: 'Ready',
     switchOn: false,
     runtimeProgress: 0,
     showRuntimeProgress: true,
@@ -57,7 +60,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     get runtimeProgressLabel() {
-      return this.pythonReady ? 'Python runtime ready' : 'Loading Python runtime…';
+      return this.pythonReady
+        ? messages.runtimeReady || 'Python runtime ready'
+        : messages.runtimeLoading || 'Loading Python runtime...';
     },
 
     get validateTabState() {
@@ -75,12 +80,6 @@ document.addEventListener('alpine:init', () => {
       return this.qualityRows.some((row) => row.status === 'failed' || row.status === 'error')
         ? 'failed'
         : 'passed';
-    },
-
-    get previewTabState() {
-      if (this.previewError) return 'error';
-      if (!this.previewHandle) return 'idle';
-      return 'success';
     },
 
     get previewStartRow() {
@@ -145,7 +144,7 @@ document.addEventListener('alpine:init', () => {
           this.yamlName = 'example.yaml';
         }
       } catch (_error) {
-        this.yamlText = '# Write or drop a YAML contract here';
+        this.yamlText = messages.editorFallback || '# Write or drop a YAML contract here';
       }
     },
 
