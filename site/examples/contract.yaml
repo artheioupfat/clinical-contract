@@ -51,11 +51,11 @@ team:
       role: Data Scientist
     - name: sacha.schutz@chu-brest.fr
       role: Doctor
-    - name: alexis.gouraton@chu-brest.fr
+    - name: alexis.gouranton@chu-brest.fr
       role: Data Scientist
     - name: artur.lamard@chu-brest.fr
       role: Data Engineer
-    - name: lucas.bourenuf@chu-brest.fr
+    - name: lucas.bourneuf@chu-brest.fr
       role: Administrator System
     - name: bertrand.borel@chu-brest.fr
       role: Data Scientist
