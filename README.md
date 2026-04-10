@@ -51,6 +51,7 @@ git clone https://github.com/artheioupfat/clinical-contract.git
 cd clinical-contract
 uv sync --extra dev
 uv run pytest -v
+pytest --cov=src/clinical_contract --cov-report=term-missing
 ```
 
 
