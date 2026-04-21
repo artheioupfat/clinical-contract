@@ -140,6 +140,7 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
                 {
                     "schema_name": schema_report.schema_name,
                     "column": column.column,
+                    "required": column.required,
                     "yaml_type": column.yaml_type,
                     "parquet_type": column.parquet_type,
                     "status": column.status.value,

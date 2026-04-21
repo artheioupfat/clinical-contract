@@ -197,6 +197,7 @@
                         <tr>
                           <th>Schema</th>
                           <th>Column</th>
+                          <th>Required</th>
                           <th>Expected</th>
                           <th>Detected</th>
                           <th>Status</th>
@@ -204,12 +205,13 @@
                       </thead>
                       <tbody>
                         <template x-if="schemaRows.length === 0">
-                          <tr><td colspan="5" class="empty-row">No schema result yet.</td></tr>
+                          <tr><td colspan="6" class="empty-row">No schema result yet.</td></tr>
                         </template>
                         <template x-for="(row, idx) in schemaRows" :key="`${row.schema_name}-${row.column}-${idx}`">
                           <tr>
                             <td x-text="row.schema_name"></td>
                             <td x-text="row.column"></td>
+                            <td x-text="row.required === true ? 'true' : row.required === false ? 'false' : 'missing'"></td>
                             <td x-text="row.yaml_type"></td>
                             <td x-text="row.parquet_type"></td>
                             <td>

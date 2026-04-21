@@ -288,7 +288,7 @@ class Property(BaseModel):
     logicalType: str
     physicalType: str
     description: str
-    required: bool = False
+    required: bool 
     quality: Optional[list[Quality]] = None
 
 
@@ -371,17 +371,27 @@ class DataContract(BaseModel):
                                 if not isinstance(prop, dict):
                                     errors.append(f"schema[{i}].properties[{j}] invalid (not an object)")
                                     continue
+
                                 missing_prop_fields = [f for f in required_prop_fields if f not in prop]
                                 if missing_prop_fields:
                                     errors.append(f"schema[{i}].properties[{j}] missing {', '.join(missing_prop_fields)}")
-                                else:
-                                    logical_type = prop.get("logicalType")
-                                    if not isinstance(logical_type, str) or not _is_supported_logical_type(logical_type):
-                                        errors.append(
-                                            f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
-                                        )
-                                    else:
-                                        total_columns += 1
+                                    continue
+
+                                required_value = prop.get("required")
+                                if type(required_value) is not bool:
+                                    errors.append(
+                                        f"schema[{i}].properties[{j}].required must be true or false"
+                                    )
+                                    continue
+
+                                logical_type = prop.get("logicalType")
+                                if not isinstance(logical_type, str) or not _is_supported_logical_type(logical_type):
+                                    errors.append(
+                                        f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
+                                    )
+                                    continue
+
+                                total_columns += 1
 
                     if errors:
                         present = False
@@ -451,6 +461,7 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type="column not found",
+                        required=prop.required,
                         status=ColumnCheckStatus.missing if prop.required else ColumnCheckStatus.optional_missing,
                     ))
                 elif not _types_compatible(prop.logicalType, parquet_type):
@@ -458,6 +469,7 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type=_logical_type_for_display(parquet_type),
+                        required=prop.required,
                         status=ColumnCheckStatus.type_mismatch,
                     ))
                 else:
@@ -465,6 +477,7 @@ class DataContract(BaseModel):
                         column=prop.name,
                         yaml_type=prop.logicalType,
                         parquet_type=_logical_type_for_display(parquet_type),
+                        required=prop.required,
                         status=ColumnCheckStatus.ok,
                     ))
             reports.append(SchemaCheckReport(
