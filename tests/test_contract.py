@@ -709,6 +709,7 @@ schema:
         logicalType: unknown_type
         physicalType: TEXT
         description: ok
+        required: true
 """
     raw = load_raw(yaml_invalid)
     report = DataContract.validate_structure(raw)

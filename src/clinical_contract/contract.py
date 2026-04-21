@@ -366,7 +366,7 @@ class DataContract(BaseModel):
                         if not isinstance(properties, list) or len(properties) == 0:
                             errors.append(f"schema[{i}].properties empty or invalid")
                         else:
-                            required_prop_fields = ["name", "logicalType", "description"]
+                            required_prop_fields = ["name", "logicalType", "description", "required"]
                             for j, prop in enumerate(properties):
                                 if not isinstance(prop, dict):
                                     errors.append(f"schema[{i}].properties[{j}] invalid (not an object)")
@@ -394,16 +394,22 @@ class DataContract(BaseModel):
 
 
             #La description doit être composé de 3 sous-champs : purpose, usage, limitations
-            elif field == "description": 
-                # Vérification des sous-champs
+            elif field == "description":
                 subfields = ["purpose", "usage", "limitations"]
-                if isinstance(value, dict):
-                    missing_sub = [s for s in subfields if s not in value]
-                    display = "present" if not missing_sub else f"missing {', '.join(missing_sub)}"
-                    present = present and not missing_sub
-                else:
+
+                if not isinstance(value, dict):
                     display = "invalid (not an object)"
                     present = False
+                else:
+                    missing_sub = [s for s in subfields if s not in value]
+
+                    if missing_sub:
+                        display = f"missing {', '.join(missing_sub)}"
+                        present = False
+                    else:
+                        # ✔ les champs existent, même vides → OK
+                        display = "structure valid"
+                        present = True
 
             # Pour les autres champs, on affiche simplement leur valeur
             else:
@@ -444,7 +450,7 @@ class DataContract(BaseModel):
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=prop.logicalType,
-                        parquet_type="—",
+                        parquet_type="column not found",
                         status=ColumnCheckStatus.missing if prop.required else ColumnCheckStatus.optional_missing,
                     ))
                 elif not _types_compatible(prop.logicalType, parquet_type):
