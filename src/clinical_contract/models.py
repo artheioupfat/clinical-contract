@@ -89,7 +89,8 @@ class ColumnCheckResult(BaseModel):
     """Result of a single column check (schema vs parquet)."""
     column: str
     yaml_type: str
-    parquet_type: str   # "—" si absente
+    parquet_type: str   # "column not found" si absente
+    required: bool
     status: ColumnCheckStatus
 
     @property
