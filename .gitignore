@@ -25,6 +25,10 @@ htmlcov/
 # Lock and local tool cache
 .uv-cache/
 
+# Frontend
+node_modules/
+site_dist/
+
 # IDE
 .vscode/
 .idea/
