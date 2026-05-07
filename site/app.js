@@ -8,10 +8,59 @@ document.addEventListener('alpine:init', () => {
   const editor = modules.editor || {};
   const data = modules.data || {};
   const results = modules.results || {};
+  const schema = modules.schema || {};
 
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
     yamlName: 'datacontract.yaml',
+    editorView: 'schema',
+    schemaParseWarning: '',
+    showRequiredHints: false,
+    schemaRowCounter: 0,
+    schemaSection: 'fundamentals',
+    schemaSections: [
+      { id: 'fundamentals', title: 'Fundamentals' },
+      { id: 'schema', title: 'Schema' },
+      { id: 'quality', title: 'Quality' },
+      { id: 'team', title: 'Team' },
+    ],
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    logicalTypeOptions: [
+      'string',
+      'date',
+      'integer',
+      'float',
+      'boolean',
+    ],
+    physicalTypeByLogical: {
+      string: ['varchar', 'text', 'string', 'char'],
+      date: ['timestamp', 'datetime'],
+      integer: ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'],
+      float: ['float32', 'float64'],
+      boolean: ['binary'],
+    },
+    schemaDraft: {
+      apiVersion: 'v3.1.0',
+      kind: 'DataContract',
+      id: '',
+      name: '',
+      version: '1.0.0',
+      status: 'active',
+      descriptionPurpose: '',
+      descriptionUsage: '',
+      descriptionLimitations: '',
+      tableName: '',
+      tablePhysicalType: 'TABLE',
+      tableDescription: '',
+      properties: [],
+      qualityRules: [],
+      teamName: '',
+      teamDescription: '',
+      teamMembers: [],
+      teamExtras: {},
+      tableExtras: {},
+    },
     dataFile: null,
     dataFileName: '',
     dataColumns: null,
@@ -38,6 +87,10 @@ document.addEventListener('alpine:init', () => {
     showRuntimeProgress: true,
     runtimeProgressInterval: null,
     runtimeBridgePoll: null,
+    splitPercent: 58,
+    splitDragging: false,
+    splitMoveHandler: null,
+    splitEndHandler: null,
     logoVariant: 'neutral',
     logoErrored: false,
 
@@ -113,6 +166,7 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.initThemeSwitch();
+      this.initSplitPane();
       this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
@@ -124,6 +178,7 @@ document.addEventListener('alpine:init', () => {
 
       window.addEventListener('beforeunload', () => {
         this.releasePreviewSession();
+        this.destroySplitPane();
       });
 
       this.runtimeBridgePoll = window.setInterval(() => {
@@ -146,11 +201,16 @@ document.addEventListener('alpine:init', () => {
       } catch (_error) {
         this.yamlText = messages.editorFallback || '# Write or drop a YAML contract here';
       }
+
+      if (typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+      }
     },
 
     ...ui,
     ...runtime,
     ...editor,
+    ...schema,
     ...data,
     ...results,
   }));

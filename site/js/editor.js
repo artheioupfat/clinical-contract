@@ -103,5 +103,8 @@ window.ClinicalModules.editor = {
     this.yamlText = await file.text();
     this.yamlName = file.name;
     this.clearResults();
+    if (typeof this.syncSchemaFromYaml === 'function') {
+      this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    }
   },
 };

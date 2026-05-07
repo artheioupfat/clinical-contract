@@ -570,6 +570,73 @@ schema:
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
+def test_check_schema_date_matches_timestamp(tmp_path):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / "events_event_date_timestamp.parquet"
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+    with duckdb.connect() as conn:
+        conn.execute(
+            "CREATE TABLE events AS "
+            "SELECT TIMESTAMP '2024-01-01 10:30:00' AS event_date"
+        )
+        conn.execute(f"COPY events TO '{parquet_path_literal}' (FORMAT PARQUET)")
+    yaml_date = """
+apiVersion: v1.0.0
+kind: DataContract
+id: date-contract
+name: Date Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: events
+    physicalType: TABLE
+    description: Events table
+    properties:
+      - name: event_date
+        logicalType: date
+        physicalType: timestamp
+        description: Event date
+        required: true
+"""
+    contract, _ = load_contract(yaml_date)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_validate_structure_boolen_alias_supported():
+    yaml_boolen = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: is_active
+        logicalType: boolen
+        physicalType: binary
+        description: ok
+        required: true
+"""
+    raw = load_raw(yaml_boolen)
+    report = DataContract.validate_structure(raw)
+    assert report.success is True
+
+
 
 
 def test_validate_structure_schema_missing_fields():

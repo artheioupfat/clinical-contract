@@ -10,6 +10,7 @@
       }
     </style>
     <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
     <link rel="stylesheet" href="./css/tailwind.css" />
@@ -51,7 +52,11 @@
         </header>
 
         <main class="app-main">
-          <div class="app-grid">
+          <div
+            x-ref="appGrid"
+            :class="editorView === 'schema' ? 'app-grid app-grid--schema' : 'app-grid'"
+            :style="splitGridStyle()"
+          >
             <section class="panel panel--editor">
               <div class="panel-head">
                 <div>
@@ -59,6 +64,10 @@
                   <div class="panel-title" x-text="yamlName || 'contract.yaml'"></div>
                 </div>
                 <div class="pine-toolbar">
+                  <div class="view-switch">
+                    <button type="button" :class="editorModeButtonClass('schema')" @click="setEditorView('schema')">Schema</button>
+                    <button type="button" :class="editorModeButtonClass('yaml')" @click="setEditorView('yaml')">YAML</button>
+                  </div>
                   <button type="button" @click="$refs.yamlInput.click()" class="pine-btn">Load contract</button>
                   <input x-ref="yamlInput" type="file" class="sr-only" accept=".yaml,.yml" @change="importYaml($event)" />
                   <button type="button" @click="downloadYaml()" class="pine-btn">Download contract</button>
@@ -66,27 +75,317 @@
                 </div>
               </div>
 
-              <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">
-                <div class="editor-gutter" aria-hidden="true">
-                  <template x-for="line in lineNumbers" :key="line">
-                    <div class="editor-line-number" x-text="line"></div>
-                  </template>
+              <template x-if="editorView === 'yaml'">
+                <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">
+                  <div class="editor-gutter" aria-hidden="true">
+                    <template x-for="line in lineNumbers" :key="line">
+                      <div class="editor-line-number" x-text="line"></div>
+                    </template>
+                  </div>
+                  <textarea
+                    id="yaml-editor"
+                    x-ref="yamlEditor"
+                    x-model="yamlText"
+                    @scroll="syncEditorScroll($event)"
+                    @keydown="handleEditorKeydown($event)"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    class="editor-textarea"
+                    placeholder="Drop a YAML data contract here."
+                  ></textarea>
                 </div>
-                <textarea
-                  id="yaml-editor"
-                  x-ref="yamlEditor"
-                  x-model="yamlText"
-                  @scroll="syncEditorScroll($event)"
-                  @keydown="handleEditorKeydown($event)"
-                  spellcheck="false"
-                  autocomplete="off"
-                  autocorrect="off"
-                  autocapitalize="off"
-                  class="editor-textarea"
-                  placeholder="Drop a YAML data contract here."
-                ></textarea>
-              </div>
+              </template>
+
+              <template x-if="editorView === 'schema'">
+                <div class="schema-editor" :class="switchOn ? 'schema-editor--dark' : ''">
+                  <div
+                    x-show="schemaParseWarning"
+                    x-cloak
+                    class="schema-warning border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+                    x-text="schemaParseWarning"
+                  ></div>
+
+                  <div class="schema-workflow">
+                    <aside class="schema-nav">
+                      <div class="schema-nav-head">
+                        <div class="schema-nav-title">Contract builder</div>
+                      </div>
+
+                      <nav class="schema-nav-list">
+                        <template x-for="section in schemaSections" :key="`schema-section-${section.id}`">
+                          <button type="button" :class="schemaSectionClass(section.id)" @click="setSchemaSection(section.id)">
+                            <span class="schema-nav-copy">
+                              <span class="schema-nav-item-title" x-text="section.title"></span>
+                            </span>
+                          </button>
+                        </template>
+                      </nav>
+
+                   </aside>
+
+                    <section class="schema-workspace">
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'fundamentals'" x-cloak>
+                        <div class="schema-stage-bar">
+                          <div>
+                            <div class="schema-stage-title">Fundamentals</div>
+                          </div>
+                        </div>
+                        <div class="schema-business-stack">
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Contract ID <span class="schema-required" x-show="showRequiredFor('id')" x-cloak>* required</span></span>
+                            <input type="text" x-model="schemaDraft.id" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('id')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Contract Name <span class="schema-required" x-show="showRequiredFor('name')" x-cloak>* required</span></span>
+                            <input type="text" x-model="schemaDraft.name" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('name')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                          <label class="space-y-1 schema-wide-field">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Purpose <span class="schema-required" x-show="showRequiredFor('descriptionPurpose')" x-cloak>* required</span></span>
+                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionPurpose')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" placeholder="Why this dataset exists"></textarea>
+                          </label>
+                          <label class="space-y-1 schema-wide-field">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Usage <span class="schema-required" x-show="showRequiredFor('descriptionUsage')" x-cloak>* required</span></span>
+                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionUsage')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" placeholder="How consumers should use it"></textarea>
+                          </label>
+                          <label class="space-y-1 schema-wide-field">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Limitations <span class="schema-required" x-show="showRequiredFor('descriptionLimitations')" x-cloak>* required</span></span>
+                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionLimitations')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" placeholder="Known caveats, scope, or historical issues"></textarea>
+                          </label>
+                          <details class="schema-advanced schema-wide-field" :open="hasAdvancedRequiredHints()">
+                            <summary>Advanced contract metadata</summary>
+                            <div class="schema-advanced-grid">
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">API Version <span class="schema-required" x-show="showRequiredFor('apiVersion')" x-cloak>* required</span></span>
+                                <input type="text" x-model="schemaDraft.apiVersion" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('apiVersion')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Kind <span class="schema-required" x-show="showRequiredFor('kind')" x-cloak>* required</span></span>
+                                <input type="text" x-model="schemaDraft.kind" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('kind')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Version <span class="schema-required" x-show="showRequiredFor('version')" x-cloak>* required</span></span>
+                                <input type="text" x-model="schemaDraft.version" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('version')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Status <span class="schema-required" x-show="showRequiredFor('status')" x-cloak>* required</span></span>
+                                <input type="text" x-model="schemaDraft.status" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('status')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                            </div>
+                          </details>
+                        </div>
+                      </div>
+
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
+                        <div class="schema-stage-bar">
+                          <div>
+                            <div class="schema-stage-title">Schema</div>
+                          </div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-3">
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Table Name <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak>* required</span></span>
+                            <input type="text" x-model="schemaDraft.tableName" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableName')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Physical Type <span class="schema-required" x-show="showRequiredFor('tablePhysicalType')" x-cloak>* required</span></span>
+                            <select x-model="schemaDraft.tablePhysicalType" @change="pushSchemaToYaml()" :class="requiredInputClass('tablePhysicalType')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500">
+                              <option value="TABLE">TABLE</option>
+                              <option value="VIEW">VIEW</option>
+                              <option value="FILE">FILE</option>
+                            </select>
+                          </label>
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak>* required</span></span>
+                            <input type="text" x-model="schemaDraft.tableDescription" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableDescription')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                        </div>
+
+                        <div class="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+                          <div class="schema-stage-title">Columns</div>
+                        </div>
+
+                        <div class="mt-3 overflow-x-auto">
+                          <table class="schema-table schema-table--compact min-w-[820px] w-full border-collapse">
+                            <thead>
+                              <tr class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                                <th class="px-3 py-2">Column</th>
+                                <th class="px-3 py-2">Logical Type</th>
+                                <th class="px-3 py-2">Physical Type</th>
+                                <th class="px-3 py-2">Required</th>
+                                <th class="px-3 py-2">Description</th>
+                                <th class="px-3 py-2 text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="row in schemaDraft.properties" :key="row._rowId">
+                                <tr class="border-t border-slate-100 align-top">
+                                  <td class="px-3 py-2">
+                                    <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input w-full min-w-[160px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500" placeholder="column_name" />
+                                    <div class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</div>
+                                  </td>
+                                  <td class="px-3 py-2">
+                                    <select
+                                      x-model="row.logicalType"
+                                      @change="onLogicalTypeChanged(row)"
+                                      :class="requiredInputClass('propertyLogicalType', row)"
+                                      class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
+                                    >
+                                      <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-${row._rowId}-${logicalType}`">
+                                        <option :value="logicalType" x-text="logicalType"></option>
+                                      </template>
+                                    </select>
+                                    <div class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</div>
+                                  </td>
+                                  <td class="px-3 py-2">
+                                    <select
+                                      x-model="row.physicalType"
+                                      @change="pushSchemaToYaml()"
+                                      :class="requiredInputClass('propertyPhysicalType', row)"
+                                      class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
+                                    >
+                                      <option value="">Auto</option>
+                                      <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-${row._rowId}-${physicalType}`">
+                                        <option :value="physicalType" x-text="physicalType"></option>
+                                      </template>
+                                    </select>
+                                    <div class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</div>
+                                  </td>
+                                  <td class="px-3 py-2">
+                                    <label class="inline-flex cursor-pointer items-center gap-2 pt-2 text-sm text-slate-600">
+                                      <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                                      <span>Required</span>
+                                    </label>
+                                  </td>
+                                  <td class="px-3 py-2">
+                                    <input type="text" x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" class="schema-input w-full min-w-[220px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500" placeholder="Business meaning" />
+                                    <div class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</div>
+                                  </td>
+                                  <td class="px-3 py-2 text-right">
+                                    <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeSchemaProperty(row._rowId)">Remove</button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addSchemaProperty()">Add column</button>
+                        </div>
+                      </div>
+
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
+                        <div class="schema-stage-bar">
+                          <div>
+                            <div class="schema-stage-title">Quality</div>
+                          </div>
+                        </div>
+                        <div class="space-y-3">
+                          <template x-if="schemaDraft.qualityRules.length === 0">
+                            <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                              Add at least one named column, then create SQL quality checks here.
+                            </div>
+                          </template>
+                          <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
+                            <div class="rounded-lg border border-slate-200 bg-white p-3">
+                              <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                                <label class="space-y-1">
+                                  <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Column</span>
+                                  <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500">
+                                    <template x-for="property in schemaDraft.properties" :key="`quality-property-${rule._rowId}-${property._rowId}`">
+                                      <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
+                                    </template>
+                                  </select>
+                                </label>
+                                <label class="space-y-1">
+                                  <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Expected Count</span>
+                                  <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                                </label>
+                                <div class="flex items-end justify-end">
+                                  <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeQualityRule(rule._rowId)">Remove</button>
+                                </div>
+                              </div>
+                              <label class="mt-3 block space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description</span>
+                                <input type="text" x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <label class="mt-3 block space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">SQL Query</span>
+                                <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="4" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-blue-500"></textarea>
+                              </label>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)">Add check</button>
+                        </div>
+                      </div>
+
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'team'" x-cloak>
+                        <div class="schema-stage-bar">
+                          <div>
+                            <div class="schema-stage-title">Team</div>
+                          </div>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Team Name</span>
+                            <input type="text" x-model="schemaDraft.teamName" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                          <label class="space-y-1">
+                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description</span>
+                            <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                          </label>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                          <template x-if="schemaDraft.teamMembers.length === 0">
+                            <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                              No team members yet.
+                            </div>
+                          </template>
+                          <template x-for="member in schemaDraft.teamMembers" :key="member._rowId">
+                            <div class="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]">
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Name or Email</span>
+                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <label class="space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Role</span>
+                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                              </label>
+                              <div class="flex items-end justify-end">
+                                <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeTeamMember(member._rowId)">Remove</button>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addTeamMember()">Add member</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
             </section>
+
+            <button
+              type="button"
+              class="split-resizer"
+              :class="splitDragging ? 'split-resizer--active' : ''"
+              @pointerdown.prevent="startSplitResize($event)"
+              @dblclick.prevent="resetSplitPane()"
+              @keydown="handleSplitKeydown($event)"
+              role="separator"
+              aria-label="Resize editor and checker panels"
+              aria-orientation="vertical"
+              :aria-valuenow="Math.round(splitPercent)"
+              aria-valuemin="35"
+              aria-valuemax="75"
+            >
+              <span class="split-resizer__handle" aria-hidden="true"></span>
+            </button>
 
             <section class="panel">
               <div class="panel-head">
@@ -365,6 +664,7 @@
     <script src="./js/ui.js"></script>
     <script src="./js/runtime.js"></script>
     <script src="./js/editor.js"></script>
+    <script src="./js/schema.js"></script>
     <script src="./js/data.js"></script>
     <script src="./js/results.js"></script>
     <script src="./app.js"></script>

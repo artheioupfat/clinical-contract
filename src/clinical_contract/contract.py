@@ -28,13 +28,20 @@ from .models import (
 TYPE_MAP: dict[str, set[str]] = {
     # GENÉRIQUES
     "string":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
+    "integer":  {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
+                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
     "int":      {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
                  "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
     "float":    {"float16","float32","float64","double","real","decimal128","decimal"},
+    "date":     {"date", "datetime", "timestamp", "timestamp with time zone", "timestamptz",
+                 "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
+                 "date32","date64"},
     "datetime": {"timestamp","timestamp with time zone","timestamptz",
                  "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
-                 "date32","date64","date"},
-    "boolean":  {"bool","boolean"},
+                 "date32","date64","date","datetime"},
+    "boolean":  {"bool","boolean","binary","large_binary","blob"},
+    "boolen":   {"bool","boolean","binary","large_binary","blob"},
+    "bool":     {"bool","boolean","binary","large_binary","blob"},
     "binary":   {"binary","large_binary"},
 
     # SPÉCIFIQUES
@@ -51,7 +58,14 @@ TYPE_MAP: dict[str, set[str]] = {
     "double": {"double","float64"},
     "date32": {"date32"},
     "date64": {"date64"},
-    "date":   {"date"},
+}
+
+LOGICAL_TYPE_ALIASES: dict[str, str] = {
+    "int": "integer",
+    "timestamp": "date",
+    "datetime": "date",
+    "bool": "boolean",
+    "boolen": "boolean",
 }
 
 
@@ -99,27 +113,26 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
+def _normalize_logical_type(logical_type: str) -> str:
+    logical_lower = logical_type.lower().strip()
+    if logical_lower.startswith("timestamp["):
+        return "date"
+    if logical_lower.startswith("decimal("):
+        return "float"
+    return LOGICAL_TYPE_ALIASES.get(logical_lower, logical_lower)
+
+
 
 
 def _is_supported_logical_type(logical_type: str) -> bool:
-    logical_lower = logical_type.lower().strip()
-    if logical_lower.startswith("timestamp["):
-        logical_lower = "datetime"
-    if logical_lower.startswith("decimal("):
-        logical_lower = "float"
+    logical_lower = _normalize_logical_type(logical_type)
     return logical_lower in TYPE_MAP
 
 
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
     """Return True if YAML type matches Parquet type based on TYPE_MAP."""
-    yaml_lower = yaml_type.lower().strip()
+    yaml_lower = _normalize_logical_type(yaml_type)
     parquet_lower = _normalize_type_name(parquet_type)
-
-    # Normalisation
-    if yaml_lower.startswith("timestamp["):
-        yaml_lower = "datetime"
-    if yaml_lower.startswith("decimal("):
-        yaml_lower = "float"
 
     allowed_types = TYPE_MAP.get(yaml_lower)
     if not allowed_types:
