@@ -134,7 +134,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     schema_ok = True
     for sr in schema_reports:
         print(f"  Schema: {sr.schema_name}")
-        headers = ["Column", "YAML Type", "Parquet Type", "Status"]
+        headers = ["Column", "Expected", "Detected", "Status"]
         rows = [
             [c.column, c.yaml_type, c.parquet_type, c.status_icon]
             for c in sr.columns
@@ -150,8 +150,8 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
                     print(f"     • '{f.column}' is missing in parquet")
                 else:
                     print(
-                        f"     • '{f.column}': YAML type '{f.yaml_type}' "
-                        f"is incompatible with parquet type '{f.parquet_type}'"
+                        f"     • '{f.column}': expected type '{f.yaml_type}' "
+                        f"is incompatible with detected type '{f.parquet_type}'"
                     )
         else:
             n = len(sr.columns)

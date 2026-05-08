@@ -32,6 +32,7 @@ window.ClinicalModules.schema = {
     const sections = Array.isArray(this.schemaSections) ? this.schemaSections : [];
     if (!sections.some((section) => section.id === sectionId)) return;
     this.schemaSection = sectionId;
+    this.persistEditorSession();
   },
 
   normalizeContractDescription(description) {
@@ -87,10 +88,12 @@ window.ClinicalModules.schema = {
 
     const rowFieldMap = {
       propertyName: row.name,
-      propertyLogicalType: row.logicalType,
-      propertyPhysicalType: row.physicalType,
       propertyDescription: row.description,
     };
+
+    if (fieldKey === 'propertyLogicalType' || fieldKey === 'propertyPhysicalType') {
+      return this.isBlankRequiredValue(row.logicalType) && this.isBlankRequiredValue(row.physicalType);
+    }
 
     if (Object.prototype.hasOwnProperty.call(rowFieldMap, fieldKey)) {
       return this.isBlankRequiredValue(rowFieldMap[fieldKey]);
@@ -108,12 +111,15 @@ window.ClinicalModules.schema = {
   },
 
   createSchemaProperty(seed = {}) {
+    const logicalType = this.normalizeTypeToken(seed.logicalType || '');
+    const physicalType = this.normalizeTypeToken(seed.physicalType || '');
     this.schemaRowCounter += 1;
     return {
       _rowId: this.schemaRowCounter,
       name: seed.name || '',
-      logicalType: seed.logicalType || 'string',
-      physicalType: seed.physicalType || '',
+      logicalType,
+      physicalType,
+      _lastLogicalType: logicalType,
       required: Boolean(seed.required),
       description: seed.description || '',
       extras: deepClone(seed.extras || {}),
@@ -143,6 +149,38 @@ window.ClinicalModules.schema = {
     };
   },
 
+  readFirstDefined(source, keys, fallback = '') {
+    if (!source || typeof source !== 'object') return fallback;
+
+    const normalizedEntries = {};
+    for (const [rawKey, rawValue] of Object.entries(source)) {
+      const normalizedKey = String(rawKey).toLowerCase().replace(/[-_]/g, '');
+      if (!Object.prototype.hasOwnProperty.call(normalizedEntries, normalizedKey)) {
+        normalizedEntries[normalizedKey] = rawValue;
+      }
+    }
+
+    for (const key of keys) {
+      if (Object.prototype.hasOwnProperty.call(source, key) && source[key] !== null && source[key] !== undefined) {
+        return source[key];
+      }
+      const normalizedKey = String(key).toLowerCase().replace(/[-_]/g, '');
+      if (
+        Object.prototype.hasOwnProperty.call(normalizedEntries, normalizedKey) &&
+        normalizedEntries[normalizedKey] !== null &&
+        normalizedEntries[normalizedKey] !== undefined
+      ) {
+        return normalizedEntries[normalizedKey];
+      }
+    }
+    return fallback;
+  },
+
+  normalizeTypeToken(value) {
+    if (value === null || value === undefined) return '';
+    return String(value).trim();
+  },
+
   getLogicalTypeOptions(row) {
     const defaults = Array.isArray(this.logicalTypeOptions) ? this.logicalTypeOptions : [];
     const current = String(row?.logicalType || '').trim();
@@ -154,7 +192,9 @@ window.ClinicalModules.schema = {
   getPhysicalTypeOptions(row) {
     const logical = String(row?.logicalType || '').trim();
     const physicalMap = this.physicalTypeByLogical || {};
-    const defaults = Array.isArray(physicalMap[logical]) ? physicalMap[logical] : [];
+    const defaults = Array.isArray(physicalMap[logical])
+      ? physicalMap[logical]
+      : [...new Set(Object.values(physicalMap).flat())];
     const current = String(row?.physicalType || '').trim();
     if (!current) return defaults;
     if (defaults.includes(current)) return defaults;
@@ -162,15 +202,19 @@ window.ClinicalModules.schema = {
   },
 
   onLogicalTypeChanged(row) {
-    const options = this.getPhysicalTypeOptions(row);
-    if (!options.length) {
+    const nextLogical = this.normalizeTypeToken(row.logicalType);
+    const previousLogical = this.normalizeTypeToken(row._lastLogicalType);
+    row.logicalType = nextLogical;
+
+    // Clear physical type only when the logical type was effectively changed by the user.
+    if (nextLogical && previousLogical && nextLogical !== previousLogical) {
       row.physicalType = '';
-      this.pushSchemaToYaml();
-      return;
     }
-    if (!options.includes(row.physicalType)) {
-      [row.physicalType] = options;
-    }
+    row._lastLogicalType = nextLogical;
+    this.pushSchemaToYaml();
+  },
+
+  onPhysicalTypeChanged(row) {
     this.pushSchemaToYaml();
   },
 
@@ -215,12 +259,25 @@ window.ClinicalModules.schema = {
     if (mode === this.editorView) return;
     if (mode === 'schema') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: true });
-      this.setSchemaSection('fundamentals');
+      this.setSchemaSection(this.schemaDraft.properties?.length ? 'schema' : 'fundamentals');
     }
     this.editorView = mode;
+    this.persistEditorSession();
   },
 
-  seedSchemaDraft() {
+  startBlankContract() {
+    this.schemaStarted = true;
+    this.schemaParseWarning = '';
+    this.showRequiredHints = false;
+    this.yamlName = 'datacontract.yaml';
+    this.clearResults();
+    this.seedSchemaDraft({ withProperty: true });
+    this.pushSchemaToYaml();
+    this.setSchemaSection('fundamentals');
+    this.persistEditorSession();
+  },
+
+  seedSchemaDraft({ withProperty = false } = {}) {
     this.schemaDraft = {
       apiVersion: 'v3.1.0',
       kind: 'DataContract',
@@ -234,7 +291,7 @@ window.ClinicalModules.schema = {
       tableName: '',
       tablePhysicalType: 'TABLE',
       tableDescription: '',
-      properties: [this.createSchemaProperty()],
+      properties: withProperty ? [this.createSchemaProperty()] : [],
       qualityRules: [],
       teamName: '',
       teamDescription: '',
@@ -248,9 +305,9 @@ window.ClinicalModules.schema = {
 
   syncSchemaFromYaml({ preserveCurrentOnError = true } = {}) {
     if (!this.yamlText || !this.yamlText.trim()) {
-      this.schemaParseWarning =
-        'YAML is empty. Fill the schema form to generate a valid data contract YAML.';
       this.seedSchemaDraft();
+      this.schemaStarted = false;
+      this.schemaParseWarning = '';
       return;
     }
 
@@ -260,6 +317,7 @@ window.ClinicalModules.schema = {
     } catch (error) {
       this.schemaParseWarning =
         `YAML parse warning: ${error.message}. You can still edit in Schema mode; saving fields will rewrite YAML.`;
+      this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
       }
@@ -269,6 +327,7 @@ window.ClinicalModules.schema = {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       this.schemaParseWarning =
         'YAML root is not an object. Schema mode will use a clean template and rewrite YAML from form values.';
+      this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
       }
@@ -295,11 +354,28 @@ window.ClinicalModules.schema = {
     const qualityRules = [];
     const normalizedProperties = properties.map((prop) => {
       const source = prop && typeof prop === 'object' ? prop : {};
-      const handledProp = new Set(['name', 'logicalType', 'physicalType', 'required', 'description']);
+      const handledProp = new Set([
+        'name',
+        'logicalType',
+        'logical_type',
+        'logical-type',
+        'physicalType',
+        'physical_type',
+        'physical-type',
+        'required',
+        'description',
+        'quality',
+      ]);
       const propExtras = {};
       for (const [key, value] of Object.entries(source)) {
         if (!handledProp.has(key)) propExtras[key] = value;
       }
+      const logicalType = this.normalizeTypeToken(
+        this.readFirstDefined(source, ['logicalType', 'logicaltype', 'logical_type', 'logical-type'])
+      );
+      const physicalType = this.normalizeTypeToken(
+        this.readFirstDefined(source, ['physicalType', 'physicaltype', 'physical_type', 'physical-type'])
+      );
       const rules = Array.isArray(source.quality) ? source.quality : [];
       for (const rule of rules) {
         const quality = rule && typeof rule === 'object' ? rule : {};
@@ -321,8 +397,8 @@ window.ClinicalModules.schema = {
       }
       return this.createSchemaProperty({
         name: source.name || '',
-        logicalType: source.logicalType || 'string',
-        physicalType: source.physicalType || '',
+        logicalType,
+        physicalType,
         required: Boolean(source.required),
         description: source.description || '',
         extras: propExtras,
@@ -378,6 +454,12 @@ window.ClinicalModules.schema = {
     this.schemaRootExtras = rootExtras;
     this.schemaOtherSchemas = deepClone(otherSchemas);
     this.schemaParseWarning = '';
+    this.schemaStarted = true;
+  },
+
+  syncSchemaFromYamlEditor() {
+    if (this.editorView !== 'yaml') return;
+    this.syncSchemaFromYaml({ preserveCurrentOnError: true });
   },
 
   buildContractObjectFromSchema() {
@@ -404,15 +486,13 @@ window.ClinicalModules.schema = {
 
     const properties = (draft.properties || [])
       .map((prop) => {
-        const row = deepClone(prop.extras || {});
         if (!prop.name || !prop.name.trim()) return null;
+        const row = {};
         row.name = prop.name.trim();
-        row.logicalType = prop.logicalType || 'string';
+        if (prop.logicalType && prop.logicalType.trim()) row.logicalType = prop.logicalType.trim();
         if (prop.physicalType && prop.physicalType.trim()) row.physicalType = prop.physicalType.trim();
-        else delete row.physicalType;
-        row.required = Boolean(prop.required);
         if (prop.description && prop.description.trim()) row.description = prop.description.trim();
-        else delete row.description;
+        row.required = Boolean(prop.required);
         const quality = (draft.qualityRules || [])
           .filter((rule) => rule.propertyName === prop.name)
           .map((rule) => {
@@ -426,7 +506,11 @@ window.ClinicalModules.schema = {
           })
           .filter((rule) => rule.query || rule.description);
         if (quality.length) row.quality = quality;
-        else delete row.quality;
+        for (const [key, value] of Object.entries(deepClone(prop.extras || {}))) {
+          if (!Object.prototype.hasOwnProperty.call(row, key)) {
+            row[key] = value;
+          }
+        }
         return row;
       })
       .filter(Boolean);
@@ -460,6 +544,7 @@ window.ClinicalModules.schema = {
   pushSchemaToYaml() {
     let contract;
     try {
+      this.schemaStarted = true;
       contract = this.buildContractObjectFromSchema();
       this.yamlText = this.ensureYamlLibrary().dump(contract, {
         noRefs: true,

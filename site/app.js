@@ -12,8 +12,9 @@ document.addEventListener('alpine:init', () => {
 
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
-    yamlName: 'datacontract.yaml',
+    yamlName: '',
     editorView: 'schema',
+    schemaStarted: false,
     schemaParseWarning: '',
     showRequiredHints: false,
     schemaRowCounter: 0,
@@ -63,6 +64,7 @@ document.addEventListener('alpine:init', () => {
     },
     dataFile: null,
     dataFileName: '',
+    dataFileSize: 0,
     dataColumns: null,
     dataRows: null,
     draggingData: false,
@@ -87,6 +89,9 @@ document.addEventListener('alpine:init', () => {
     showRuntimeProgress: true,
     runtimeProgressInterval: null,
     runtimeBridgePoll: null,
+    runtimeFailureTimer: null,
+    runtimeError: '',
+    runtimeErrorHandlersRegistered: false,
     splitPercent: 58,
     splitDragging: false,
     splitMoveHandler: null,
@@ -113,6 +118,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     get runtimeProgressLabel() {
+      if (this.runtimeError) {
+        return messages.runtimeFailed || 'Python runtime error';
+      }
       return this.pythonReady
         ? messages.runtimeReady || 'Python runtime ready'
         : messages.runtimeLoading || 'Loading Python runtime...';
@@ -167,6 +175,9 @@ document.addEventListener('alpine:init', () => {
     async init() {
       this.initThemeSwitch();
       this.initSplitPane();
+      this.restoreEditorSession();
+      this.registerEditorSessionPersistence();
+      this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
@@ -177,6 +188,7 @@ document.addEventListener('alpine:init', () => {
       });
 
       window.addEventListener('beforeunload', () => {
+        this.persistEditorSession();
         this.releasePreviewSession();
         this.destroySplitPane();
       });
@@ -190,16 +202,6 @@ document.addEventListener('alpine:init', () => {
 
       if (typeof window.pyValidateContract === 'function') {
         this.onPythonRuntimeReady();
-      }
-
-      try {
-        const response = await fetch('./examples/contract.yaml');
-        if (response.ok) {
-          this.yamlText = await response.text();
-          this.yamlName = 'example.yaml';
-        }
-      } catch (_error) {
-        this.yamlText = messages.editorFallback || '# Write or drop a YAML contract here';
       }
 
       if (typeof this.syncSchemaFromYaml === 'function') {

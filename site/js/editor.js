@@ -2,6 +2,27 @@ window.ClinicalModules = window.ClinicalModules || {};
 
 window.ClinicalModules.editor = {
   indentUnit: '  ',
+  editorSessionKey: 'clinical-contract-editor-session-v1',
+
+  clearEditorSession() {
+    try {
+      localStorage.removeItem(this.editorSessionKey);
+    } catch (_error) {
+      // Ignore storage failures.
+    }
+  },
+
+  restoreEditorSession() {
+    this.clearEditorSession();
+  },
+
+  registerEditorSessionPersistence() {
+    // The editor intentionally keeps drafts in memory only.
+  },
+
+  persistEditorSession() {
+    // No persistence by design: refresh/reopen should return to the base screen.
+  },
 
   applyEditorChange(textarea, value, selectionStart, selectionEnd = selectionStart) {
     textarea.value = value;
@@ -81,6 +102,26 @@ window.ClinicalModules.editor = {
     event.target.value = '';
   },
 
+  async loadExampleContract() {
+    try {
+      const response = await fetch('./examples/contract.yaml');
+      if (!response.ok) {
+        throw new Error(`Example request failed with status ${response.status}`);
+      }
+      this.yamlText = await response.text();
+      this.yamlName = 'example.yaml';
+      this.schemaStarted = true;
+      this.clearResults();
+      if (typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+      }
+      this.schemaSection = 'schema';
+      this.persistEditorSession();
+    } catch (error) {
+      this.schemaParseWarning = `Unable to load example contract: ${error.message}`;
+    }
+  },
+
   downloadYaml() {
     const blob = new Blob([this.yamlText || ''], { type: 'text/yaml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -102,9 +143,12 @@ window.ClinicalModules.editor = {
   async handleYamlFile(file) {
     this.yamlText = await file.text();
     this.yamlName = file.name;
+    this.schemaStarted = Boolean(this.yamlText.trim());
     this.clearResults();
     if (typeof this.syncSchemaFromYaml === 'function') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: false });
     }
+    this.schemaSection = 'schema';
+    this.persistEditorSession();
   },
 };

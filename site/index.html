@@ -9,7 +9,7 @@
         display: none !important;
       }
     </style>
-    <script src="https://unpkg.com/alpinejs" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
@@ -61,7 +61,7 @@
               <div class="panel-head">
                 <div>
                   <div class="panel-eyebrow">Editor</div>
-                  <div class="panel-title" x-text="yamlName || 'contract.yaml'"></div>
+                  <div class="panel-title" x-text="yamlName || 'Untitled contract'"></div>
                 </div>
                 <div class="pine-toolbar">
                   <div class="view-switch">
@@ -86,6 +86,7 @@
                     id="yaml-editor"
                     x-ref="yamlEditor"
                     x-model="yamlText"
+                    @input.debounce.350ms="syncSchemaFromYamlEditor()"
                     @scroll="syncEditorScroll($event)"
                     @keydown="handleEditorKeydown($event)"
                     spellcheck="false"
@@ -107,7 +108,23 @@
                     x-text="schemaParseWarning"
                   ></div>
 
-                  <div class="schema-workflow">
+                  <template x-if="!schemaStarted">
+                    <div class="schema-empty">
+                      <div class="schema-empty-card">
+                        <div class="schema-empty-kicker">New data contract</div>
+                        <h2 class="schema-empty-title">Start with a blank schema</h2>
+                        <p class="schema-empty-copy">
+                          Build your contract step by step, or load the example contract to inspect a complete setup.
+                        </p>
+                        <div class="schema-empty-actions">
+                          <button type="button" class="pine-btn pine-btn--primary" @click="startBlankContract()">Add schema</button>
+                          <button type="button" class="pine-btn" @click="loadExampleContract()">Load example</button>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div class="schema-workflow" x-show="schemaStarted" x-cloak>
                     <aside class="schema-nav">
                       <div class="schema-nav-head">
                         <div class="schema-nav-title">Contract builder</div>
@@ -232,6 +249,7 @@
                                       :class="requiredInputClass('propertyLogicalType', row)"
                                       class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
                                     >
+                                      <option value="">Not specified</option>
                                       <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-${row._rowId}-${logicalType}`">
                                         <option :value="logicalType" x-text="logicalType"></option>
                                       </template>
@@ -241,11 +259,11 @@
                                   <td class="px-3 py-2">
                                     <select
                                       x-model="row.physicalType"
-                                      @change="pushSchemaToYaml()"
+                                      @change="onPhysicalTypeChanged(row)"
                                       :class="requiredInputClass('propertyPhysicalType', row)"
                                       class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
                                     >
-                                      <option value="">Auto</option>
+                                      <option value="">Not specified</option>
                                       <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-${row._rowId}-${physicalType}`">
                                         <option :value="physicalType" x-text="physicalType"></option>
                                       </template>
@@ -289,7 +307,7 @@
                           </template>
                           <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
                             <div class="rounded-lg border border-slate-200 bg-white p-3">
-                              <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                              <div class="grid gap-3 md:grid-cols-[1fr_auto]">
                                 <label class="space-y-1">
                                   <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Column</span>
                                   <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500">
@@ -297,10 +315,6 @@
                                       <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
                                     </template>
                                   </select>
-                                </label>
-                                <label class="space-y-1">
-                                  <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Expected Count</span>
-                                  <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
                                 </label>
                                 <div class="flex items-end justify-end">
                                   <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeQualityRule(rule._rowId)">Remove</button>
@@ -313,6 +327,10 @@
                               <label class="mt-3 block space-y-1">
                                 <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">SQL Query</span>
                                 <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="4" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-blue-500"></textarea>
+                              </label>
+                              <label class="mt-3 block max-w-xs space-y-1">
+                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Must be</span>
+                                <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
                               </label>
                             </div>
                           </template>
@@ -394,7 +412,10 @@
                   <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
                 </div>
                 <div class="pine-toolbar">
-                  <div class="data-stats" x-show="dataStatsText()" x-cloak x-text="dataStatsText()"></div>
+                  <div class="data-meta-stack" x-show="dataStatsText() || dataFileSizeText()" x-cloak>
+                    <div class="data-stats" x-show="dataStatsText()" x-text="dataStatsText()"></div>
+                    <div class="data-file-size" x-show="dataFileSizeText()" x-text="dataFileSizeText()"></div>
+                  </div>
                   <button type="button" @click="$refs.dataInput.click()" class="pine-btn">Load data</button>
                   <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />
                   <button type="button" @click="runCheck()" :disabled="busy || !pythonReady || !dataFile" class="pine-btn pine-btn--success">Run checks</button>
@@ -652,8 +673,9 @@
 
         <footer class="app-footer">
           <div class="footer-left">
-            <span class="runtime-badge" :class="pythonReady ? 'runtime-badge--ready' : 'runtime-badge--loading'" x-text="pythonReady ? 'Python ready' : 'Python loading'"></span>
+            <span class="runtime-badge" :class="runtimeBadgeClass()" x-text="runtimeBadgeLabel()"></span>
             <span x-text="yamlText.split('\n').length + ' lines'"></span>
+            <span class="footer-error" x-show="runtimeError" x-cloak x-text="runtimeError"></span>
           </div>
         </footer>
       </div>

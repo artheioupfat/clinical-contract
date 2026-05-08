@@ -65,21 +65,21 @@
   }
 
   .pine-header {
-    @apply flex items-center justify-between gap-4 border-b px-4 py-3;
+    @apply flex items-center justify-between gap-4 border-b px-4 py-2;
     background: linear-gradient(180deg, #fbfdff 0%, var(--cc-surface) 100%);
     border-color: var(--cc-border);
   }
 
   .pine-brand {
-    @apply flex items-center gap-3;
+    @apply flex items-center gap-2.5;
   }
 
   .pine-logo-box {
-    @apply flex h-20 w-24 items-center justify-center overflow-hidden rounded-xl bg-white shadow-inner shadow-slate-900/10;
+    @apply flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg bg-white shadow-inner shadow-slate-900/10;
   }
 
   .pine-logo-image {
-    @apply h-16 w-20 object-contain;
+    @apply h-12 w-16 object-contain;
   }
 
   .pine-brand-row {
@@ -87,7 +87,7 @@
   }
 
   .pine-brand-title {
-    @apply m-0 text-base font-semibold tracking-tight;
+    @apply m-0 text-[15px] font-semibold tracking-tight;
     color: var(--cc-text);
   }
 
@@ -131,7 +131,7 @@
   }
 
   .pine-theme-switch-label {
-    @apply select-none text-sm font-semibold;
+    @apply select-none text-[13px] font-semibold;
   }
 
   .pine-theme-switch-label--off {
@@ -175,7 +175,7 @@
   }
 
   .panel-head {
-    @apply flex items-center justify-between gap-4 border-b px-4 py-3.5;
+    @apply flex items-center justify-between gap-4 border-b px-4 py-2.5;
     border-color: var(--cc-border);
   }
 
@@ -185,22 +185,22 @@
   }
 
   .panel-title {
-    @apply mt-1 text-[15px] font-semibold;
+    @apply mt-0.5 text-[14px] font-semibold;
     color: var(--cc-text);
   }
 
   .pine-toolbar {
-    @apply flex flex-wrap items-center justify-end gap-2;
+    @apply flex flex-wrap items-center justify-end gap-1.5;
   }
 
   .view-switch {
-    @apply inline-flex items-center rounded-xl border p-1;
+    @apply inline-flex items-center rounded-lg border p-0.5;
     background: var(--cc-surface-muted);
     border-color: var(--cc-border);
   }
 
   .view-switch-btn {
-    @apply rounded-lg px-2.5 py-1.5 text-xs font-semibold transition;
+    @apply rounded-md px-2.5 py-1.5 text-xs font-semibold transition;
     color: var(--cc-muted);
   }
 
@@ -210,7 +210,7 @@
   }
 
   .pine-btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border bg-white px-3.5 py-2.5 text-sm font-medium transition;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-[13px] font-medium transition;
     border-color: var(--cc-border);
     color: var(--cc-text);
   }
@@ -257,7 +257,7 @@
   }
 
   .editor-textarea {
-    @apply h-full w-full resize-none border-0 bg-transparent p-4 font-mono text-[13px] font-medium leading-[1.65] text-slate-900 outline-none;
+    @apply h-full w-full resize-none border-0 bg-transparent p-3.5 font-mono text-[13px] font-medium leading-[1.6] text-slate-900 outline-none;
     tab-size: 2;
   }
 
@@ -266,11 +266,11 @@
   }
 
   .checker-body {
-    @apply flex min-h-0 min-w-0 flex-1 flex-col gap-3.5 p-4;
+    @apply flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-4;
   }
 
   .dropzone {
-    @apply flex min-h-[92px] cursor-pointer items-center justify-between gap-4 rounded-2xl border border-dashed p-4 transition;
+    @apply flex min-h-[78px] cursor-pointer items-center justify-between gap-4 rounded-lg border border-dashed p-3.5 transition;
     background: var(--cc-surface);
     border-color: var(--cc-border);
   }
@@ -285,7 +285,7 @@
   }
 
   .dropzone-icon-wrap {
-    @apply flex h-11 w-11 items-center justify-center rounded-xl;
+    @apply flex h-10 w-10 items-center justify-center rounded-lg;
     background: var(--cc-primary-soft);
     color: var(--cc-primary);
   }
@@ -309,18 +309,18 @@
   }
 
   .results-shell {
-    @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border;
+    @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border;
     border-color: var(--cc-border);
   }
 
   .pine-tabs {
-    @apply flex gap-1.5 border-b p-2.5;
+    @apply flex gap-1.5 border-b p-2;
     background: var(--cc-surface);
     border-color: var(--cc-border);
   }
 
   .pine-tab {
-    @apply cursor-pointer rounded-xl bg-transparent px-3 py-2 text-xs font-semibold;
+    @apply cursor-pointer rounded-md bg-transparent px-2.5 py-1.5 text-xs font-semibold;
     color: var(--cc-muted);
   }
 
@@ -411,10 +411,18 @@
     @apply bg-amber-500;
   }
 
+  .data-meta-stack {
+    @apply flex flex-col items-end gap-0.5 text-right;
+    color: var(--cc-muted);
+  }
+
   .data-stats {
-    @apply inline-flex items-center whitespace-pre rounded-xl border px-3 py-2 text-[13px] font-semibold;
-    background: var(--cc-surface);
-    border-color: var(--cc-border);
+    @apply whitespace-pre text-[13px] font-semibold leading-tight;
+    color: var(--cc-muted);
+  }
+
+  .data-file-size {
+    @apply text-[12px] font-medium leading-tight;
     color: var(--cc-muted);
   }
 
@@ -426,8 +434,40 @@
     @apply mx-3 mt-3 rounded-lg;
   }
 
+  .schema-empty {
+    @apply flex min-h-0 flex-1 items-center justify-center p-6;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.16) 1px, transparent 0),
+      radial-gradient(circle at 50% 0%, rgba(232, 242, 251, 0.95) 0%, rgba(255, 255, 255, 0.9) 46%, rgba(244, 248, 252, 0.92) 100%);
+    background-size: 22px 22px, 100% 100%;
+  }
+
+  .schema-empty-card {
+    @apply max-w-xl rounded-xl border bg-white p-7 text-center shadow-xl shadow-slate-900/5;
+    border-color: var(--cc-border);
+  }
+
+  .schema-empty-kicker {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    color: var(--cc-primary);
+  }
+
+  .schema-empty-title {
+    @apply mt-3 text-2xl font-semibold tracking-tight;
+    color: var(--cc-text);
+  }
+
+  .schema-empty-copy {
+    @apply mx-auto mt-3 max-w-md text-sm leading-6;
+    color: var(--cc-muted);
+  }
+
+  .schema-empty-actions {
+    @apply mt-6 flex flex-wrap items-center justify-center gap-3;
+  }
+
   .schema-workflow {
-    @apply grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[200px_1fr];
+    @apply grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_1fr];
   }
 
   .schema-nav {
@@ -447,11 +487,11 @@
   }
 
   .schema-nav-list {
-    @apply flex min-h-0 flex-1 flex-col gap-1.5 overflow-auto p-3;
+    @apply flex min-h-0 flex-1 flex-col gap-1 overflow-auto p-2.5;
   }
 
   .schema-nav-item {
-    @apply inline-flex w-full items-center rounded-lg border border-transparent px-3.5 py-3 text-left transition;
+    @apply inline-flex w-full items-center rounded-md border border-transparent px-3 py-2.5 text-left transition;
   }
 
   .schema-nav-item:hover {
@@ -473,7 +513,7 @@
   }
 
   .schema-nav-item-title {
-    @apply text-sm font-semibold;
+    @apply text-[13px] font-semibold;
     color: var(--cc-text);
   }
 
@@ -490,7 +530,7 @@
   }
 
   .schema-stage {
-    @apply h-full min-h-0 overflow-auto border-0 p-5;
+    @apply h-full min-h-0 overflow-auto border-0 p-4;
   }
 
   .schema-stage--columns {
@@ -498,12 +538,12 @@
   }
 
   .schema-stage-bar {
-    @apply mb-5 flex items-start justify-between gap-3 border-b pb-4;
+    @apply mb-4 flex items-start justify-between gap-3 border-b pb-3;
     border-color: var(--cc-border);
   }
 
   .schema-stage-title {
-    @apply text-base font-semibold;
+    @apply text-[15px] font-semibold;
     color: var(--cc-text);
   }
 
@@ -524,7 +564,7 @@
   }
 
   .schema-advanced {
-    @apply rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2;
+    @apply rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2;
   }
 
   .schema-advanced summary {
@@ -548,14 +588,16 @@
   }
 
   .schema-add-btn {
-    @apply inline-flex cursor-pointer items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold text-white transition;
-    background: var(--cc-primary);
-    border-color: var(--cc-primary);
+    @apply inline-flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-[13px] font-semibold text-white transition;
+    background: var(--cc-primary) !important;
+    border-color: var(--cc-primary) !important;
+    color: white !important;
   }
 
   .schema-add-btn:hover:not(:disabled) {
-    background: var(--cc-primary-strong);
-    border-color: var(--cc-primary-strong);
+    background: var(--cc-primary-strong) !important;
+    border-color: var(--cc-primary-strong) !important;
+    color: white !important;
   }
 
   .schema-add-btn:disabled {
@@ -567,7 +609,8 @@
   }
 
   .schema-editor .schema-input {
-    @apply border-slate-200 bg-white text-slate-900 shadow-none;
+    @apply border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900 shadow-none;
+    border-radius: 0.5rem;
   }
 
   .schema-editor .schema-input--required {
@@ -612,6 +655,18 @@
 
   .schema-editor .pine-btn:hover:not(:disabled) {
     @apply border-slate-300 bg-slate-50;
+  }
+
+  .schema-editor .pine-btn--primary {
+    border-color: var(--cc-primary);
+    background: var(--cc-primary);
+    color: white;
+  }
+
+  .schema-editor .pine-btn--primary:hover:not(:disabled) {
+    border-color: var(--cc-primary-strong);
+    background: var(--cc-primary-strong);
+    color: white;
   }
 
   .schema-yaml-preview {
@@ -761,7 +816,7 @@
   }
 
   .footer-left {
-    @apply flex items-center gap-3;
+    @apply flex min-w-0 items-center gap-3;
   }
 
   .runtime-badge {
@@ -775,6 +830,16 @@
 
   .runtime-badge--loading {
     background: var(--cc-danger-soft);
+    color: var(--cc-danger);
+  }
+
+  .runtime-badge--failed {
+    background: var(--cc-danger-soft);
+    color: var(--cc-danger);
+  }
+
+  .footer-error {
+    @apply max-w-[55vw] truncate font-medium;
     color: var(--cc-danger);
   }
 
@@ -929,8 +994,10 @@
   }
 
   .theme-dark .data-stats {
-    background: var(--cc-night-raised);
-    border-color: var(--cc-night-border);
+    color: var(--cc-night-muted);
+  }
+
+  .theme-dark .data-file-size {
     color: var(--cc-night-muted);
   }
 
@@ -985,6 +1052,36 @@
 
   .theme-dark .schema-warning {
     @apply border-amber-700 bg-amber-950 text-amber-200;
+  }
+
+  .theme-dark .schema-empty,
+  .schema-editor--dark .schema-empty {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(143, 208, 255, 0.18) 1px, transparent 0),
+      radial-gradient(circle at 50% 0%, rgba(18, 57, 106, 0.92) 0%, rgba(12, 36, 66, 0.96) 42%, rgba(7, 20, 38, 1) 100%);
+    background-size: 22px 22px, 100% 100%;
+  }
+
+  .theme-dark .schema-empty-card,
+  .schema-editor--dark .schema-empty-card {
+    background: var(--cc-night-panel);
+    border-color: var(--cc-night-border);
+    box-shadow: none;
+  }
+
+  .theme-dark .schema-empty-kicker,
+  .schema-editor--dark .schema-empty-kicker {
+    color: #8fd0ff;
+  }
+
+  .theme-dark .schema-empty-title,
+  .schema-editor--dark .schema-empty-title {
+    color: var(--cc-night-text);
+  }
+
+  .theme-dark .schema-empty-copy,
+  .schema-editor--dark .schema-empty-copy {
+    color: var(--cc-night-muted);
   }
 
   .theme-dark .schema-workflow {
@@ -1337,5 +1434,13 @@
 
   .theme-dark .runtime-badge--loading {
     @apply bg-rose-950 text-rose-200;
+  }
+
+  .theme-dark .runtime-badge--failed {
+    @apply bg-rose-950 text-rose-200;
+  }
+
+  .theme-dark .footer-error {
+    @apply text-rose-200;
   }
 }

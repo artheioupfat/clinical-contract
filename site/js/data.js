@@ -1,12 +1,16 @@
+(function registerDataModule() {
 window.ClinicalModules = window.ClinicalModules || {};
-const constants = window.ClinicalConstants || {};
-const messages = constants.messages || {};
+const dataConstants = window.ClinicalConstants || {};
+const dataMessages = dataConstants.messages || {};
 
 window.ClinicalModules.data = {
   async analyzeDataFile(file, dataBuffer = null) {
     this.dataColumns = null;
     this.dataRows = null;
-    if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) return;
+    if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) {
+      this.setDataRuntimeUnavailable();
+      return;
+    }
     try {
       const buffer = dataBuffer || (await file.arrayBuffer());
       const payload = JSON.parse(window.pyAnalyzeDataFile(buffer, file.name || ''));
@@ -16,7 +20,7 @@ window.ClinicalModules.data = {
       console.error(error);
       this.dataColumns = null;
       this.dataRows = null;
-      this.previewError = `${messages.dataAnalysisError || 'Data analysis error'}: ${error.message}`;
+      this.previewError = `${dataMessages.dataAnalysisError || 'Data analysis error'}: ${error.message}`;
     }
   },
 
@@ -28,7 +32,7 @@ window.ClinicalModules.data = {
       await this.preparePreview(this.dataFile, buffer);
     } catch (error) {
       console.error(error);
-      this.previewError = `${messages.dataLoadingError || 'Data loading error'}: ${error.message}`;
+      this.previewError = `${dataMessages.dataLoadingError || 'Data loading error'}: ${error.message}`;
     }
   },
 
@@ -56,7 +60,10 @@ window.ClinicalModules.data = {
     this.releasePreviewSession();
     this.clearPreviewData();
 
-    if (!this.pythonReady || !file || !window.pyPrepareDataPreview) return;
+    if (!this.pythonReady || !file || !window.pyPrepareDataPreview) {
+      this.setDataRuntimeUnavailable();
+      return;
+    }
 
     try {
       const buffer = dataBuffer || (await file.arrayBuffer());
@@ -124,6 +131,7 @@ window.ClinicalModules.data = {
     if (!file) return;
     this.dataFile = file;
     this.dataFileName = file.name;
+    this.dataFileSize = file.size || 0;
     await this.refreshDataInsights();
     event.target.value = '';
   },
@@ -134,6 +142,7 @@ window.ClinicalModules.data = {
     if (!file) return;
     this.dataFile = file;
     this.dataFileName = file.name;
+    this.dataFileSize = file.size || 0;
     await this.refreshDataInsights();
   },
 
@@ -141,4 +150,30 @@ window.ClinicalModules.data = {
     if (this.dataColumns === null || this.dataRows === null) return '';
     return `Cols: ${this.dataColumns}    Rows: ${this.dataRows}`;
   },
+
+  dataFileSizeText() {
+    if (!this.dataFileSize) return '';
+    return `Data file: ${this.formatFileSize(this.dataFileSize)}`;
+  },
+
+  formatFileSize(bytes) {
+    const value = Number(bytes) || 0;
+    if (value <= 0) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = value;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    const precision = size >= 10 || unitIndex === 0 ? 0 : 1;
+    return `${size.toFixed(precision)}${units[unitIndex]}`;
+  },
+
+  setDataRuntimeUnavailable() {
+    this.previewRows = [];
+    this.previewError = dataMessages.dataRuntimeUnavailable || 'Data loading requires the Python runtime.';
+    console.error(this.previewError);
+  },
 };
+})();
