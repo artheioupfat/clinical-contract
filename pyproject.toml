@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "clinical-contract"
 version = "0.1.6"
-description = "Valide des data contracts YAML cliniques contre des fichiers Parquet"
+description = "Validate clinical YAML data contracts against Parquet and CSV files"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -30,7 +30,7 @@ dependencies = [
     "duckdb>=0.10",
 ]
 
-# La commande terminal
+# CLI entry point
 [project.scripts]
 clinical-contract = "clinical_contract.cli:main"
 
