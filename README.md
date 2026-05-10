@@ -67,7 +67,7 @@ schema:
     properties:
       - name: IPP
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Permanent patient identifier
         required: true
         quality:

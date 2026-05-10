@@ -28,7 +28,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant patient
         required: true
         quality:
@@ -66,12 +66,12 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant
         required: true
       - name: notes
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Colonne optionnelle
         required: false
 """
@@ -94,7 +94,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant
         required: true
 """
@@ -409,7 +409,6 @@ schema:
     properties:
       - name: event_ts
         logicalType: timestamp[us, tz=Europe/Paris]
-        physicalType: TIMESTAMP
         description: Horodatage
         required: true
 """
@@ -426,6 +425,39 @@ schema:
     reports = contract.check_schema(str(parquet_file))
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_physical_text_does_not_fallback_to_logical_string(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
+    yaml_physical_text = """
+apiVersion: v1.0.0
+kind: DataContract
+id: physical-string-contract
+name: Physical String Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Patient id
+        required: true
+"""
+    contract, _ = load_contract(yaml_physical_text)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "TEXT"
+    assert reports[0].columns[0].parquet_type == "VARCHAR"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_check_schema_csv_type_mismatch():

@@ -16,7 +16,7 @@ schema:
     properties:
       - name: IPP
         logicalType: string
-        physicalType: text
+        physicalType: varchar
         description: Identifiant patient permanent
         required: true
         quality:
@@ -27,13 +27,13 @@ schema:
 
       - name: IEP
         logicalType: string
-        physicalType: text
+        physicalType: varchar
         description: Identifiant d'épisode patient
         required: true
 
       - name: EVENT_TIME
         logicalType: date
-        physicalType: datetime
+        physicalType: timestamp
         description: Timestamp of the recorded event
         required: true
         quality:

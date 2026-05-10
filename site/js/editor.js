@@ -115,7 +115,11 @@ window.ClinicalModules.editor = {
       if (typeof this.syncSchemaFromYaml === 'function') {
         this.syncSchemaFromYaml({ preserveCurrentOnError: false });
       }
-      this.schemaSection = 'schema';
+      if (typeof this.setSchemaSection === 'function') {
+        this.setSchemaSection('fundamentals');
+      } else {
+        this.schemaSection = 'fundamentals';
+      }
       this.persistEditorSession();
     } catch (error) {
       this.schemaParseWarning = `Unable to load example contract: ${error.message}`;
@@ -148,7 +152,11 @@ window.ClinicalModules.editor = {
     if (typeof this.syncSchemaFromYaml === 'function') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: false });
     }
-    this.schemaSection = 'schema';
+    if (typeof this.setSchemaSection === 'function') {
+      this.setSchemaSection('fundamentals');
+    } else {
+      this.schemaSection = 'fundamentals';
+    }
     this.persistEditorSession();
   },
 };
