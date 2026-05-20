@@ -100,7 +100,7 @@
               </template>
 
               <template x-if="editorView === 'schema'">
-                <div class="schema-editor" :class="switchOn ? 'schema-editor--dark' : ''">
+                <div class="schema-editor">
                   <div
                     x-show="schemaParseWarning"
                     x-cloak
@@ -270,30 +270,30 @@
 
                       <template x-if="schemaEditorProperty()">
                         <div
-                          class="quality-modal-backdrop"
+                          class="entity-modal-backdrop"
                           @keydown.escape.window="closeSchemaProperty()"
                         >
-                          <div class="quality-modal" x-data="{ row: schemaEditorProperty() }" @click.outside="closeSchemaProperty()">
-                            <div class="quality-modal__header">
+                          <div class="entity-modal" x-data="{ row: schemaEditorProperty() }" @click.outside="closeSchemaProperty()">
+                            <div class="entity-modal__header">
                               <div>
-                                <div class="quality-modal__kicker">Column details</div>
-                                <div class="quality-modal__title" x-text="row.name || 'Unnamed column'"></div>
+                                <div class="entity-modal__kicker">Column details</div>
+                                <div class="entity-modal__title" x-text="row.name || 'Unnamed column'"></div>
                               </div>
                             </div>
 
-                            <div class="quality-modal__body">
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Column name <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span></span>
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Column name <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span></span>
                                 <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input" placeholder="column_name" />
                               </label>
 
-                              <label class="quality-modal__field column-required-field">
-                                <span class="quality-modal__label">Required</span>
+                              <label class="entity-modal__field column-required-field">
+                                <span class="entity-modal__label">Required</span>
                                 <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="column-required-checkbox" />
                               </label>
 
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Logical type <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span></span>
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Logical type <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span></span>
                                 <select
                                   :value="row.logicalType || ''"
                                   @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
@@ -308,8 +308,8 @@
                                 </select>
                               </label>
 
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Physical type <span class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</span></span>
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Physical type <span class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</span></span>
                                 <select
                                   :value="row.physicalType || ''"
                                   @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
@@ -324,14 +324,14 @@
                                 </select>
                               </label>
 
-                              <label class="quality-modal__field quality-modal__field--wide column-description-field">
-                                <span class="quality-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
+                              <label class="entity-modal__field entity-modal__field--wide column-description-field">
+                                <span class="entity-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
                                 <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Business meaning, expected semantics, and usage notes"></textarea>
                               </label>
                             </div>
 
-                            <div class="quality-modal__footer">
-                              <button type="button" class="quality-modal__remove" @click="removeSchemaProperty(row._rowId)">Remove column</button>
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeSchemaProperty(row._rowId)">Remove column</button>
                               <button type="button" class="pine-btn pine-btn--primary" @click="closeSchemaProperty()">Done</button>
                             </div>
                           </div>
@@ -378,39 +378,39 @@
 
                       <template x-if="qualityEditorRule()">
                         <div
-                          class="quality-modal-backdrop"
+                          class="entity-modal-backdrop"
                           @keydown.escape.window="closeQualityRule()"
                         >
-                          <div class="quality-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
-                            <div class="quality-modal__header">
+                          <div class="entity-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
+                            <div class="entity-modal__header">
                               <div>
-                                <div class="quality-modal__kicker">Quality check</div>
-                                <div class="quality-modal__title" x-text="rule.description || 'Untitled quality check'"></div>
+                                <div class="entity-modal__kicker">Quality check</div>
+                                <div class="entity-modal__title" x-text="rule.description || 'Untitled quality check'"></div>
                               </div>
                             </div>
 
-                            <div class="quality-modal__body">
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Column</span>
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Column</span>
                                 <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input">
-                                  <template x-for="property in schemaDraft.properties" :key="`quality-modal-property-${rule._rowId}-${property._rowId}`">
+                                  <template x-for="property in schemaDraft.properties" :key="`entity-modal-property-${rule._rowId}-${property._rowId}`">
                                     <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
                                   </template>
                                 </select>
                               </label>
 
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Expected result</span>
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Expected result</span>
                                 <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
                               </label>
 
-                              <label class="quality-modal__field quality-modal__field--wide">
-                                <span class="quality-modal__label">Description</span>
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label">Description</span>
                                 <textarea x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" placeholder="Explain what this quality check protects"></textarea>
                               </label>
 
-                              <label class="quality-modal__field quality-modal__field--wide">
-                                <span class="quality-modal__label">SQL query</span>
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label">SQL query</span>
                                 <div class="quality-sql-editor">
                                   <div class="quality-sql-editor__bar">
                                     <span>DuckDB SQL</span>
@@ -420,8 +420,8 @@
                               </label>
                             </div>
 
-                            <div class="quality-modal__footer">
-                              <button type="button" class="quality-modal__remove" @click="removeQualityRule(rule._rowId)">Remove check</button>
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeQualityRule(rule._rowId)">Remove check</button>
                               <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()">Done</button>
                             </div>
                           </div>
@@ -430,13 +430,13 @@
 
                       <template x-if="resetContractModalOpen">
                         <div
-                          class="quality-modal-backdrop"
+                          class="entity-modal-backdrop"
                           @keydown.escape.window="closeResetContractModal()"
                         >
                           <div class="reset-modal" @click.outside="closeResetContractModal()">
                             <div class="reset-modal__header">
                               <div>
-                                <div class="quality-modal__kicker">Reset contract</div>
+                                <div class="entity-modal__kicker">Reset contract</div>
                                 <div class="reset-modal__title">Delete the current draft?</div>
                               </div>
                             </div>
@@ -509,36 +509,36 @@
 
                       <template x-if="teamEditorMember()">
                         <div
-                          class="quality-modal-backdrop"
+                          class="entity-modal-backdrop"
                           @keydown.escape.window="closeTeamMember()"
                         >
-                          <div class="quality-modal" x-data="{ member: teamEditorMember() }" @click.outside="closeTeamMember()">
-                            <div class="quality-modal__header">
+                          <div class="entity-modal" x-data="{ member: teamEditorMember() }" @click.outside="closeTeamMember()">
+                            <div class="entity-modal__header">
                               <div>
-                                <div class="quality-modal__kicker">Team member</div>
-                                <div class="quality-modal__title" x-text="member.name || 'Unnamed member'"></div>
+                                <div class="entity-modal__kicker">Team member</div>
+                                <div class="entity-modal__title" x-text="member.name || 'Unnamed member'"></div>
                               </div>
                             </div>
 
-                            <div class="quality-modal__body">
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Name</span>
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Name</span>
                                 <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Jane Doe" />
                               </label>
 
-                              <label class="quality-modal__field">
-                                <span class="quality-modal__label">Role</span>
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label">Role</span>
                                 <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Data owner" />
                               </label>
 
-                              <label class="quality-modal__field quality-modal__field--wide">
-                                <span class="quality-modal__label">Email</span>
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label">Email</span>
                                 <input type="email" x-model="member.email" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="jane.doe@example.org" />
                               </label>
                             </div>
 
-                            <div class="quality-modal__footer">
-                              <button type="button" class="quality-modal__remove" @click="removeTeamMember(member._rowId)">Remove member</button>
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeTeamMember(member._rowId)">Remove member</button>
                               <button type="button" class="pine-btn pine-btn--primary" @click="closeTeamMember()">Done</button>
                             </div>
                           </div>

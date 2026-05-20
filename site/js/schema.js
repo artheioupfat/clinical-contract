@@ -228,8 +228,7 @@ window.ClinicalModules.schema = {
     const previousLogical = this.normalizeTypeToken(row._lastLogicalType);
     row.logicalType = nextLogical;
 
-    // Clear physical type only when the logical type was effectively changed by the user.
-    if (nextLogical && previousLogical && nextLogical !== previousLogical) {
+    if (nextLogical !== previousLogical) {
       row.physicalType = '';
     }
     row._lastLogicalType = nextLogical;
