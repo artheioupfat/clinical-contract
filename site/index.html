@@ -287,7 +287,7 @@
                                 <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input" placeholder="column_name" />
                               </label>
 
-                              <label class="quality-modal__field">
+                              <label class="quality-modal__field column-required-field">
                                 <span class="quality-modal__label">Required</span>
                                 <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="column-required-checkbox" />
                               </label>

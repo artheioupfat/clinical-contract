@@ -711,6 +711,14 @@
     @apply mt-2 h-5 w-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500;
   }
 
+  .column-required-field {
+    @apply flex flex-col items-start gap-2;
+  }
+
+  .column-required-field .column-required-checkbox {
+    @apply mt-0;
+  }
+
   .column-description-field {
     @apply mt-1 border-t border-slate-200 pt-4;
   }

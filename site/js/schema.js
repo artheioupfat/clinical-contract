@@ -357,7 +357,7 @@ window.ClinicalModules.schema = {
     this.showRequiredHints = false;
     this.yamlName = 'datacontract.yaml';
     this.clearResults();
-    this.seedSchemaDraft({ withProperty: true });
+    this.seedSchemaDraft();
     this.pushSchemaToYaml();
     this.setSchemaSection('fundamentals');
     this.persistEditorSession();
@@ -532,7 +532,7 @@ window.ClinicalModules.schema = {
       tableName: firstSchema.name || '',
       tablePhysicalType: firstSchema.physicalType || 'TABLE',
       tableDescription: firstSchema.description || '',
-      properties: normalizedProperties.length ? normalizedProperties : [this.createSchemaProperty()],
+      properties: normalizedProperties,
       qualityRules,
       teamName: team.name || '',
       teamDescription: team.description || '',
