@@ -234,15 +234,32 @@ window.ClinicalModules.schema = {
   addQualityRule() {
     const firstProperty = (this.schemaDraft.properties || []).find((property) => property.name);
     if (!firstProperty) return;
-    this.schemaDraft.qualityRules.push(
-      this.createQualityRule({ propertyName: firstProperty?.name || '' })
-    );
+    const rule = this.createQualityRule({ propertyName: firstProperty?.name || '' });
+    this.schemaDraft.qualityRules.push(rule);
+    this.qualityEditorRuleId = rule._rowId;
     this.pushSchemaToYaml();
   },
 
   removeQualityRule(rowId) {
     this.schemaDraft.qualityRules = this.schemaDraft.qualityRules.filter((rule) => rule._rowId !== rowId);
+    if (this.qualityEditorRuleId === rowId) {
+      this.qualityEditorRuleId = null;
+    }
     this.pushSchemaToYaml();
+  },
+
+  openQualityRule(rowId) {
+    this.qualityEditorRuleId = rowId;
+  },
+
+  closeQualityRule() {
+    this.qualityEditorRuleId = null;
+  },
+
+  qualityEditorRule() {
+    return (this.schemaDraft.qualityRules || []).find(
+      (rule) => rule._rowId === this.qualityEditorRuleId
+    ) || null;
   },
 
   addTeamMember() {

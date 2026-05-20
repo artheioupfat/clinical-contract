@@ -27,6 +27,7 @@ document.addEventListener('alpine:init', () => {
     ],
     schemaRootExtras: {},
     schemaOtherSchemas: [],
+    qualityEditorRuleId: null,
     logicalTypeOptions: [
       'string',
       'date',

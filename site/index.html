@@ -301,46 +301,91 @@
                             <div class="schema-stage-title">Quality</div>
                           </div>
                         </div>
-                        <div class="space-y-3">
+                        <div class="quality-list-shell">
                           <template x-if="schemaDraft.qualityRules.length === 0">
-                            <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                            <div class="quality-empty">
                               Add at least one named column, then create SQL quality checks here.
                             </div>
                           </template>
-                          <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
-                            <div class="rounded-lg border border-slate-200 bg-white p-3">
-                              <div class="grid gap-3 md:grid-cols-[1fr_auto]">
-                                <label class="space-y-1">
-                                  <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Column</span>
-                                  <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500">
-                                    <template x-for="property in schemaDraft.properties" :key="`quality-property-${rule._rowId}-${property._rowId}`">
-                                      <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
-                                    </template>
-                                  </select>
-                                </label>
-                                <div class="flex items-end justify-end">
-                                  <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeQualityRule(rule._rowId)">Remove</button>
-                                </div>
-                              </div>
-                              <label class="mt-3 block space-y-1">
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description</span>
-                                <input type="text" x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
-                              </label>
-                              <label class="mt-3 block space-y-1">
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">SQL Query</span>
-                                <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="4" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-800 outline-none focus:border-blue-500"></textarea>
-                              </label>
-                              <label class="mt-3 block max-w-xs space-y-1">
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Must be</span>
-                                <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
-                              </label>
-                            </div>
-                          </template>
+                          <table x-show="schemaDraft.qualityRules.length > 0" x-cloak class="quality-table">
+                            <thead>
+                              <tr>
+                                <th>Column</th>
+                                <th>Description</th>
+                                <th class="text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
+                                <tr class="quality-table__row" @click="openQualityRule(rule._rowId)" tabindex="0" @keydown.enter.prevent="openQualityRule(rule._rowId)">
+                                  <td class="quality-table__column" x-text="rule.propertyName || 'No column selected'"></td>
+                                  <td class="quality-table__description" x-text="rule.description || 'Untitled quality check'"></td>
+                                  <td class="quality-table__action">
+                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)">Edit details</button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
                         </div>
                         <div class="schema-add-row">
                           <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)">Add check</button>
                         </div>
                       </div>
+
+                      <template x-if="qualityEditorRule()">
+                        <div
+                          class="quality-modal-backdrop"
+                          @keydown.escape.window="closeQualityRule()"
+                        >
+                          <div class="quality-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
+                            <div class="quality-modal__header">
+                              <div>
+                                <div class="quality-modal__kicker">Quality check</div>
+                                <div class="quality-modal__title" x-text="rule.description || 'Untitled quality check'"></div>
+                              </div>
+                              <button type="button" class="quality-modal__close" @click="closeQualityRule()">Close</button>
+                            </div>
+
+                            <div class="quality-modal__body">
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Column</span>
+                                <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input">
+                                  <template x-for="property in schemaDraft.properties" :key="`quality-modal-property-${rule._rowId}-${property._rowId}`">
+                                    <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Expected result</span>
+                                <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                              </label>
+
+                              <label class="quality-modal__field quality-modal__field--wide">
+                                <span class="quality-modal__label">Description</span>
+                                <input type="text" x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                              </label>
+
+                              <label class="quality-modal__field quality-modal__field--wide">
+                                <span class="quality-modal__label">SQL query</span>
+                                <div class="quality-sql-editor">
+                                  <div class="quality-sql-editor__bar">
+                                    <span>DuckDB SQL</span>
+                                    <span>Expected count equals result</span>
+                                  </div>
+                                  <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" placeholder="select count(*) from data where ..."></textarea>
+                                </div>
+                              </label>
+                            </div>
+
+                            <div class="quality-modal__footer">
+                              <button type="button" class="quality-modal__remove" @click="removeQualityRule(rule._rowId)">Remove check</button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()">Done</button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
 
                       <div class="schema-card schema-stage" x-show="schemaSection === 'team'" x-cloak>
                         <div class="schema-stage-bar">
