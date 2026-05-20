@@ -127,7 +127,7 @@
                   <div class="schema-workflow" x-show="schemaStarted" x-cloak>
                     <aside class="schema-nav">
                       <div class="schema-nav-head">
-                        <div class="schema-nav-title">Contract builder</div>
+                        <div class="schema-nav-title">Write contract</div>
                       </div>
 
                       <nav class="schema-nav-list">
@@ -140,6 +140,9 @@
                         </template>
                       </nav>
 
+                      <div class="schema-nav-footer">
+                        <button type="button" class="schema-reset-button" @click.stop.prevent="resetContractModalOpen = true">Reset contract</button>
+                      </div>
                    </aside>
 
                     <section class="schema-workspace">
@@ -223,67 +226,37 @@
                           <div class="schema-stage-title">Columns</div>
                         </div>
 
-                        <div class="mt-3 overflow-x-auto">
-                          <table class="schema-table schema-table--compact min-w-[820px] w-full border-collapse">
+                        <div class="column-list-shell mt-3">
+                          <template x-if="schemaDraft.properties.length === 0">
+                            <div class="column-empty">
+                              Add a column, then edit its type and description from the details panel.
+                            </div>
+                          </template>
+                          <table x-show="schemaDraft.properties.length > 0" x-cloak class="column-table">
                             <thead>
-                              <tr class="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
-                                <th class="px-3 py-2">Column</th>
-                                <th class="px-3 py-2">Logical Type</th>
-                                <th class="px-3 py-2">Physical Type</th>
-                                <th class="px-3 py-2">Required</th>
-                                <th class="px-3 py-2">Description</th>
-                                <th class="px-3 py-2 text-right">Action</th>
+                              <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                                <th class="text-right">Action</th>
                               </tr>
                             </thead>
                             <tbody>
                               <template x-for="row in schemaDraft.properties" :key="row._rowId">
-                                <tr class="border-t border-slate-100 align-top">
-                                  <td class="px-3 py-2">
-                                    <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input w-full min-w-[160px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500" placeholder="column_name" />
-                                    <div class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</div>
+                                <tr class="column-table__row" @click="openSchemaProperty(row._rowId)" tabindex="0" @keydown.enter.prevent="openSchemaProperty(row._rowId)">
+                                  <td class="column-table__column">
+                                    <span x-text="row.name || 'Unnamed column'"></span>
+                                    <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span>
                                   </td>
-                                  <td class="px-3 py-2">
-                                    <select
-                                      :value="row.logicalType || ''"
-                                      @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
-                                      x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
-                                      :class="requiredInputClass('propertyLogicalType', row)"
-                                      class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
-                                    >
-                                      <option value="">Not specified</option>
-                                      <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-${row._rowId}-${logicalType}`">
-                                        <option :value="logicalType" x-text="logicalType"></option>
-                                      </template>
-                                    </select>
-                                    <div class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</div>
+                                  <td class="column-table__type">
+                                    <span x-text="columnTypeSummary(row)"></span>
+                                    <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span>
                                   </td>
-                                  <td class="px-3 py-2">
-                                    <select
-                                      :value="row.physicalType || ''"
-                                      @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
-                                      x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
-                                      :class="requiredInputClass('propertyPhysicalType', row)"
-                                      class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
-                                    >
-                                      <option value="">Not specified</option>
-                                      <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-${row._rowId}-${physicalType}`">
-                                        <option :value="physicalType" x-text="physicalType"></option>
-                                      </template>
-                                    </select>
-                                    <div class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</div>
-                                  </td>
-                                  <td class="px-3 py-2">
-                                    <label class="inline-flex cursor-pointer items-center gap-2 pt-2 text-sm text-slate-600">
-                                      <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                                      <span>Required</span>
-                                    </label>
-                                  </td>
-                                  <td class="px-3 py-2">
-                                    <input type="text" x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" class="schema-input w-full min-w-[220px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500" placeholder="Business meaning" />
-                                    <div class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</div>
-                                  </td>
-                                  <td class="px-3 py-2 text-right">
-                                    <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeSchemaProperty(row._rowId)">Remove</button>
+                                  <td class="column-table__required" x-text="row.required ? 'Yes' : 'No'"></td>
+                                  <td class="column-table__description" x-text="row.description || 'No description yet'"></td>
+                                  <td class="column-table__action">
+                                    <button type="button" class="column-edit-button" @click.stop.prevent="openSchemaProperty(row._rowId)">Edit</button>
                                   </td>
                                 </tr>
                               </template>
@@ -294,6 +267,76 @@
                           <button type="button" class="schema-add-btn" @click="addSchemaProperty()">Add column</button>
                         </div>
                       </div>
+
+                      <template x-if="schemaEditorProperty()">
+                        <div
+                          class="quality-modal-backdrop"
+                          @keydown.escape.window="closeSchemaProperty()"
+                        >
+                          <div class="quality-modal" x-data="{ row: schemaEditorProperty() }" @click.outside="closeSchemaProperty()">
+                            <div class="quality-modal__header">
+                              <div>
+                                <div class="quality-modal__kicker">Column details</div>
+                                <div class="quality-modal__title" x-text="row.name || 'Unnamed column'"></div>
+                              </div>
+                            </div>
+
+                            <div class="quality-modal__body">
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Column name <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span></span>
+                                <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input" placeholder="column_name" />
+                              </label>
+
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Required</span>
+                                <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="column-required-checkbox" />
+                              </label>
+
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Logical type <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span></span>
+                                <select
+                                  :value="row.logicalType || ''"
+                                  @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
+                                  x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
+                                  :class="requiredInputClass('propertyLogicalType', row)"
+                                  class="schema-input"
+                                >
+                                  <option value="">Not specified</option>
+                                  <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-modal-${row._rowId}-${logicalType}`">
+                                    <option :value="logicalType" x-text="logicalType"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Physical type <span class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</span></span>
+                                <select
+                                  :value="row.physicalType || ''"
+                                  @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
+                                  x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
+                                  :class="requiredInputClass('propertyPhysicalType', row)"
+                                  class="schema-input"
+                                >
+                                  <option value="">Not specified</option>
+                                  <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-modal-${row._rowId}-${physicalType}`">
+                                    <option :value="physicalType" x-text="physicalType"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="quality-modal__field quality-modal__field--wide column-description-field">
+                                <span class="quality-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
+                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Business meaning, expected semantics, and usage notes"></textarea>
+                              </label>
+                            </div>
+
+                            <div class="quality-modal__footer">
+                              <button type="button" class="quality-modal__remove" @click="removeSchemaProperty(row._rowId)">Remove column</button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeSchemaProperty()">Done</button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
 
                       <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
                         <div class="schema-stage-bar">
@@ -321,7 +364,7 @@
                                   <td class="quality-table__column" x-text="rule.propertyName || 'No column selected'"></td>
                                   <td class="quality-table__description" x-text="rule.description || 'Untitled quality check'"></td>
                                   <td class="quality-table__action">
-                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)">Edit details</button>
+                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)">Edit</button>
                                   </td>
                                 </tr>
                               </template>
@@ -344,7 +387,6 @@
                                 <div class="quality-modal__kicker">Quality check</div>
                                 <div class="quality-modal__title" x-text="rule.description || 'Untitled quality check'"></div>
                               </div>
-                              <button type="button" class="quality-modal__close" @click="closeQualityRule()">Close</button>
                             </div>
 
                             <div class="quality-modal__body">
@@ -364,7 +406,7 @@
 
                               <label class="quality-modal__field quality-modal__field--wide">
                                 <span class="quality-modal__label">Description</span>
-                                <input type="text" x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                <textarea x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" placeholder="Explain what this quality check protects"></textarea>
                               </label>
 
                               <label class="quality-modal__field quality-modal__field--wide">
@@ -372,7 +414,6 @@
                                 <div class="quality-sql-editor">
                                   <div class="quality-sql-editor__bar">
                                     <span>DuckDB SQL</span>
-                                    <span>Expected count equals result</span>
                                   </div>
                                   <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" placeholder="select count(*) from data where ..."></textarea>
                                 </div>
@@ -382,6 +423,37 @@
                             <div class="quality-modal__footer">
                               <button type="button" class="quality-modal__remove" @click="removeQualityRule(rule._rowId)">Remove check</button>
                               <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()">Done</button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
+
+                      <template x-if="resetContractModalOpen">
+                        <div
+                          class="quality-modal-backdrop"
+                          @keydown.escape.window="closeResetContractModal()"
+                        >
+                          <div class="reset-modal" @click.outside="closeResetContractModal()">
+                            <div class="reset-modal__header">
+                              <div>
+                                <div class="quality-modal__kicker">Reset contract</div>
+                                <div class="reset-modal__title">Delete the current draft?</div>
+                              </div>
+                            </div>
+
+                            <div class="reset-modal__body">
+                              <p>
+                                This will remove the contract currently being edited in the builder and return to the start screen.
+                                You can download the YAML first if you want to keep a local copy.
+                              </p>
+                            </div>
+
+                            <div class="reset-modal__footer">
+                              <button type="button" class="pine-btn" @click="downloadYaml()" :disabled="!yamlText.trim()">Download draft</button>
+                              <div class="reset-modal__actions">
+                                <button type="button" class="pine-btn" @click="closeResetContractModal()">Cancel</button>
+                                <button type="button" class="reset-modal__danger" @click="resetContractDraft()">Reset contract</button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -400,35 +472,78 @@
                           </label>
                           <label class="space-y-1">
                             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description</span>
-                            <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
+                            <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-input--description w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
                           </label>
                         </div>
-                        <div class="mt-4 space-y-2">
+                        <div class="team-list-shell mt-4">
                           <template x-if="schemaDraft.teamMembers.length === 0">
-                            <div class="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
+                            <div class="team-empty">
                               No team members yet.
                             </div>
                           </template>
-                          <template x-for="member in schemaDraft.teamMembers" :key="member._rowId">
-                            <div class="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 md:grid-cols-[1fr_1fr_auto]">
-                              <label class="space-y-1">
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Name or Email</span>
-                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
-                              </label>
-                              <label class="space-y-1">
-                                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Role</span>
-                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
-                              </label>
-                              <div class="flex items-end justify-end">
-                                <button type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700" @click="removeTeamMember(member._rowId)">Remove</button>
-                              </div>
-                            </div>
-                          </template>
+                          <table x-show="schemaDraft.teamMembers.length > 0" x-cloak class="team-table">
+                            <thead>
+                              <tr>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th class="text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="member in schemaDraft.teamMembers" :key="member._rowId">
+                                <tr class="team-table__row" @click="openTeamMember(member._rowId)" tabindex="0" @keydown.enter.prevent="openTeamMember(member._rowId)">
+                                  <td class="team-table__name" x-text="member.name || 'Unnamed member'"></td>
+                                  <td class="team-table__role" x-text="member.role || 'No role specified'"></td>
+                                  <td class="team-table__action">
+                                    <button type="button" class="team-edit-button" @click.stop.prevent="openTeamMember(member._rowId)">Edit</button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
                         </div>
                         <div class="schema-add-row">
                           <button type="button" class="schema-add-btn" @click="addTeamMember()">Add member</button>
                         </div>
                       </div>
+
+                      <template x-if="teamEditorMember()">
+                        <div
+                          class="quality-modal-backdrop"
+                          @keydown.escape.window="closeTeamMember()"
+                        >
+                          <div class="quality-modal" x-data="{ member: teamEditorMember() }" @click.outside="closeTeamMember()">
+                            <div class="quality-modal__header">
+                              <div>
+                                <div class="quality-modal__kicker">Team member</div>
+                                <div class="quality-modal__title" x-text="member.name || 'Unnamed member'"></div>
+                              </div>
+                            </div>
+
+                            <div class="quality-modal__body">
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Name</span>
+                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Jane Doe" />
+                              </label>
+
+                              <label class="quality-modal__field">
+                                <span class="quality-modal__label">Role</span>
+                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Data owner" />
+                              </label>
+
+                              <label class="quality-modal__field quality-modal__field--wide">
+                                <span class="quality-modal__label">Email</span>
+                                <input type="email" x-model="member.email" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="jane.doe@example.org" />
+                              </label>
+                            </div>
+
+                            <div class="quality-modal__footer">
+                              <button type="button" class="quality-modal__remove" @click="removeTeamMember(member._rowId)">Remove member</button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeTeamMember()">Done</button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>
                     </div>
                   </div>
                 </div>

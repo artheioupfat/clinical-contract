@@ -35,6 +35,27 @@ window.ClinicalModules.schema = {
     this.persistEditorSession();
   },
 
+  openResetContractModal() {
+    this.resetContractModalOpen = true;
+  },
+
+  closeResetContractModal() {
+    this.resetContractModalOpen = false;
+  },
+
+  resetContractDraft() {
+    this.resetContractModalOpen = false;
+    this.yamlText = '';
+    this.yamlName = '';
+    this.schemaStarted = false;
+    this.schemaParseWarning = '';
+    this.showRequiredHints = false;
+    this.schemaSection = 'fundamentals';
+    this.seedSchemaDraft();
+    this.clearResults();
+    this.clearEditorSession();
+  },
+
   normalizeContractDescription(description) {
     if (description && typeof description === 'object' && !Array.isArray(description)) {
       return {
@@ -145,6 +166,7 @@ window.ClinicalModules.schema = {
       _rowId: this.schemaRowCounter,
       name: seed.name || '',
       role: seed.role || '',
+      email: seed.email || '',
       extras: deepClone(seed.extras || {}),
     };
   },
@@ -219,16 +241,44 @@ window.ClinicalModules.schema = {
   },
 
   addSchemaProperty() {
-    this.schemaDraft.properties.push(this.createSchemaProperty());
+    const property = this.createSchemaProperty();
+    this.schemaDraft.properties.push(property);
+    this.columnEditorRowId = property._rowId;
     this.pushSchemaToYaml();
   },
 
   removeSchemaProperty(rowId) {
     this.schemaDraft.properties = this.schemaDraft.properties.filter((row) => row._rowId !== rowId);
+    if (this.columnEditorRowId === rowId) {
+      this.columnEditorRowId = null;
+    }
     this.schemaDraft.qualityRules = (this.schemaDraft.qualityRules || []).filter(
       (rule) => this.schemaDraft.properties.some((property) => property.name === rule.propertyName)
     );
     this.pushSchemaToYaml();
+  },
+
+  openSchemaProperty(rowId) {
+    this.columnEditorRowId = rowId;
+  },
+
+  closeSchemaProperty() {
+    this.columnEditorRowId = null;
+  },
+
+  schemaEditorProperty() {
+    return (this.schemaDraft.properties || []).find(
+      (property) => property._rowId === this.columnEditorRowId
+    ) || null;
+  },
+
+  columnTypeSummary(row) {
+    if (row?.logicalType && row?.physicalType) {
+      return `${row.logicalType} / ${row.physicalType}`;
+    }
+    if (row?.logicalType) return row.logicalType;
+    if (row?.physicalType) return row.physicalType;
+    return 'Not specified';
   },
 
   addQualityRule() {
@@ -263,13 +313,32 @@ window.ClinicalModules.schema = {
   },
 
   addTeamMember() {
-    this.schemaDraft.teamMembers.push(this.createTeamMember());
+    const member = this.createTeamMember();
+    this.schemaDraft.teamMembers.push(member);
+    this.teamEditorMemberId = member._rowId;
     this.pushSchemaToYaml();
   },
 
   removeTeamMember(rowId) {
     this.schemaDraft.teamMembers = this.schemaDraft.teamMembers.filter((member) => member._rowId !== rowId);
+    if (this.teamEditorMemberId === rowId) {
+      this.teamEditorMemberId = null;
+    }
     this.pushSchemaToYaml();
+  },
+
+  openTeamMember(rowId) {
+    this.teamEditorMemberId = rowId;
+  },
+
+  closeTeamMember() {
+    this.teamEditorMemberId = null;
+  },
+
+  teamEditorMember() {
+    return (this.schemaDraft.teamMembers || []).find(
+      (member) => member._rowId === this.teamEditorMemberId
+    ) || null;
   },
 
   setEditorView(mode) {
@@ -318,6 +387,9 @@ window.ClinicalModules.schema = {
     };
     this.schemaRootExtras = {};
     this.schemaOtherSchemas = [];
+    this.columnEditorRowId = null;
+    this.qualityEditorRuleId = null;
+    this.teamEditorMemberId = null;
   },
 
   syncSchemaFromYaml({ preserveCurrentOnError = true } = {}) {
@@ -431,7 +503,7 @@ window.ClinicalModules.schema = {
     const teamMembers = Array.isArray(team.members)
       ? team.members.map((member) => {
           const source = member && typeof member === 'object' ? member : {};
-          const handledMember = new Set(['name', 'role']);
+          const handledMember = new Set(['name', 'role', 'email']);
           const memberExtras = {};
           for (const [key, value] of Object.entries(source)) {
             if (!handledMember.has(key)) memberExtras[key] = value;
@@ -439,6 +511,7 @@ window.ClinicalModules.schema = {
           return this.createTeamMember({
             name: source.name || '',
             role: source.role || '',
+            email: source.email || '',
             extras: memberExtras,
           });
         })
@@ -470,6 +543,9 @@ window.ClinicalModules.schema = {
 
     this.schemaRootExtras = rootExtras;
     this.schemaOtherSchemas = deepClone(otherSchemas);
+    this.columnEditorRowId = null;
+    this.qualityEditorRuleId = null;
+    this.teamEditorMemberId = null;
     this.schemaParseWarning = '';
     this.schemaStarted = true;
   },
@@ -548,6 +624,7 @@ window.ClinicalModules.schema = {
         if (!member.name || !member.name.trim()) return null;
         row.name = member.name.trim();
         if (member.role && member.role.trim()) row.role = member.role.trim();
+        if (member.email && member.email.trim()) row.email = member.email.trim();
         return row;
       })
       .filter(Boolean);

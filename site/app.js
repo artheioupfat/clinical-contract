@@ -27,7 +27,10 @@ document.addEventListener('alpine:init', () => {
     ],
     schemaRootExtras: {},
     schemaOtherSchemas: [],
+    columnEditorRowId: null,
     qualityEditorRuleId: null,
+    teamEditorMemberId: null,
+    resetContractModalOpen: false,
     logicalTypeOptions: [
       'string',
       'date',
