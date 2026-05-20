@@ -18,6 +18,7 @@
   <body>
     <div x-data="clinicalApp()" x-init="init()" class="app-root" :class="switchOn ? 'app-root--dark' : ''">
       <div class="app-frame" :class="switchOn ? 'theme-dark page-night' : ''">
+        <!-- Header: brand, runtime-independent controls, and theme switch. -->
         <header class="pine-header">
           <div class="pine-brand">
             <div class="pine-logo-box">
@@ -51,12 +52,14 @@
           </div>
         </header>
 
+        <!-- Main workspace: resizable contract editor and data checker. -->
         <main class="app-main">
           <div
             x-ref="appGrid"
             :class="editorView === 'schema' ? 'app-grid app-grid--schema' : 'app-grid'"
             :style="splitGridStyle()"
           >
+            <!-- Left panel: YAML editor plus visual contract builder. -->
             <section class="panel panel--editor">
               <div class="panel-head">
                 <div>
@@ -75,6 +78,7 @@
                 </div>
               </div>
 
+              <!-- YAML mode: plain code editor optimized for manual contract editing. -->
               <template x-if="editorView === 'yaml'">
                 <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">
                   <div class="editor-gutter" aria-hidden="true">
@@ -99,6 +103,7 @@
                 </div>
               </template>
 
+              <!-- Schema mode: guided builder that keeps the YAML as the source of truth. -->
               <template x-if="editorView === 'schema'">
                 <div class="schema-editor">
                   <div
@@ -125,6 +130,7 @@
                   </template>
 
                   <div class="schema-workflow" x-show="schemaStarted" x-cloak>
+                    <!-- Builder navigation: high-level contract sections. -->
                     <aside class="schema-nav">
                       <div class="schema-nav-head">
                         <div class="schema-nav-title">Write contract</div>
@@ -146,6 +152,7 @@
                    </aside>
 
                     <section class="schema-workspace">
+                      <!-- Fundamentals: contract identity and business description. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'fundamentals'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
@@ -197,6 +204,7 @@
                         </div>
                       </div>
 
+                      <!-- Schema: table metadata and column definitions. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
@@ -338,6 +346,7 @@
                         </div>
                       </template>
 
+                      <!-- Quality: SQL checks attached to contract columns. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
@@ -432,6 +441,7 @@
                         </div>
                       </template>
 
+                      <!-- Reset confirmation: prevents accidental draft deletion. -->
                       <template x-if="resetContractModalOpen">
                         <div
                           class="entity-modal-backdrop"
@@ -463,6 +473,7 @@
                         </div>
                       </template>
 
+                      <!-- Team: ownership metadata and members. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'team'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
@@ -574,6 +585,7 @@
               <span class="split-resizer__handle" aria-hidden="true"></span>
             </button>
 
+            <!-- Right panel: data loading, validation results, checks, and preview. -->
             <section class="panel">
               <div class="panel-head">
                 <div>
@@ -592,6 +604,7 @@
               </div>
 
               <div class="checker-body">
+                <!-- Dataset input: CSV/Parquet drag-and-drop and file picker. -->
                 <div
                   class="dropzone"
                   :class="draggingData ? 'dropzone--active' : ''"
@@ -615,6 +628,7 @@
                   <div class="dropzone-filename" x-text="dataFileName || 'No file selected'"></div>
                 </div>
 
+                <!-- Results: validate, schema, quality, and paginated dataset preview. -->
                 <div class="results-shell">
                   <div class="pine-tabs">
                     <button type="button" class="pine-tab" :class="activeTab === 'validate' ? 'pine-tab--active' : ''" @click="activeTab = 'validate'">
@@ -830,6 +844,7 @@
           </div>
         </main>
 
+        <!-- Runtime progress: PyScript/Pyodide boot feedback. -->
         <div class="runtime-progress" x-show="showRuntimeProgress" x-transition.opacity.duration.250ms x-cloak>
           <div class="runtime-progress__meta">
             <span x-text="runtimeProgressLabel"></span>
@@ -840,6 +855,7 @@
           </div>
         </div>
 
+        <!-- Footer: compact runtime status and editor metadata. -->
         <footer class="app-footer">
           <div class="footer-left">
             <span class="runtime-badge" :class="runtimeBadgeClass()" x-text="runtimeBadgeLabel()"></span>
@@ -850,6 +866,7 @@
       </div>
     </div>
 
+    <!-- Runtime and application scripts. Keep order aligned with site/README.md. -->
     <script type="py" src="./python/bridge.py" config="./pyscript.toml"></script>
     <script src="./js/constants.js"></script>
     <script src="./js/ui.js"></script>

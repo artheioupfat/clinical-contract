@@ -1,0 +1,76 @@
+# clinical-contract site
+
+Static browser playground for `clinical-contract`, designed for GitHub Pages.
+
+The site lets users build or edit a data contract, validate the YAML, load a CSV or Parquet file, preview the dataset, and run contract checks directly in the browser through PyScript/Pyodide.
+
+## Local workflow
+
+```bash
+npm install
+npm run test:site
+npm run build:site:css
+python -m http.server 8000 -d site
+```
+
+Then open `http://localhost:8000`.
+
+## File map
+
+- `index.html`: single-page application shell and static markup.
+- `css/tailwind.input.css`: Tailwind source with the component layer.
+- `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
+- `js/app.js`: Alpine root state and application composition.
+- `js/constants.js`: shared UI/type constants.
+- `js/ui.js`: theme switch, split pane, and logo status helpers.
+- `js/runtime.js`: PyScript readiness, progress, and runtime errors.
+- `js/editor.js`: YAML text editor, import, export, and keyboard behavior.
+- `js/contract-codec.js`: pure YAML/draft conversion helpers.
+- `js/schema.js`: visual contract builder actions.
+- `js/data.js`: CSV/Parquet loading and dataset preview actions.
+- `js/results.js`: validate/check result presentation.
+- `python/bridge.py`: Python bridge executed by PyScript.
+- `tests/`: lightweight Node tests for browser-safe logic.
+
+## Script loading order
+
+`index.html` intentionally loads scripts in this order:
+
+1. `constants.js`
+2. `ui.js`
+3. `runtime.js`
+4. `editor.js`
+5. `contract-codec.js`
+6. `schema.js`
+7. `data.js`
+8. `results.js`
+9. `app.js`
+
+Keep `contract-codec.js` before `schema.js`, because the schema builder uses the codec to convert between YAML and the visual draft.
+
+## Editing rules
+
+- Put YAML serialization and parsing behavior in `js/contract-codec.js`.
+- Keep Alpine UI actions in the feature modules under `js/`.
+- Edit `css/tailwind.input.css`, then run `npm run build:site:css` to update `css/tailwind.css`.
+- Add or update `site/tests/contract-codec.test.js` when changing YAML/draft behavior.
+- Keep the site static: no backend, no hardcoded local paths, and relative assets only.
+
+## Manual smoke checklist
+
+Before deploying, verify:
+
+- Start from the empty contract screen.
+- Add a schema, column, quality rule, and team member.
+- Switch between Schema and YAML without losing data.
+- Load the example contract.
+- Validate the contract.
+- Load a CSV or Parquet file.
+- Open Preview and paginate rows.
+- Run checks.
+- Toggle dark mode.
+- Reset the contract and cancel once before confirming.
+
+## Deployment
+
+GitHub Pages deploys a deterministic `site_dist/` artifact. The workflow copies the static site, copies the Python package instead of relying on symlinks, runs site tests, builds CSS, checks for symlinks, and deploys the artifact.
