@@ -1109,8 +1109,7 @@
   }
 
   .runtime-progress-fill {
-    @apply absolute inset-y-0 left-0 block h-full w-0 rounded-full transition-[width] duration-200 ease-linear;
-    background: linear-gradient(90deg, var(--cc-primary) 0%, #38a3e8 100%);
+    @apply absolute inset-y-0 left-0 block h-full w-0 rounded-full bg-[#005ca9] transition-[width] duration-200 ease-linear;
   }
 
   .app-footer {
