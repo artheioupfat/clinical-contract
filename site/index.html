@@ -326,7 +326,7 @@
 
                               <label class="entity-modal__field entity-modal__field--wide column-description-field">
                                 <span class="entity-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
-                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Business meaning, expected semantics, and usage notes"></textarea>
+                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Example: Patient identifier used to link healthcare records across hospital stays."></textarea>
                               </label>
                             </div>
 
@@ -414,6 +414,10 @@
                                 <div class="quality-sql-editor">
                                   <div class="quality-sql-editor__bar">
                                     <span>DuckDB SQL</span>
+                                    <span class="quality-sql-editor__table-hint">
+                                      <span class="quality-sql-editor__table-label">Table name:</span>
+                                      <span class="quality-sql-editor__table-name" x-text="schemaDraft.tableName || 'data'"></span>
+                                    </span>
                                   </div>
                                   <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" placeholder="select count(*) from data where ..."></textarea>
                                 </div>
