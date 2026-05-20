@@ -244,8 +244,9 @@
                                   </td>
                                   <td class="px-3 py-2">
                                     <select
-                                      x-model="row.logicalType"
-                                      @change="onLogicalTypeChanged(row)"
+                                      :value="row.logicalType || ''"
+                                      @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
+                                      x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
                                       :class="requiredInputClass('propertyLogicalType', row)"
                                       class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
                                     >
@@ -258,8 +259,9 @@
                                   </td>
                                   <td class="px-3 py-2">
                                     <select
-                                      x-model="row.physicalType"
-                                      @change="onPhysicalTypeChanged(row)"
+                                      :value="row.physicalType || ''"
+                                      @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
+                                      x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
                                       :class="requiredInputClass('propertyPhysicalType', row)"
                                       class="schema-input w-full min-w-[130px] rounded-lg border border-slate-200 px-2.5 py-2 text-sm outline-none focus:border-blue-500"
                                     >

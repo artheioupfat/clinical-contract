@@ -31,9 +31,6 @@ window.ClinicalModules.schema = {
   setSchemaSection(sectionId) {
     const sections = Array.isArray(this.schemaSections) ? this.schemaSections : [];
     if (!sections.some((section) => section.id === sectionId)) return;
-    if (sectionId === 'schema' && typeof this.syncSchemaFromYaml === 'function') {
-      this.syncSchemaFromYaml({ preserveCurrentOnError: true });
-    }
     this.schemaSection = sectionId;
     this.persistEditorSession();
   },

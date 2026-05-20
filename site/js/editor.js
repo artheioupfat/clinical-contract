@@ -6,22 +6,62 @@ window.ClinicalModules.editor = {
 
   clearEditorSession() {
     try {
-      localStorage.removeItem(this.editorSessionKey);
+      sessionStorage.removeItem(this.editorSessionKey);
     } catch (_error) {
       // Ignore storage failures.
     }
   },
 
   restoreEditorSession() {
-    this.clearEditorSession();
+    try {
+      const rawSession = sessionStorage.getItem(this.editorSessionKey);
+      if (!rawSession) return;
+
+      const session = JSON.parse(rawSession);
+      if (!session || typeof session !== 'object') return;
+
+      this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
+      this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
+      this.editorView = session.editorView === 'yaml' ? 'yaml' : 'schema';
+      this.schemaSection = typeof session.schemaSection === 'string'
+        ? session.schemaSection
+        : 'fundamentals';
+      this.schemaStarted = Boolean(this.yamlText.trim());
+
+      if (this.schemaStarted && typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+      }
+    } catch (_error) {
+      this.clearEditorSession();
+    }
   },
 
   registerEditorSessionPersistence() {
-    // The editor intentionally keeps drafts in memory only.
+    this.$watch('yamlText', () => this.persistEditorSession());
+    this.$watch('yamlName', () => this.persistEditorSession());
+    this.$watch('editorView', () => this.persistEditorSession());
+    this.$watch('schemaSection', () => this.persistEditorSession());
   },
 
   persistEditorSession() {
-    // No persistence by design: refresh/reopen should return to the base screen.
+    try {
+      const payload = {
+        yamlText: this.yamlText || '',
+        yamlName: this.yamlName || '',
+        editorView: this.editorView || 'schema',
+        schemaSection: this.schemaSection || 'fundamentals',
+        savedAt: new Date().toISOString(),
+      };
+
+      if (!payload.yamlText.trim() && !payload.yamlName) {
+        this.clearEditorSession();
+        return;
+      }
+
+      sessionStorage.setItem(this.editorSessionKey, JSON.stringify(payload));
+    } catch (_error) {
+      // Ignore storage failures.
+    }
   },
 
   applyEditorChange(textarea, value, selectionStart, selectionEnd = selectionStart) {
