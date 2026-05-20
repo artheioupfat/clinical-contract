@@ -475,7 +475,10 @@
                             <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-input--description w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
                           </label>
                         </div>
-                        <div class="team-list-shell mt-4">
+                        <div class="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+                          <div class="schema-stage-title">Members</div>
+                        </div>
+                        <div class="team-list-shell mt-3">
                           <template x-if="schemaDraft.teamMembers.length === 0">
                             <div class="team-empty">
                               No team members yet.
@@ -848,6 +851,7 @@
     <script src="./js/ui.js"></script>
     <script src="./js/runtime.js"></script>
     <script src="./js/editor.js"></script>
+    <script src="./js/contract-codec.js"></script>
     <script src="./js/schema.js"></script>
     <script src="./js/data.js"></script>
     <script src="./js/results.js"></script>

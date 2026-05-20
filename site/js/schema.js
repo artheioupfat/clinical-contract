@@ -1,13 +1,5 @@
 window.ClinicalModules = window.ClinicalModules || {};
 
-function deepClone(value) {
-  try {
-    return structuredClone(value);
-  } catch (_error) {
-    return JSON.parse(JSON.stringify(value));
-  }
-}
-
 window.ClinicalModules.schema = {
   ensureYamlLibrary() {
     const yamlLib = window.jsyaml;
@@ -15,6 +7,13 @@ window.ClinicalModules.schema = {
       throw new Error('YAML parser is unavailable in the browser runtime.');
     }
     return yamlLib;
+  },
+
+  ensureContractCodec() {
+    if (!window.ClinicalContractCodec) {
+      throw new Error('Contract codec is unavailable in the browser runtime.');
+    }
+    return window.ClinicalContractCodec;
   },
 
   editorModeButtonClass(mode) {
@@ -54,28 +53,6 @@ window.ClinicalModules.schema = {
     this.seedSchemaDraft();
     this.clearResults();
     this.clearEditorSession();
-  },
-
-  normalizeContractDescription(description) {
-    if (description && typeof description === 'object' && !Array.isArray(description)) {
-      return {
-        purpose: description.purpose || '',
-        usage: description.usage || '',
-        limitations: description.limitations || '',
-      };
-    }
-    if (typeof description === 'string') {
-      return {
-        purpose: description,
-        usage: '',
-        limitations: '',
-      };
-    }
-    return {
-      purpose: '',
-      usage: '',
-      limitations: '',
-    };
   },
 
   isBlankRequiredValue(value) {
@@ -132,75 +109,30 @@ window.ClinicalModules.schema = {
   },
 
   createSchemaProperty(seed = {}) {
-    const logicalType = this.normalizeTypeToken(seed.logicalType || '');
-    const physicalType = this.normalizeTypeToken(seed.physicalType || '');
-    this.schemaRowCounter += 1;
-    return {
-      _rowId: this.schemaRowCounter,
-      name: seed.name || '',
-      logicalType,
-      physicalType,
-      _lastLogicalType: logicalType,
-      required: Boolean(seed.required),
-      description: seed.description || '',
-      extras: deepClone(seed.extras || {}),
-    };
+    return this.ensureContractCodec().createSchemaProperty(seed, {
+      nextRowId: () => this.nextSchemaRowId(),
+    });
   },
 
   createQualityRule(seed = {}) {
-    this.schemaRowCounter += 1;
-    return {
-      _rowId: this.schemaRowCounter,
-      propertyName: seed.propertyName || '',
-      type: seed.type || 'sql',
-      description: seed.description || '',
-      query: seed.query || '',
-      mustBe: seed.mustBe ?? 0,
-      extras: deepClone(seed.extras || {}),
-    };
+    return this.ensureContractCodec().createQualityRule(seed, {
+      nextRowId: () => this.nextSchemaRowId(),
+    });
   },
 
   createTeamMember(seed = {}) {
-    this.schemaRowCounter += 1;
-    return {
-      _rowId: this.schemaRowCounter,
-      name: seed.name || '',
-      role: seed.role || '',
-      email: seed.email || '',
-      extras: deepClone(seed.extras || {}),
-    };
+    return this.ensureContractCodec().createTeamMember(seed, {
+      nextRowId: () => this.nextSchemaRowId(),
+    });
   },
 
-  readFirstDefined(source, keys, fallback = '') {
-    if (!source || typeof source !== 'object') return fallback;
-
-    const normalizedEntries = {};
-    for (const [rawKey, rawValue] of Object.entries(source)) {
-      const normalizedKey = String(rawKey).toLowerCase().replace(/[-_]/g, '');
-      if (!Object.prototype.hasOwnProperty.call(normalizedEntries, normalizedKey)) {
-        normalizedEntries[normalizedKey] = rawValue;
-      }
-    }
-
-    for (const key of keys) {
-      if (Object.prototype.hasOwnProperty.call(source, key) && source[key] !== null && source[key] !== undefined) {
-        return source[key];
-      }
-      const normalizedKey = String(key).toLowerCase().replace(/[-_]/g, '');
-      if (
-        Object.prototype.hasOwnProperty.call(normalizedEntries, normalizedKey) &&
-        normalizedEntries[normalizedKey] !== null &&
-        normalizedEntries[normalizedKey] !== undefined
-      ) {
-        return normalizedEntries[normalizedKey];
-      }
-    }
-    return fallback;
+  nextSchemaRowId() {
+    this.schemaRowCounter += 1;
+    return this.schemaRowCounter;
   },
 
   normalizeTypeToken(value) {
-    if (value === null || value === undefined) return '';
-    return String(value).trim();
+    return this.ensureContractCodec().normalizeTypeToken(value);
   },
 
   getLogicalTypeOptions(row) {
@@ -363,27 +295,10 @@ window.ClinicalModules.schema = {
   },
 
   seedSchemaDraft({ withProperty = false } = {}) {
-    this.schemaDraft = {
-      apiVersion: 'v3.1.0',
-      kind: 'DataContract',
-      id: '',
-      name: '',
-      version: '1.0.0',
-      status: 'active',
-      descriptionPurpose: '',
-      descriptionUsage: '',
-      descriptionLimitations: '',
-      tableName: '',
-      tablePhysicalType: 'TABLE',
-      tableDescription: '',
-      properties: withProperty ? [this.createSchemaProperty()] : [],
-      qualityRules: [],
-      teamName: '',
-      teamDescription: '',
-      teamMembers: [],
-      teamExtras: {},
-      tableExtras: {},
-    };
+    this.schemaDraft = this.ensureContractCodec().createEmptyDraft({
+      withProperty,
+      nextRowId: () => this.nextSchemaRowId(),
+    });
     this.schemaRootExtras = {};
     this.schemaOtherSchemas = [];
     this.columnEditorRowId = null;
@@ -422,126 +337,13 @@ window.ClinicalModules.schema = {
       return;
     }
 
-    const handledRoot = new Set(['apiVersion', 'kind', 'id', 'name', 'version', 'status', 'description', 'schema', 'team']);
-    const rootExtras = {};
-    for (const [key, value] of Object.entries(parsed)) {
-      if (!handledRoot.has(key)) rootExtras[key] = value;
-    }
-
-    const schemaArray = Array.isArray(parsed.schema) ? parsed.schema : [];
-    const firstSchema = schemaArray[0] && typeof schemaArray[0] === 'object' ? schemaArray[0] : {};
-    const otherSchemas = schemaArray.slice(1);
-
-    const handledTable = new Set(['name', 'physicalType', 'description', 'properties']);
-    const tableExtras = {};
-    for (const [key, value] of Object.entries(firstSchema)) {
-      if (!handledTable.has(key)) tableExtras[key] = value;
-    }
-
-    const properties = Array.isArray(firstSchema.properties) ? firstSchema.properties : [];
-    const qualityRules = [];
-    const normalizedProperties = properties.map((prop) => {
-      const source = prop && typeof prop === 'object' ? prop : {};
-      const handledProp = new Set([
-        'name',
-        'logicalType',
-        'logical_type',
-        'logical-type',
-        'physicalType',
-        'physical_type',
-        'physical-type',
-        'required',
-        'description',
-        'quality',
-      ]);
-      const propExtras = {};
-      for (const [key, value] of Object.entries(source)) {
-        if (!handledProp.has(key)) propExtras[key] = value;
-      }
-      const logicalType = this.normalizeTypeToken(
-        this.readFirstDefined(source, ['logicalType', 'logicaltype', 'logical_type', 'logical-type'])
-      );
-      const physicalType = this.normalizeTypeToken(
-        this.readFirstDefined(source, ['physicalType', 'physicaltype', 'physical_type', 'physical-type'])
-      );
-      const rules = Array.isArray(source.quality) ? source.quality : [];
-      for (const rule of rules) {
-        const quality = rule && typeof rule === 'object' ? rule : {};
-        const handledRule = new Set(['type', 'description', 'query', 'mustBe']);
-        const ruleExtras = {};
-        for (const [key, value] of Object.entries(quality)) {
-          if (!handledRule.has(key)) ruleExtras[key] = value;
-        }
-        qualityRules.push(
-          this.createQualityRule({
-            propertyName: source.name || '',
-            type: quality.type || 'sql',
-            description: quality.description || '',
-            query: quality.query || '',
-            mustBe: quality.mustBe ?? 0,
-            extras: ruleExtras,
-          })
-        );
-      }
-      return this.createSchemaProperty({
-        name: source.name || '',
-        logicalType,
-        physicalType,
-        required: Boolean(source.required),
-        description: source.description || '',
-        extras: propExtras,
-      });
+    const decoded = this.ensureContractCodec().contractObjectToDraft(parsed, {
+      nextRowId: () => this.nextSchemaRowId(),
     });
 
-    const team = parsed.team && typeof parsed.team === 'object' && !Array.isArray(parsed.team) ? parsed.team : {};
-    const handledTeam = new Set(['name', 'description', 'members']);
-    const teamExtras = {};
-    for (const [key, value] of Object.entries(team)) {
-      if (!handledTeam.has(key)) teamExtras[key] = value;
-    }
-    const teamMembers = Array.isArray(team.members)
-      ? team.members.map((member) => {
-          const source = member && typeof member === 'object' ? member : {};
-          const handledMember = new Set(['name', 'role', 'email']);
-          const memberExtras = {};
-          for (const [key, value] of Object.entries(source)) {
-            if (!handledMember.has(key)) memberExtras[key] = value;
-          }
-          return this.createTeamMember({
-            name: source.name || '',
-            role: source.role || '',
-            email: source.email || '',
-            extras: memberExtras,
-          });
-        })
-      : [];
-
-    const description = this.normalizeContractDescription(parsed.description);
-
-    this.schemaDraft = {
-      apiVersion: parsed.apiVersion || 'v3.1.0',
-      kind: parsed.kind || 'DataContract',
-      id: parsed.id || '',
-      name: parsed.name || '',
-      version: parsed.version || '1.0.0',
-      status: parsed.status || 'active',
-      descriptionPurpose: description.purpose,
-      descriptionUsage: description.usage,
-      descriptionLimitations: description.limitations,
-      tableName: firstSchema.name || '',
-      tablePhysicalType: firstSchema.physicalType || 'TABLE',
-      tableDescription: firstSchema.description || '',
-      properties: normalizedProperties,
-      qualityRules,
-      teamName: team.name || '',
-      teamDescription: team.description || '',
-      teamMembers,
-      teamExtras,
-      tableExtras,
-    };
-
-    this.schemaRootExtras = rootExtras;
-    this.schemaOtherSchemas = deepClone(otherSchemas);
+    this.schemaDraft = decoded.draft;
+    this.schemaRootExtras = decoded.rootExtras;
+    this.schemaOtherSchemas = decoded.otherSchemas;
     this.columnEditorRowId = null;
     this.qualityEditorRuleId = null;
     this.teamEditorMemberId = null;
@@ -555,94 +357,19 @@ window.ClinicalModules.schema = {
   },
 
   buildContractObjectFromSchema() {
-    const draft = this.schemaDraft || {};
-    const top = deepClone(this.schemaRootExtras || {});
-
-    if (draft.apiVersion) top.apiVersion = draft.apiVersion;
-    if (draft.kind) top.kind = draft.kind;
-    if (draft.id) top.id = draft.id;
-    if (draft.name) top.name = draft.name;
-    if (draft.version) top.version = draft.version;
-    if (draft.status) top.status = draft.status;
-    top.description = {
-      purpose: draft.descriptionPurpose || '',
-      usage: draft.descriptionUsage || '',
-      limitations: draft.descriptionLimitations || '',
-    };
-
-    const table = deepClone(draft.tableExtras || {});
-    table.name = draft.tableName || '';
-    if (draft.tablePhysicalType) table.physicalType = draft.tablePhysicalType;
-    if (draft.tableDescription) table.description = draft.tableDescription;
-    else delete table.description;
-
-    const properties = (draft.properties || [])
-      .map((prop) => {
-        if (!prop.name || !prop.name.trim()) return null;
-        const row = {};
-        row.name = prop.name.trim();
-        if (prop.logicalType && prop.logicalType.trim()) row.logicalType = prop.logicalType.trim();
-        if (prop.physicalType && prop.physicalType.trim()) row.physicalType = prop.physicalType.trim();
-        if (prop.description && prop.description.trim()) row.description = prop.description.trim();
-        row.required = Boolean(prop.required);
-        const quality = (draft.qualityRules || [])
-          .filter((rule) => rule.propertyName === prop.name)
-          .map((rule) => {
-            const qualityRow = deepClone(rule.extras || {});
-            qualityRow.type = rule.type || 'sql';
-            if (rule.description && rule.description.trim()) qualityRow.description = rule.description.trim();
-            else delete qualityRow.description;
-            qualityRow.query = rule.query || '';
-            qualityRow.mustBe = Number(rule.mustBe ?? 0);
-            return qualityRow;
-          })
-          .filter((rule) => rule.query || rule.description);
-        if (quality.length) row.quality = quality;
-        for (const [key, value] of Object.entries(deepClone(prop.extras || {}))) {
-          if (!Object.prototype.hasOwnProperty.call(row, key)) {
-            row[key] = value;
-          }
-        }
-        return row;
-      })
-      .filter(Boolean);
-
-    table.properties = properties;
-
-    const schemas = [table, ...(this.schemaOtherSchemas || [])];
-    top.schema = schemas;
-
-    const team = deepClone(draft.teamExtras || {});
-    if (draft.teamName && draft.teamName.trim()) team.name = draft.teamName.trim();
-    if (draft.teamDescription && draft.teamDescription.trim()) {
-      team.description = draft.teamDescription.trim();
-    }
-    const members = (draft.teamMembers || [])
-      .map((member) => {
-        const row = deepClone(member.extras || {});
-        if (!member.name || !member.name.trim()) return null;
-        row.name = member.name.trim();
-        if (member.role && member.role.trim()) row.role = member.role.trim();
-        if (member.email && member.email.trim()) row.email = member.email.trim();
-        return row;
-      })
-      .filter(Boolean);
-    if (members.length) team.members = members;
-    if (Object.keys(team).length) top.team = team;
-    else delete top.team;
-
-    return top;
+    return this.ensureContractCodec().draftToContractObject(
+      this.schemaDraft || {},
+      this.schemaRootExtras || {},
+      this.schemaOtherSchemas || []
+    );
   },
 
   pushSchemaToYaml() {
-    let contract;
     try {
       this.schemaStarted = true;
-      contract = this.buildContractObjectFromSchema();
-      this.yamlText = this.ensureYamlLibrary().dump(contract, {
-        noRefs: true,
-        lineWidth: 110,
-        sortKeys: false,
+      this.yamlText = this.ensureContractCodec().draftToYamlText(this.schemaDraft || {}, this.ensureYamlLibrary(), {
+        rootExtras: this.schemaRootExtras || {},
+        otherSchemas: this.schemaOtherSchemas || [],
       });
       this.yamlName = this.yamlName || 'datacontract.yaml';
       this.schemaParseWarning = '';
