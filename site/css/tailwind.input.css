@@ -442,7 +442,7 @@
   }
 
   .schema-warning {
-    @apply mx-3 mt-3 rounded-lg;
+    @apply mx-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800;
   }
 
   /* Empty contract state */
@@ -561,6 +561,7 @@
   }
 
   .schema-subsection-bar {
+    @apply mt-5 flex items-center justify-between border-t pt-4;
     border-color: var(--cc-border);
   }
 
@@ -575,6 +576,30 @@
 
   .schema-stage-pill {
     @apply shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-500;
+  }
+
+  .schema-form-grid {
+    @apply grid gap-3;
+  }
+
+  .schema-form-grid--two {
+    @apply md:grid-cols-2;
+  }
+
+  .schema-form-grid--schema {
+    @apply md:grid-cols-[minmax(12rem,0.8fr)_minmax(18rem,1.2fr)];
+  }
+
+  .schema-form-field {
+    @apply space-y-1;
+  }
+
+  .schema-form-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+  }
+
+  .schema-form-control {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900 outline-none focus:border-blue-500;
   }
 
   .schema-business-stack {
@@ -610,24 +635,15 @@
   }
 
   .schema-add-btn {
-    @apply inline-flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-[13px] font-semibold text-white transition;
-    background: var(--cc-primary);
-    border-color: var(--cc-primary);
-    color: white;
+    @apply inline-flex cursor-pointer items-center justify-center rounded-lg border border-[#005ca9] bg-[#005ca9] px-3 py-2 text-[13px] font-semibold text-white transition;
   }
 
   .schema-add-btn:hover:not(:disabled) {
-    background: var(--cc-primary-strong);
-    border-color: var(--cc-primary-strong);
-    color: white;
+    @apply border-[#003f7d] bg-[#003f7d] text-white;
   }
 
   .schema-add-btn:disabled {
     @apply cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500 opacity-70;
-  }
-
-  .schema-editor label > span {
-    @apply text-slate-500;
   }
 
   .schema-editor .schema-input {
@@ -959,10 +975,6 @@
 
   .reset-modal__danger {
     @apply inline-flex cursor-pointer items-center justify-center rounded-lg border border-rose-600 bg-rose-600 px-3 py-2 text-[13px] font-semibold text-white transition hover:border-rose-700 hover:bg-rose-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500;
-  }
-
-  .schema-editor .rounded-lg {
-    @apply border-slate-200 bg-white;
   }
 
   .schema-editor .pine-btn {
@@ -1474,7 +1486,7 @@
     @apply text-blue-200;
   }
 
-  .theme-dark .schema-editor label > span {
+  .theme-dark .schema-form-label {
     @apply text-blue-200;
   }
 

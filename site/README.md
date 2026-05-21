@@ -17,10 +17,16 @@ Then open `http://localhost:8000`.
 
 ## File map
 
-- `index.html`: single-page application shell and static markup.
+- `index.html`: small application shell. It loads HTML partials before Alpine starts.
+- `partials/header.html`: brand header and theme switch.
+- `partials/editor-panel.html`: YAML editor and visual contract builder.
+- `partials/split-resizer.html`: draggable divider between editor and checker.
+- `partials/data-panel.html`: data upload, results tabs, and dataset preview.
+- `partials/runtime-footer.html`: runtime progress bar and compact footer.
 - `css/tailwind.input.css`: Tailwind source with the component layer.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
 - `js/app.js`: Alpine root state and application composition.
+- `js/include-html.js`: loads static partials, then starts Alpine.
 - `js/constants.js`: shared UI/type constants.
 - `js/ui.js`: theme switch, split pane, and logo status helpers.
 - `js/runtime.js`: PyScript readiness, progress, and runtime errors.
@@ -45,16 +51,20 @@ Then open `http://localhost:8000`.
 7. `data.js`
 8. `results.js`
 9. `app.js`
+10. `include-html.js`
 
 Keep `contract-codec.js` before `schema.js`, because the schema builder uses the codec to convert between YAML and the visual draft.
+Keep `include-html.js` last: it injects the partials and only then loads Alpine, so Alpine can initialize the final DOM once.
 
 ## Editing rules
 
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
+- Edit page markup in `partials/`; keep `index.html` as the lightweight shell.
 - Edit `css/tailwind.input.css`, then run `npm run build:site:css` to update `css/tailwind.css`.
 - Add or update `site/tests/contract-codec.test.js` when changing YAML/draft behavior.
 - Keep the site static: no backend, no hardcoded local paths, and relative assets only.
+- Serve the site through HTTP during development. Partial loading does not work reliably from `file://`.
 
 ## Manual smoke checklist
 

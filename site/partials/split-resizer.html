@@ -1,0 +1,16 @@
+            <button
+              type="button"
+              class="split-resizer"
+              :class="splitDragging ? 'split-resizer--active' : ''"
+              @pointerdown.prevent="startSplitResize($event)"
+              @dblclick.prevent="resetSplitPane()"
+              @keydown="handleSplitKeydown($event)"
+              role="separator"
+              aria-label="Resize editor and checker panels"
+              aria-orientation="vertical"
+              :aria-valuenow="Math.round(splitPercent)"
+              aria-valuemin="35"
+              aria-valuemax="75"
+            >
+              <span class="split-resizer__handle" aria-hidden="true"></span>
+            </button>
