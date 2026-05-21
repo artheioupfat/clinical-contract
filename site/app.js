@@ -8,12 +8,66 @@ document.addEventListener('alpine:init', () => {
   const editor = modules.editor || {};
   const data = modules.data || {};
   const results = modules.results || {};
+  const schema = modules.schema || {};
 
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
-    yamlName: 'datacontract.yaml',
+    yamlName: '',
+    editorView: 'schema',
+    schemaStarted: false,
+    schemaParseWarning: '',
+    showRequiredHints: false,
+    schemaRowCounter: 0,
+    schemaSection: 'fundamentals',
+    schemaSections: [
+      { id: 'fundamentals', title: 'Fundamentals' },
+      { id: 'schema', title: 'Schema' },
+      { id: 'quality', title: 'Quality' },
+      { id: 'team', title: 'Team' },
+    ],
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    columnEditorRowId: null,
+    qualityEditorRuleId: null,
+    teamEditorMemberId: null,
+    resetContractModalOpen: false,
+    logicalTypeOptions: [
+      'string',
+      'date',
+      'integer',
+      'float',
+      'boolean',
+    ],
+    physicalTypeByLogical: {
+      string: ['varchar', 'text', 'string', 'char'],
+      date: ['timestamp', 'datetime'],
+      integer: ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'],
+      float: ['float32', 'float64'],
+      boolean: ['binary'],
+    },
+    schemaDraft: {
+      apiVersion: 'v3.1.0',
+      kind: 'DataContract',
+      id: '',
+      name: '',
+      version: '1.0.0',
+      status: 'active',
+      descriptionPurpose: '',
+      descriptionUsage: '',
+      descriptionLimitations: '',
+      tableName: '',
+      tableDescription: '',
+      properties: [],
+      qualityRules: [],
+      teamName: '',
+      teamDescription: '',
+      teamMembers: [],
+      teamExtras: {},
+      tableExtras: {},
+    },
     dataFile: null,
     dataFileName: '',
+    dataFileSize: 0,
     dataColumns: null,
     dataRows: null,
     draggingData: false,
@@ -38,6 +92,13 @@ document.addEventListener('alpine:init', () => {
     showRuntimeProgress: true,
     runtimeProgressInterval: null,
     runtimeBridgePoll: null,
+    runtimeFailureTimer: null,
+    runtimeError: '',
+    runtimeErrorHandlersRegistered: false,
+    splitPercent: 58,
+    splitDragging: false,
+    splitMoveHandler: null,
+    splitEndHandler: null,
     logoVariant: 'neutral',
     logoErrored: false,
 
@@ -60,6 +121,9 @@ document.addEventListener('alpine:init', () => {
     },
 
     get runtimeProgressLabel() {
+      if (this.runtimeError) {
+        return messages.runtimeFailed || 'Python runtime error';
+      }
       return this.pythonReady
         ? messages.runtimeReady || 'Python runtime ready'
         : messages.runtimeLoading || 'Loading Python runtime...';
@@ -113,6 +177,10 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.initThemeSwitch();
+      this.initSplitPane();
+      this.restoreEditorSession();
+      this.registerEditorSessionPersistence();
+      this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
@@ -123,7 +191,9 @@ document.addEventListener('alpine:init', () => {
       });
 
       window.addEventListener('beforeunload', () => {
+        this.persistEditorSession();
         this.releasePreviewSession();
+        this.destroySplitPane();
       });
 
       this.runtimeBridgePoll = window.setInterval(() => {
@@ -137,20 +207,15 @@ document.addEventListener('alpine:init', () => {
         this.onPythonRuntimeReady();
       }
 
-      try {
-        const response = await fetch('./examples/contract.yaml');
-        if (response.ok) {
-          this.yamlText = await response.text();
-          this.yamlName = 'example.yaml';
-        }
-      } catch (_error) {
-        this.yamlText = messages.editorFallback || '# Write or drop a YAML contract here';
+      if (typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
       }
     },
 
     ...ui,
     ...runtime,
     ...editor,
+    ...schema,
     ...data,
     ...results,
   }));

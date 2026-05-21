@@ -28,7 +28,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant patient
         required: true
         quality:
@@ -66,12 +66,12 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant
         required: true
       - name: notes
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Colonne optionnelle
         required: false
 """
@@ -94,7 +94,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Identifiant
         required: true
 """
@@ -333,7 +333,7 @@ def test_check_schema_colonne_optionnelle_absente(tmp_path):
 
     cols = {c.column: c for c in reports[0].columns}
     assert cols["id"].status == ColumnCheckStatus.ok
-    assert cols["id"].parquet_type == "string"
+    assert cols["id"].parquet_type == "varchar"
     assert cols["notes"].status == ColumnCheckStatus.optional_missing
     assert reports[0].success is True
 
@@ -409,7 +409,6 @@ schema:
     properties:
       - name: event_ts
         logicalType: timestamp[us, tz=Europe/Paris]
-        physicalType: TIMESTAMP
         description: Horodatage
         required: true
 """
@@ -426,6 +425,39 @@ schema:
     reports = contract.check_schema(str(parquet_file))
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_physical_text_does_not_fallback_to_logical_string(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
+    yaml_physical_text = """
+apiVersion: v1.0.0
+kind: DataContract
+id: physical-string-contract
+name: Physical String Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: Patient id
+        required: true
+"""
+    contract, _ = load_contract(yaml_physical_text)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "TEXT"
+    assert reports[0].columns[0].parquet_type == "varchar"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_check_schema_csv_type_mismatch():
@@ -493,7 +525,8 @@ schema:
 
     assert reports[0].success is True
     assert col.status == ColumnCheckStatus.ok
-    assert col.parquet_type.lower() == "uint32"
+    assert col.yaml_type == "UINTEGER"
+    assert col.parquet_type == "uint32"
 
 
 def test_check_schema_uint32_rejects_ubigint(tmp_path):
@@ -531,7 +564,8 @@ schema:
 
     assert reports[0].success is False
     assert col.status == ColumnCheckStatus.type_mismatch
-    assert col.parquet_type.lower() == "uint64"
+    assert col.yaml_type == "UINTEGER"
+    assert col.parquet_type == "uint64"
 
 
 def test_check_schema_integer_keeps_family_compatibility(tmp_path):
@@ -559,7 +593,6 @@ schema:
     properties:
       - name: status_code
         logicalType: int
-        physicalType: INTEGER
         description: Status
         required: true
 """
@@ -568,6 +601,188 @@ schema:
 
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+    assert reports[0].columns[0].yaml_type == "int"
+    assert reports[0].columns[0].parquet_type == "uint8"
+
+
+def test_check_schema_physical_type_takes_precedence(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UTINYINT",
+    )
+    yaml_physical = """
+apiVersion: v1.0.0
+kind: DataContract
+id: physical-contract
+name: Physical Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: integer
+        physicalType: INTEGER
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_physical)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "INTEGER"
+    assert reports[0].columns[0].parquet_type == "uint8"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_physical_type_only_matches_detected_type(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_physical_only = """
+apiVersion: v1.0.0
+kind: DataContract
+id: physical-only-contract
+name: Physical Only Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        physicalType: uint32
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_physical_only)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "uint32"
+    assert reports[0].columns[0].parquet_type == "uint32"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_displays_bigint_as_int64(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="patient_count",
+        duckdb_type="BIGINT",
+    )
+    yaml_int64 = """
+apiVersion: v1.0.0
+kind: DataContract
+id: int64-contract
+name: Int64 Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: patient_count
+        logicalType: integer
+        physicalType: int64
+        description: Patient count
+        required: true
+"""
+    contract, _ = load_contract(yaml_int64)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "int64"
+    assert reports[0].columns[0].parquet_type == "int64"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_date_matches_timestamp(tmp_path):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / "events_event_date_timestamp.parquet"
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+    with duckdb.connect() as conn:
+        conn.execute(
+            "CREATE TABLE events AS "
+            "SELECT TIMESTAMP '2024-01-01 10:30:00' AS event_date"
+        )
+        conn.execute(f"COPY events TO '{parquet_path_literal}' (FORMAT PARQUET)")
+    yaml_date = """
+apiVersion: v1.0.0
+kind: DataContract
+id: date-contract
+name: Date Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: events
+    physicalType: TABLE
+    description: Events table
+    properties:
+      - name: event_date
+        logicalType: date
+        physicalType: timestamp
+        description: Event date
+        required: true
+"""
+    contract, _ = load_contract(yaml_date)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_validate_structure_boolen_alias_supported():
+    yaml_boolen = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: is_active
+        logicalType: boolen
+        physicalType: binary
+        description: ok
+        required: true
+"""
+    raw = load_raw(yaml_boolen)
+    report = DataContract.validate_structure(raw)
+    assert report.success is True
 
 
 
@@ -717,3 +932,60 @@ schema:
     assert report.success is False
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert "schema[0].properties[0].logicalType unsupported" in schema_field.display_value
+
+
+def test_validate_structure_accepts_physical_type_without_logical_type():
+    yaml_valid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        physicalType: TEXT
+        description: ok
+        required: true
+"""
+    raw = load_raw(yaml_valid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+def test_validate_structure_fails_without_any_column_type():
+    yaml_invalid = """
+apiVersion: v1.0.0
+kind: DataContract
+id: test
+name: Test
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        description: ok
+        required: true
+"""
+    raw = load_raw(yaml_invalid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "missing logicalType or physicalType" in schema_field.display_value

@@ -1,0 +1,256 @@
+            <!-- Right panel: data loading, validation results, checks, and preview. -->
+            <section class="panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-eyebrow">Checker</div>
+                  <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
+                </div>
+                <div class="pine-toolbar">
+                  <div class="data-meta-stack" x-show="dataStatsText() || dataFileSizeText()" x-cloak>
+                    <div class="data-stats" x-show="dataStatsText()" x-text="dataStatsText()"></div>
+                    <div class="data-file-size" x-show="dataFileSizeText()" x-text="dataFileSizeText()"></div>
+                  </div>
+                  <button type="button" @click="$refs.dataInput.click()" class="pine-btn">Load data</button>
+                  <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />
+                  <button type="button" @click="runCheck()" :disabled="busy || !pythonReady || !dataFile" class="pine-btn pine-btn--success">Run checks</button>
+                </div>
+              </div>
+
+              <div class="checker-body">
+                <!-- Dataset input: CSV/Parquet drag-and-drop and file picker. -->
+                <div
+                  class="dropzone"
+                  :class="draggingData ? 'dropzone--active' : ''"
+                  @dblclick="$refs.dataInput.click()"
+                  @dragenter.prevent="draggingData = true"
+                  @dragover.prevent="draggingData = true"
+                  @dragleave.prevent="draggingData = false"
+                  @drop.prevent="dropData($event)"
+                >
+                  <div class="dropzone-content">
+                    <div class="dropzone-icon-wrap" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="dropzone-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16.5v1.25A2.25 2.25 0 006.25 20h11.5A2.25 2.25 0 0020 17.75V16.5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="dropzone-title">Drag and drop parquet or csv here</div>
+                      <div class="dropzone-subtitle">Or use "Load data" to pick a local file.</div>
+                    </div>
+                  </div>
+                  <div class="dropzone-filename" x-text="dataFileName || 'No file selected'"></div>
+                </div>
+
+                <!-- Results: validate, schema, quality, and paginated dataset preview. -->
+                <div class="results-shell">
+                  <div class="pine-tabs">
+                    <button type="button" class="pine-tab" :class="activeTab === 'validate' ? 'pine-tab--active' : ''" @click="activeTab = 'validate'">
+                      <span class="pine-tab-label">
+                        <span class="tab-dot" :class="tabDotClass(validateTabState)"></span>
+                        <span>Validate</span>
+                      </span>
+                    </button>
+                    <button type="button" class="pine-tab" :class="activeTab === 'schema' ? 'pine-tab--active' : ''" @click="activeTab = 'schema'">
+                      <span class="pine-tab-label">
+                        <span class="tab-dot" :class="tabDotClass(schemaTabState)"></span>
+                        <span>Schema</span>
+                      </span>
+                    </button>
+                    <button type="button" class="pine-tab" :class="activeTab === 'quality' ? 'pine-tab--active' : ''" @click="activeTab = 'quality'">
+                      <span class="pine-tab-label">
+                        <span class="tab-dot" :class="tabDotClass(qualityTabState)"></span>
+                        <span>Quality</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      class="pine-tab pine-tab--preview"
+                      :class="activeTab === 'preview' ? 'pine-tab--active' : ''"
+                      @click="activeTab = 'preview'"
+                      x-show="dataFile"
+                      x-cloak
+                    >
+                      <span>Preview</span>
+                    </button>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'validate'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Field</th>
+                          <th>Status</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="validateRows.length === 0">
+                          <tr><td colspan="3" class="empty-row">No validation result yet.</td></tr>
+                        </template>
+                        <template x-for="row in validateRows" :key="row.field">
+                          <tr>
+                            <td x-text="row.field"></td>
+                            <td>
+                              <span class="status-chip" :class="statusChipClass(row.status)">
+                                <span class="status-dot" :class="statusDotClass(row.status)"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
+                            <td x-text="row.value"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'schema'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Schema</th>
+                          <th>Column</th>
+                          <th>Required</th>
+                          <th>Expected</th>
+                          <th>Detected</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="schemaRows.length === 0">
+                          <tr><td colspan="6" class="empty-row">No schema result yet.</td></tr>
+                        </template>
+                        <template x-for="(row, idx) in schemaRows" :key="`${row.schema_name}-${row.column}-${idx}`">
+                          <tr>
+                            <td x-text="row.schema_name"></td>
+                            <td x-text="row.column"></td>
+                            <td x-text="row.required === true ? 'true' : row.required === false ? 'false' : 'missing'"></td>
+                            <td x-text="row.yaml_type"></td>
+                            <td x-text="row.parquet_type"></td>
+                            <td>
+                              <span class="status-chip" :class="statusChipClass(row.status)">
+                                <span class="status-dot" :class="statusDotClass(row.status)"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="results-table-wrap" x-show="activeTab === 'quality'" x-cloak>
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th>Schema</th>
+                          <th>Column</th>
+                          <th>Rule</th>
+                          <th>Obtained</th>
+                          <th>Expected</th>
+                          <th>Result</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="qualityRows.length === 0">
+                          <tr><td colspan="6" class="empty-row">No quality result yet.</td></tr>
+                        </template>
+                        <template x-for="(row, idx) in qualityRows" :key="`${row.property_name}-${idx}`">
+                          <tr>
+                            <td x-text="row.schema_name"></td>
+                            <td x-text="row.property_name"></td>
+                            <td x-text="row.description"></td>
+                            <td x-text="row.obtained"></td>
+                            <td x-text="row.expected"></td>
+                            <td>
+                              <span class="status-chip" :class="statusChipClass(row.status)">
+                                <span class="status-dot" :class="statusDotClass(row.status)"></span>
+                                <span x-text="row.status"></span>
+                              </span>
+                            </td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div class="results-table-wrap results-table-wrap--preview" x-show="activeTab === 'preview'" x-cloak>
+                    <div class="preview-layout">
+                      <div class="preview-scroll">
+                        <table class="preview-table">
+                          <thead>
+                            <tr>
+                              <template x-if="previewColumns.length === 0">
+                                <th class="preview-th preview-th--single">Data preview</th>
+                              </template>
+                              <template x-for="(columnName, idx) in previewColumns" :key="`preview-col-${idx}`">
+                                <th class="preview-th" :class="idx === 0 ? 'preview-th--first' : ''" :title="columnName" x-text="columnName"></th>
+                              </template>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template x-if="previewLoading">
+                              <tr>
+                                <td class="preview-empty" :colspan="Math.max(1, previewColumns.length)">Loading preview page...</td>
+                              </tr>
+                            </template>
+                            <template x-if="!previewLoading && previewError">
+                              <tr>
+                                <td class="preview-empty preview-empty--error" :colspan="Math.max(1, previewColumns.length)" x-text="previewError"></td>
+                              </tr>
+                            </template>
+                            <template x-if="!previewLoading && !previewError && previewRows.length === 0">
+                              <tr>
+                                <td class="preview-empty" :colspan="Math.max(1, previewColumns.length)">No preview rows yet. Load a data file to inspect rows.</td>
+                              </tr>
+                            </template>
+                            <template x-for="(row, rowIdx) in previewRows" :key="`preview-row-${rowIdx}`">
+                              <tr>
+                                <template x-for="(cell, cellIdx) in row" :key="`preview-cell-${rowIdx}-${cellIdx}`">
+                                  <td class="preview-td" :class="cellIdx === 0 ? 'preview-td--first' : ''">
+                                    <div class="preview-cell" :title="cell === null ? 'null' : String(cell)" x-text="cell === null ? 'null' : String(cell)"></div>
+                                  </td>
+                                </template>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <div class="preview-pagination" x-show="!previewError" x-cloak>
+                        <p class="preview-pagination__meta">
+                          Showing <span x-text="previewStartRow"></span> to <span x-text="previewEndRow"></span> of
+                          <span x-text="previewTotalRows"></span> results
+                        </p>
+                        <nav>
+                          <ul class="pager">
+                            <li>
+                              <button type="button" class="pager-btn" @click="goPreviewPrev()" :disabled="previewLoading || previewPage <= 1 || previewTotalPages === 0">Previous</button>
+                            </li>
+                            <template x-for="(item, idx) in previewPageItems" :key="`preview-page-${idx}-${item}`">
+                              <li class="pager-item--desktop">
+                                <template x-if="item === 'ellipsis'">
+                                  <span class="pager-ellipsis">...</span>
+                                </template>
+                                <template x-if="item !== 'ellipsis'">
+                                  <button
+                                    type="button"
+                                    class="pager-btn"
+                                    :class="Number(item) === previewPage ? 'pager-btn--active' : ''"
+                                    @click="loadPreviewPage(Number(item))"
+                                    :disabled="previewLoading"
+                                    x-text="item"
+                                  ></button>
+                                </template>
+                              </li>
+                            </template>
+                            <li>
+                              <button type="button" class="pager-btn" @click="goPreviewNext()" :disabled="previewLoading || previewPage >= previewTotalPages || previewTotalPages === 0">Next</button>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>

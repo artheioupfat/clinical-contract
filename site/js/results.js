@@ -60,13 +60,19 @@ window.ClinicalModules.results = {
     }
     this.busy = true;
     this.activeTab = 'validate';
+    this.showRequiredHints = true;
     try {
       const payload = JSON.parse(window.pyValidateContract(this.yamlText));
       this.validateRows = this.normalizeValidateRows(payload.fields || []);
-      if (payload.success) this.setLogoSuccess();
-      else this.setLogoFailure();
+      if (payload.success) {
+        this.showRequiredHints = false;
+        this.setLogoSuccess();
+      } else {
+        this.setLogoFailure();
+      }
     } catch (error) {
       console.error(error);
+      this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {
       this.busy = false;
@@ -82,6 +88,7 @@ window.ClinicalModules.results = {
     }
 
     this.busy = true;
+    this.showRequiredHints = true;
 
     try {
       const buffer = await this.dataFile.arrayBuffer();
@@ -95,15 +102,18 @@ window.ClinicalModules.results = {
         this.activeTab = 'validate';
         this.setLogoFailure();
       } else if (!payload.schema_success) {
+        this.showRequiredHints = false;
         this.activeTab = 'schema';
         this.setLogoFailure();
       } else {
+        this.showRequiredHints = false;
         this.activeTab = 'quality';
         if (payload.report_success) this.setLogoSuccess();
         else this.setLogoFailure();
       }
     } catch (error) {
       console.error(error);
+      this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {
       this.busy = false;

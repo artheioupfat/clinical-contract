@@ -1,13 +1,13 @@
 """
 clinical-contract
 =================
-Valide des data contracts YAML cliniques contre des fichiers Parquet.
+Validate clinical YAML data contracts against Parquet and CSV files.
 
-Usage CLI :
+CLI usage:
     clinical-contract validate contract.yaml
     clinical-contract check    contract.yaml data.parquet
 
-Usage Python :
+Python usage:
     from clinical_contract import load_contract
 
     contract, raw = load_contract("contract.yaml")

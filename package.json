@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "scripts": {
     "build:site:css": "tailwindcss -c tailwind.config.js -i ./site/css/tailwind.input.css -o ./site/css/tailwind.css --minify",
-    "watch:site:css": "tailwindcss -c tailwind.config.js -i ./site/css/tailwind.input.css -o ./site/css/tailwind.css --watch"
+    "watch:site:css": "tailwindcss -c tailwind.config.js -i ./site/css/tailwind.input.css -o ./site/css/tailwind.css --watch",
+    "test:site": "node --test site/tests/*.test.js"
   },
   "devDependencies": {
     "tailwindcss": "3.4.17"

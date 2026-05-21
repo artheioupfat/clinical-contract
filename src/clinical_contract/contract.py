@@ -28,13 +28,20 @@ from .models import (
 TYPE_MAP: dict[str, set[str]] = {
     # GENÉRIQUES
     "string":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
+    "integer":  {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
+                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
     "int":      {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
                  "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
     "float":    {"float16","float32","float64","double","real","decimal128","decimal"},
+    "date":     {"date", "datetime", "timestamp", "timestamp with time zone", "timestamptz",
+                 "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
+                 "date32","date64"},
     "datetime": {"timestamp","timestamp with time zone","timestamptz",
                  "timestamp[ms]","timestamp[us]","timestamp[ns]","timestamp[s]",
-                 "date32","date64","date"},
-    "boolean":  {"bool","boolean"},
+                 "date32","date64","date","datetime"},
+    "boolean":  {"bool","boolean","binary","large_binary","blob"},
+    "boolen":   {"bool","boolean","binary","large_binary","blob"},
+    "bool":     {"bool","boolean","binary","large_binary","blob"},
     "binary":   {"binary","large_binary"},
 
     # SPÉCIFIQUES
@@ -51,17 +58,24 @@ TYPE_MAP: dict[str, set[str]] = {
     "double": {"double","float64"},
     "date32": {"date32"},
     "date64": {"date64"},
-    "date":   {"date"},
+}
+
+LOGICAL_TYPE_ALIASES: dict[str, str] = {
+    "int": "integer",
+    "timestamp": "date",
+    "datetime": "date",
+    "bool": "boolean",
+    "boolen": "boolean",
 }
 
 
-PARQUET_TO_LOGICAL_DISPLAY_MAP: dict[str, str] = {
+DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "string": "string",
     "large_string": "string",
     "utf8": "string",
     "large_utf8": "string",
-    "text": "string",
-    "varchar": "string",
+    "text": "text",
+    "varchar": "varchar",
     "tinyint": "int8",
     "smallint": "int16",
     "integer": "int32",
@@ -89,6 +103,45 @@ PARQUET_TO_LOGICAL_DISPLAY_MAP: dict[str, str] = {
     "blob": "binary",
 }
 
+PHYSICAL_TYPE_ALIASES: dict[str, str] = {
+    "char": "char",
+    "string": "string",
+    "text": "text",
+    "varchar": "varchar",
+    "datetime": "datetime",
+    "timestamp": "timestamp",
+    "timestamp with time zone": "timestamp with time zone",
+    "timestamptz": "timestamptz",
+    "timestamp_s": "timestamp_s",
+    "timestamp_ms": "timestamp_ms",
+    "timestamp_us": "timestamp_us",
+    "timestamp_ns": "timestamp_ns",
+    "int8": "tinyint",
+    "tinyint": "tinyint",
+    "int16": "smallint",
+    "smallint": "smallint",
+    "int": "integer",
+    "int32": "integer",
+    "integer": "integer",
+    "int64": "bigint",
+    "bigint": "bigint",
+    "uint8": "utinyint",
+    "utinyint": "utinyint",
+    "uint16": "usmallint",
+    "usmallint": "usmallint",
+    "uint32": "uinteger",
+    "uinteger": "uinteger",
+    "uint64": "ubigint",
+    "ubigint": "ubigint",
+    "float32": "float",
+    "float": "float",
+    "real": "float",
+    "float64": "double",
+    "double": "double",
+    "binary": "binary",
+    "blob": "binary",
+}
+
 
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
@@ -99,27 +152,36 @@ def _normalize_type_name(type_name: str) -> str:
     return type_lower
 
 
+def _normalize_physical_type(physical_type: str) -> str:
+    normalized = _normalize_type_name(physical_type)
+    return PHYSICAL_TYPE_ALIASES.get(normalized, normalized)
+
+
+def _normalize_logical_type(logical_type: str) -> str:
+    logical_lower = logical_type.lower().strip()
+    if logical_lower.startswith("timestamp["):
+        return "date"
+    if logical_lower.startswith("decimal("):
+        return "float"
+    return LOGICAL_TYPE_ALIASES.get(logical_lower, logical_lower)
+
+
 
 
 def _is_supported_logical_type(logical_type: str) -> bool:
-    logical_lower = logical_type.lower().strip()
-    if logical_lower.startswith("timestamp["):
-        logical_lower = "datetime"
-    if logical_lower.startswith("decimal("):
-        logical_lower = "float"
+    logical_lower = _normalize_logical_type(logical_type)
     return logical_lower in TYPE_MAP
+
+
+def _is_supported_physical_type(physical_type: str) -> bool:
+    physical_lower = _normalize_physical_type(physical_type)
+    return physical_lower in PHYSICAL_TYPE_ALIASES.values()
 
 
 def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
     """Return True if YAML type matches Parquet type based on TYPE_MAP."""
-    yaml_lower = yaml_type.lower().strip()
+    yaml_lower = _normalize_logical_type(yaml_type)
     parquet_lower = _normalize_type_name(parquet_type)
-
-    # Normalisation
-    if yaml_lower.startswith("timestamp["):
-        yaml_lower = "datetime"
-    if yaml_lower.startswith("decimal("):
-        yaml_lower = "float"
 
     allowed_types = TYPE_MAP.get(yaml_lower)
     if not allowed_types:
@@ -128,9 +190,13 @@ def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
     return parquet_lower in allowed_types
 
 
-def _logical_type_for_display(parquet_type: str) -> str:
-    normalized = _normalize_type_name(parquet_type)
-    return PARQUET_TO_LOGICAL_DISPLAY_MAP.get(normalized, normalized)
+def _physical_types_compatible(contract_type: str, detected_type: str) -> bool:
+    return _normalize_physical_type(contract_type) == _normalize_physical_type(detected_type)
+
+
+def _data_type_for_display(data_type: str) -> str:
+    normalized = _normalize_type_name(data_type)
+    return DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP.get(normalized, normalized)
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -285,8 +351,8 @@ class Quality(BaseModel):
 
 class Property(BaseModel):
     name: str
-    logicalType: str
-    physicalType: str
+    logicalType: str = ""
+    physicalType: str = ""
     description: str
     required: bool 
     quality: Optional[list[Quality]] = None
@@ -366,7 +432,7 @@ class DataContract(BaseModel):
                         if not isinstance(properties, list) or len(properties) == 0:
                             errors.append(f"schema[{i}].properties empty or invalid")
                         else:
-                            required_prop_fields = ["name", "logicalType", "description", "required"]
+                            required_prop_fields = ["name", "description", "required"]
                             for j, prop in enumerate(properties):
                                 if not isinstance(prop, dict):
                                     errors.append(f"schema[{i}].properties[{j}] invalid (not an object)")
@@ -385,9 +451,25 @@ class DataContract(BaseModel):
                                     continue
 
                                 logical_type = prop.get("logicalType")
-                                if not isinstance(logical_type, str) or not _is_supported_logical_type(logical_type):
+                                physical_type = prop.get("physicalType")
+                                has_logical_type = isinstance(logical_type, str) and bool(logical_type.strip())
+                                has_physical_type = isinstance(physical_type, str) and bool(physical_type.strip())
+
+                                if not has_logical_type and not has_physical_type:
+                                    errors.append(
+                                        f"schema[{i}].properties[{j}] missing logicalType or physicalType"
+                                    )
+                                    continue
+
+                                if has_logical_type and not _is_supported_logical_type(logical_type):
                                     errors.append(
                                         f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
+                                    )
+                                    continue
+
+                                if has_physical_type and not _is_supported_physical_type(physical_type):
+                                    errors.append(
+                                        f"schema[{i}].properties[{j}].physicalType unsupported: {physical_type!r}"
                                     )
                                     continue
 
@@ -442,7 +524,8 @@ class DataContract(BaseModel):
         """
         Pour chaque SchemaItem du contrat, vérifie que :
         - chaque property obligatoire existe comme colonne dans le parquet
-        - le type de la colonne est compatible avec logicalType du YAML
+        - le type détecté est comparé à physicalType si présent
+        - sinon, le type détecté est comparé à logicalType
         Les colonnes optionnelles absentes sont signalées mais n'échouent pas.
 
         Returns
@@ -456,27 +539,37 @@ class DataContract(BaseModel):
             column_results = []
             for prop in schema_item.properties:
                 parquet_type = parquet_columns.get(prop.name)
+                expected_type = prop.physicalType.strip() or prop.logicalType.strip() or "not specified"
                 if parquet_type is None:
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
-                        yaml_type=prop.logicalType,
+                        yaml_type=expected_type,
                         parquet_type="column not found",
                         required=prop.required,
                         status=ColumnCheckStatus.missing if prop.required else ColumnCheckStatus.optional_missing,
                     ))
-                elif not _types_compatible(prop.logicalType, parquet_type):
+                    continue
+
+                detected_type = _data_type_for_display(parquet_type)
+                type_matches = (
+                    _physical_types_compatible(prop.physicalType, parquet_type)
+                    if prop.physicalType
+                    else _types_compatible(prop.logicalType, parquet_type)
+                )
+
+                if not type_matches:
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
-                        yaml_type=prop.logicalType,
-                        parquet_type=_logical_type_for_display(parquet_type),
+                        yaml_type=expected_type,
+                        parquet_type=detected_type,
                         required=prop.required,
                         status=ColumnCheckStatus.type_mismatch,
                     ))
                 else:
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
-                        yaml_type=prop.logicalType,
-                        parquet_type=_logical_type_for_display(parquet_type),
+                        yaml_type=expected_type,
+                        parquet_type=detected_type,
                         required=prop.required,
                         status=ColumnCheckStatus.ok,
                     ))

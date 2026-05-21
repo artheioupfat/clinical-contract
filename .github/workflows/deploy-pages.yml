@@ -30,10 +30,11 @@ jobs:
           node-version: "20"
           cache: npm
 
-      - name: Build Tailwind CSS
+      - name: Test and build site
         run: |
           set -euo pipefail
           npm ci
+          npm run test:site
           npm run build:site:css
 
       - name: Configure Pages

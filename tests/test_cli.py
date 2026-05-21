@@ -29,7 +29,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Patient id
         required: true
         quality:
@@ -67,7 +67,7 @@ schema:
     properties:
       - name: id
         logicalType: string
-        physicalType: TEXT
+        physicalType: VARCHAR
         description: Patient id
         required: true
         quality:

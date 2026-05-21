@@ -1,0 +1,35 @@
+        <!-- Header: brand, runtime-independent controls, and theme switch. -->
+        <header class="pine-header">
+          <div class="pine-brand">
+            <div class="pine-logo-box">
+              <img :src="logoSrc" :alt="logoAlt" class="pine-logo-image" @error="handleLogoError" />
+            </div>
+            <div class="pine-brand-row">
+              <h1 class="pine-brand-title">clinical-contract</h1>
+              <span class="pine-badge">beta</span>
+            </div>
+          </div>
+
+          <div class="pine-theme-toggle">
+            <input id="theme-switch" type="checkbox" name="theme-switch" class="sr-only" :checked="switchOn" />
+            <button
+              x-ref="switchButton"
+              type="button"
+              @click="toggleThemeSwitch()"
+              class="pine-theme-switch"
+              :class="switchOn ? 'pine-theme-switch--on' : 'pine-theme-switch--off'"
+              x-cloak
+            >
+              <span class="pine-theme-switch__thumb" :class="switchOn ? 'pine-theme-switch__thumb--on' : 'pine-theme-switch__thumb--off'"></span>
+            </button>
+            <label
+              @click="$refs.switchButton.click(); $refs.switchButton.focus()"
+              for="theme-switch"
+              class="pine-theme-switch-label"
+              :class="switchOn ? 'pine-theme-switch-label--on' : 'pine-theme-switch-label--off'"
+              x-cloak
+            >
+              <span x-text="switchOn ? 'Light' : 'Dark'"></span>
+            </label>
+          </div>
+        </header>

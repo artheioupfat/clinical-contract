@@ -2,6 +2,67 @@ window.ClinicalModules = window.ClinicalModules || {};
 
 window.ClinicalModules.editor = {
   indentUnit: '  ',
+  editorSessionKey: 'clinical-contract-editor-session-v1',
+
+  clearEditorSession() {
+    try {
+      sessionStorage.removeItem(this.editorSessionKey);
+    } catch (_error) {
+      // Ignore storage failures.
+    }
+  },
+
+  restoreEditorSession() {
+    try {
+      const rawSession = sessionStorage.getItem(this.editorSessionKey);
+      if (!rawSession) return;
+
+      const session = JSON.parse(rawSession);
+      if (!session || typeof session !== 'object') return;
+
+      this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
+      this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
+      this.editorView = session.editorView === 'yaml' ? 'yaml' : 'schema';
+      this.schemaSection = typeof session.schemaSection === 'string'
+        ? session.schemaSection
+        : 'fundamentals';
+      this.schemaStarted = Boolean(this.yamlText.trim());
+
+      if (this.schemaStarted && typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+      }
+    } catch (_error) {
+      this.clearEditorSession();
+    }
+  },
+
+  registerEditorSessionPersistence() {
+    this.$watch('yamlText', () => this.persistEditorSession());
+    this.$watch('yamlName', () => this.persistEditorSession());
+    this.$watch('editorView', () => this.persistEditorSession());
+    this.$watch('schemaSection', () => this.persistEditorSession());
+  },
+
+  persistEditorSession() {
+    try {
+      const payload = {
+        yamlText: this.yamlText || '',
+        yamlName: this.yamlName || '',
+        editorView: this.editorView || 'schema',
+        schemaSection: this.schemaSection || 'fundamentals',
+        savedAt: new Date().toISOString(),
+      };
+
+      if (!payload.yamlText.trim() && !payload.yamlName) {
+        this.clearEditorSession();
+        return;
+      }
+
+      sessionStorage.setItem(this.editorSessionKey, JSON.stringify(payload));
+    } catch (_error) {
+      // Ignore storage failures.
+    }
+  },
 
   applyEditorChange(textarea, value, selectionStart, selectionEnd = selectionStart) {
     textarea.value = value;
@@ -81,6 +142,30 @@ window.ClinicalModules.editor = {
     event.target.value = '';
   },
 
+  async loadExampleContract() {
+    try {
+      const response = await fetch('./examples/contract.yaml');
+      if (!response.ok) {
+        throw new Error(`Example request failed with status ${response.status}`);
+      }
+      this.yamlText = await response.text();
+      this.yamlName = 'example.yaml';
+      this.schemaStarted = true;
+      this.clearResults();
+      if (typeof this.syncSchemaFromYaml === 'function') {
+        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+      }
+      if (typeof this.setSchemaSection === 'function') {
+        this.setSchemaSection('fundamentals');
+      } else {
+        this.schemaSection = 'fundamentals';
+      }
+      this.persistEditorSession();
+    } catch (error) {
+      this.schemaParseWarning = `Unable to load example contract: ${error.message}`;
+    }
+  },
+
   downloadYaml() {
     const blob = new Blob([this.yamlText || ''], { type: 'text/yaml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -102,6 +187,16 @@ window.ClinicalModules.editor = {
   async handleYamlFile(file) {
     this.yamlText = await file.text();
     this.yamlName = file.name;
+    this.schemaStarted = Boolean(this.yamlText.trim());
     this.clearResults();
+    if (typeof this.syncSchemaFromYaml === 'function') {
+      this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    }
+    if (typeof this.setSchemaSection === 'function') {
+      this.setSchemaSection('fundamentals');
+    } else {
+      this.schemaSection = 'fundamentals';
+    }
+    this.persistEditorSession();
   },
 };
