@@ -211,18 +211,10 @@
                             <div class="schema-stage-title">Schema</div>
                           </div>
                         </div>
-                        <div class="grid gap-3 md:grid-cols-3">
+                        <div class="grid gap-3 md:grid-cols-[minmax(12rem,0.8fr)_minmax(18rem,1.2fr)]">
                           <label class="space-y-1">
                             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Table Name <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak>* required</span></span>
                             <input type="text" x-model="schemaDraft.tableName" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableName')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500" />
-                          </label>
-                          <label class="space-y-1">
-                            <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Physical Type <span class="schema-required" x-show="showRequiredFor('tablePhysicalType')" x-cloak>* required</span></span>
-                            <select x-model="schemaDraft.tablePhysicalType" @change="pushSchemaToYaml()" :class="requiredInputClass('tablePhysicalType')" class="schema-input w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-blue-500">
-                              <option value="TABLE">TABLE</option>
-                              <option value="VIEW">VIEW</option>
-                              <option value="FILE">FILE</option>
-                            </select>
                           </label>
                           <label class="space-y-1">
                             <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Description <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak>* required</span></span>

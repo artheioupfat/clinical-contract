@@ -69,13 +69,13 @@ LOGICAL_TYPE_ALIASES: dict[str, str] = {
 }
 
 
-PARQUET_TO_LOGICAL_DISPLAY_MAP: dict[str, str] = {
+DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "string": "string",
     "large_string": "string",
     "utf8": "string",
     "large_utf8": "string",
-    "text": "string",
-    "varchar": "string",
+    "text": "text",
+    "varchar": "varchar",
     "tinyint": "int8",
     "smallint": "int16",
     "integer": "int32",
@@ -194,9 +194,9 @@ def _physical_types_compatible(contract_type: str, detected_type: str) -> bool:
     return _normalize_physical_type(contract_type) == _normalize_physical_type(detected_type)
 
 
-def _logical_type_for_display(parquet_type: str) -> str:
-    normalized = _normalize_type_name(parquet_type)
-    return PARQUET_TO_LOGICAL_DISPLAY_MAP.get(normalized, normalized)
+def _data_type_for_display(data_type: str) -> str:
+    normalized = _normalize_type_name(data_type)
+    return DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP.get(normalized, normalized)
 
 
 def _quote_identifier(identifier: str) -> str:
@@ -550,6 +550,7 @@ class DataContract(BaseModel):
                     ))
                     continue
 
+                detected_type = _data_type_for_display(parquet_type)
                 type_matches = (
                     _physical_types_compatible(prop.physicalType, parquet_type)
                     if prop.physicalType
@@ -560,7 +561,7 @@ class DataContract(BaseModel):
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=expected_type,
-                        parquet_type=parquet_type,
+                        parquet_type=detected_type,
                         required=prop.required,
                         status=ColumnCheckStatus.type_mismatch,
                     ))
@@ -568,7 +569,7 @@ class DataContract(BaseModel):
                     column_results.append(ColumnCheckResult(
                         column=prop.name,
                         yaml_type=expected_type,
-                        parquet_type=parquet_type,
+                        parquet_type=detected_type,
                         required=prop.required,
                         status=ColumnCheckStatus.ok,
                     ))

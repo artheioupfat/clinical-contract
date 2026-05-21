@@ -251,7 +251,7 @@
         descriptionUsage: description.usage,
         descriptionLimitations: description.limitations,
         tableName: firstSchema.name || '',
-        tablePhysicalType: firstSchema.physicalType || 'TABLE',
+        tablePhysicalType: 'TABLE',
         tableDescription: firstSchema.description || '',
         properties: normalizedProperties,
         qualityRules,
@@ -283,7 +283,7 @@
 
     const table = deepClone(draft.tableExtras || {});
     table.name = draft.tableName || '';
-    if (draft.tablePhysicalType) table.physicalType = draft.tablePhysicalType;
+    table.physicalType = 'TABLE';
     if (draft.tableDescription) table.description = draft.tableDescription;
     else delete table.description;
 

@@ -74,7 +74,6 @@ window.ClinicalModules.schema = {
       descriptionUsage: draft.descriptionUsage,
       descriptionLimitations: draft.descriptionLimitations,
       tableName: draft.tableName,
-      tablePhysicalType: draft.tablePhysicalType,
       tableDescription: draft.tableDescription,
     };
 

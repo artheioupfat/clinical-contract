@@ -89,6 +89,7 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
   assert.equal(draft.id, 'orders-contract');
   assert.equal(draft.descriptionPurpose, 'Protect downstream order analytics.');
   assert.equal(draft.tableName, 'orders');
+  assert.equal(draft.tablePhysicalType, 'TABLE');
   assert.equal(draft.tableExtras.xTable, 'kept');
   assert.equal(decoded.rootExtras.xRoot, 'kept');
   assert.equal(decoded.otherSchemas[0].name, 'secondary_schema');
@@ -116,6 +117,7 @@ test('draftToContractObject writes quality under its column and preserves extras
   const property = contract.schema[0].properties[0];
 
   assert.equal(contract.xRoot, 'kept');
+  assert.equal(contract.schema[0].physicalType, 'TABLE');
   assert.equal(contract.schema[0].xTable, 'kept');
   assert.equal(contract.schema[1].name, 'secondary_schema');
   assert.equal(property.logicalType, 'integer');
@@ -125,6 +127,27 @@ test('draftToContractObject writes quality under its column and preserves extras
   assert.equal(property.quality[0].severity, 'high');
   assert.equal(property.quality[0].query, 'select count(*) from data where order_id is null');
   assert.equal(contract.team.members[0].xMember, 'kept');
+});
+
+test('draftToContractObject always writes schema physicalType as TABLE', () => {
+  const decoded = codec.contractObjectToDraft(
+    {
+      ...sampleContract(),
+      schema: [
+        {
+          ...sampleContract().schema[0],
+          physicalType: 'VIEW',
+        },
+      ],
+    },
+    { nextRowId: nextIdFactory() }
+  );
+
+  assert.equal(decoded.draft.tablePhysicalType, 'TABLE');
+  decoded.draft.tablePhysicalType = 'FILE';
+  const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.otherSchemas);
+
+  assert.equal(contract.schema[0].physicalType, 'TABLE');
 });
 
 test('yaml helpers delegate parsing and dumping to the injected YAML library', () => {

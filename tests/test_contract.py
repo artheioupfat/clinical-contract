@@ -333,7 +333,7 @@ def test_check_schema_colonne_optionnelle_absente(tmp_path):
 
     cols = {c.column: c for c in reports[0].columns}
     assert cols["id"].status == ColumnCheckStatus.ok
-    assert cols["id"].parquet_type == "VARCHAR"
+    assert cols["id"].parquet_type == "varchar"
     assert cols["notes"].status == ColumnCheckStatus.optional_missing
     assert reports[0].success is True
 
@@ -456,7 +456,7 @@ schema:
 
     assert reports[0].success is False
     assert reports[0].columns[0].yaml_type == "TEXT"
-    assert reports[0].columns[0].parquet_type == "VARCHAR"
+    assert reports[0].columns[0].parquet_type == "varchar"
     assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
@@ -526,7 +526,7 @@ schema:
     assert reports[0].success is True
     assert col.status == ColumnCheckStatus.ok
     assert col.yaml_type == "UINTEGER"
-    assert col.parquet_type == "UINTEGER"
+    assert col.parquet_type == "uint32"
 
 
 def test_check_schema_uint32_rejects_ubigint(tmp_path):
@@ -565,7 +565,7 @@ schema:
     assert reports[0].success is False
     assert col.status == ColumnCheckStatus.type_mismatch
     assert col.yaml_type == "UINTEGER"
-    assert col.parquet_type == "UBIGINT"
+    assert col.parquet_type == "uint64"
 
 
 def test_check_schema_integer_keeps_family_compatibility(tmp_path):
@@ -602,7 +602,7 @@ schema:
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
     assert reports[0].columns[0].yaml_type == "int"
-    assert reports[0].columns[0].parquet_type == "UTINYINT"
+    assert reports[0].columns[0].parquet_type == "uint8"
 
 
 def test_check_schema_physical_type_takes_precedence(tmp_path):
@@ -639,7 +639,7 @@ schema:
 
     assert reports[0].success is False
     assert reports[0].columns[0].yaml_type == "INTEGER"
-    assert reports[0].columns[0].parquet_type == "UTINYINT"
+    assert reports[0].columns[0].parquet_type == "uint8"
     assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
@@ -676,7 +676,45 @@ schema:
 
     assert reports[0].success is True
     assert reports[0].columns[0].yaml_type == "uint32"
-    assert reports[0].columns[0].parquet_type == "UINTEGER"
+    assert reports[0].columns[0].parquet_type == "uint32"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_displays_bigint_as_int64(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="patient_count",
+        duckdb_type="BIGINT",
+    )
+    yaml_int64 = """
+apiVersion: v1.0.0
+kind: DataContract
+id: int64-contract
+name: Int64 Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: patient_count
+        logicalType: integer
+        physicalType: int64
+        description: Patient count
+        required: true
+"""
+    contract, _ = load_contract(yaml_int64)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "int64"
+    assert reports[0].columns[0].parquet_type == "int64"
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
