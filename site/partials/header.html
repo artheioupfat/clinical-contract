@@ -10,26 +10,40 @@
             </div>
           </div>
 
-          <div class="pine-theme-toggle">
-            <input id="theme-switch" type="checkbox" name="theme-switch" class="sr-only" :checked="switchOn" />
-            <button
-              x-ref="switchButton"
-              type="button"
-              @click="toggleThemeSwitch()"
-              class="pine-theme-switch"
-              :class="switchOn ? 'pine-theme-switch--on' : 'pine-theme-switch--off'"
-              x-cloak
+          <div class="header-actions">
+            <a
+              class="github-link"
+              href="https://github.com/artheioupfat/clinical-contract"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open clinical-contract on GitHub"
             >
-              <span class="pine-theme-switch__thumb" :class="switchOn ? 'pine-theme-switch__thumb--on' : 'pine-theme-switch__thumb--off'"></span>
-            </button>
-            <label
-              @click="$refs.switchButton.click(); $refs.switchButton.focus()"
-              for="theme-switch"
-              class="pine-theme-switch-label"
-              :class="switchOn ? 'pine-theme-switch-label--on' : 'pine-theme-switch-label--off'"
-              x-cloak
-            >
-              <span x-text="switchOn ? 'Light' : 'Dark'"></span>
-            </label>
+              <svg class="github-link__icon" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.59 2 12.253c0 4.528 2.865 8.371 6.839 9.728.5.094.683-.222.683-.494 0-.244-.009-.89-.014-1.747-2.782.62-3.369-1.375-3.369-1.375-.455-1.184-1.11-1.5-1.11-1.5-.908-.636.069-.623.069-.623 1.004.073 1.532 1.057 1.532 1.057.892 1.567 2.341 1.115 2.91.853.091-.662.35-1.115.636-1.371-2.221-.259-4.555-1.139-4.555-5.067 0-1.119.39-2.034 1.03-2.751-.103-.26-.446-1.303.098-2.715 0 0 .84-.276 2.75 1.051A9.377 9.377 0 0 1 12 6.958a9.38 9.38 0 0 1 2.504.345c1.909-1.327 2.747-1.051 2.747-1.051.546 1.412.203 2.455.1 2.715.64.717 1.028 1.632 1.028 2.751 0 3.938-2.337 4.805-4.566 5.059.359.317.679.943.679 1.9 0 1.371-.013 2.477-.013 2.814 0 .274.18.593.688.493C19.138 20.62 22 16.78 22 12.253 22 6.59 17.523 2 12 2Z" />
+              </svg>
+            </a>
+
+            <div class="pine-theme-toggle">
+              <input id="theme-switch" type="checkbox" name="theme-switch" class="sr-only" :checked="switchOn" />
+              <button
+                x-ref="switchButton"
+                type="button"
+                @click="toggleThemeSwitch()"
+                class="pine-theme-switch"
+                :class="switchOn ? 'pine-theme-switch--on' : 'pine-theme-switch--off'"
+                x-cloak
+              >
+                <span class="pine-theme-switch__thumb" :class="switchOn ? 'pine-theme-switch__thumb--on' : 'pine-theme-switch__thumb--off'"></span>
+              </button>
+              <label
+                @click="$refs.switchButton.click(); $refs.switchButton.focus()"
+                for="theme-switch"
+                class="pine-theme-switch-label"
+                :class="switchOn ? 'pine-theme-switch-label--on' : 'pine-theme-switch-label--off'"
+                x-cloak
+              >
+                <span x-text="switchOn ? 'Light' : 'Dark'"></span>
+              </label>
+            </div>
           </div>
         </header>

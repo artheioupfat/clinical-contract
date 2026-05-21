@@ -99,7 +99,30 @@
     color: var(--cc-primary-strong);
   }
 
-  /* Theme switch */
+  /* Header actions */
+  .header-actions {
+    @apply flex items-center gap-3;
+  }
+
+  .github-link {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-md transition;
+    color: var(--cc-text);
+  }
+
+  .github-link:hover {
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+  }
+
+  .github-link:focus-visible {
+    @apply outline outline-2 outline-offset-2;
+    outline-color: var(--cc-primary);
+  }
+
+  .github-link__icon {
+    @apply h-6 w-6 shrink-0;
+  }
+
   .pine-theme-toggle {
     @apply flex items-center gap-2;
   }
@@ -1260,6 +1283,15 @@
   .theme-dark .pine-header {
     background: linear-gradient(180deg, var(--cc-night-panel) 0%, var(--cc-night) 100%);
     border-color: var(--cc-night-border);
+  }
+
+  .theme-dark .github-link {
+    color: var(--cc-night-text);
+  }
+
+  .theme-dark .github-link:hover {
+    background: #174475;
+    color: white;
   }
 
   .theme-dark .panel--editor {
