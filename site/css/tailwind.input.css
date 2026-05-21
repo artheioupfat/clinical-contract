@@ -67,13 +67,13 @@
 
   /* Header and brand */
   .pine-header {
-    @apply flex items-center justify-between gap-4 border-b px-4 py-2;
+    @apply flex flex-nowrap items-center justify-between gap-4 border-b px-4 py-2;
     background: linear-gradient(180deg, #fbfdff 0%, var(--cc-surface) 100%);
     border-color: var(--cc-border);
   }
 
   .pine-brand {
-    @apply flex items-center gap-2.5;
+    @apply flex min-w-0 items-center gap-2.5;
   }
 
   .pine-logo-box {
@@ -85,11 +85,11 @@
   }
 
   .pine-brand-row {
-    @apply flex items-center gap-2;
+    @apply flex min-w-0 items-center gap-2;
   }
 
   .pine-brand-title {
-    @apply m-0 text-[15px] font-semibold tracking-tight;
+    @apply m-0 truncate text-[15px] font-semibold tracking-tight;
     color: var(--cc-text);
   }
 
@@ -101,11 +101,11 @@
 
   /* Header actions */
   .header-actions {
-    @apply flex items-center gap-3;
+    @apply flex shrink-0 flex-nowrap items-center gap-2;
   }
 
   .github-link {
-    @apply inline-flex h-10 w-10 items-center justify-center rounded-md transition;
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition;
     color: var(--cc-text);
   }
 
@@ -120,11 +120,11 @@
   }
 
   .github-link__icon {
-    @apply h-6 w-6 shrink-0;
+    @apply h-5 w-5 shrink-0;
   }
 
   .pine-theme-toggle {
-    @apply flex items-center gap-2;
+    @apply flex shrink-0 flex-nowrap items-center gap-2;
   }
 
   .pine-theme-switch {
@@ -1248,7 +1248,6 @@
   }
 
   @media (max-width: 900px) {
-    .pine-header,
     .panel-head {
       @apply flex-wrap;
     }
