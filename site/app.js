@@ -56,7 +56,6 @@ document.addEventListener('alpine:init', () => {
       descriptionUsage: '',
       descriptionLimitations: '',
       tableName: '',
-      tablePhysicalType: 'TABLE',
       tableDescription: '',
       properties: [],
       qualityRules: [],

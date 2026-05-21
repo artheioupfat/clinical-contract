@@ -89,7 +89,6 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
   assert.equal(draft.id, 'orders-contract');
   assert.equal(draft.descriptionPurpose, 'Protect downstream order analytics.');
   assert.equal(draft.tableName, 'orders');
-  assert.equal(draft.tablePhysicalType, 'TABLE');
   assert.equal(draft.tableExtras.xTable, 'kept');
   assert.equal(decoded.rootExtras.xRoot, 'kept');
   assert.equal(decoded.otherSchemas[0].name, 'secondary_schema');
@@ -129,7 +128,7 @@ test('draftToContractObject writes quality under its column and preserves extras
   assert.equal(contract.team.members[0].xMember, 'kept');
 });
 
-test('draftToContractObject always writes schema physicalType as TABLE', () => {
+test('draftToContractObject always writes schema physicalType as TABLE without draft state', () => {
   const decoded = codec.contractObjectToDraft(
     {
       ...sampleContract(),
@@ -143,7 +142,7 @@ test('draftToContractObject always writes schema physicalType as TABLE', () => {
     { nextRowId: nextIdFactory() }
   );
 
-  assert.equal(decoded.draft.tablePhysicalType, 'TABLE');
+  assert.equal(Object.prototype.hasOwnProperty.call(decoded.draft, 'tablePhysicalType'), false);
   decoded.draft.tablePhysicalType = 'FILE';
   const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.otherSchemas);
 
