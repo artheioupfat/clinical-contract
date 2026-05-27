@@ -73,7 +73,7 @@ Before deploying, verify:
 - Start from the empty contract screen.
 - Add a schema, column, quality rule, and team member.
 - Switch between Schema and YAML without losing data.
-- Load the example contract.
+- Load the template contract and bundled Parquet file.
 - Validate the contract.
 - Load a CSV or Parquet file.
 - Open Preview and paginate rows.

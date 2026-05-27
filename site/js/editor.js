@@ -144,14 +144,32 @@ window.ClinicalModules.editor = {
 
   async loadExampleContract() {
     try {
-      const response = await fetch('./examples/contract.yaml');
-      if (!response.ok) {
-        throw new Error(`Example request failed with status ${response.status}`);
+      const [contractResponse, dataResponse] = await Promise.all([
+        fetch('./examples/contract.yaml'),
+        fetch('./examples/template.parquet'),
+      ]);
+      if (!contractResponse.ok) {
+        throw new Error(`Template contract request failed with status ${contractResponse.status}`);
       }
-      this.yamlText = await response.text();
-      this.yamlName = 'example.yaml';
+      if (!dataResponse.ok) {
+        throw new Error(`Template data request failed with status ${dataResponse.status}`);
+      }
+
+      const [contractText, dataBuffer] = await Promise.all([
+        contractResponse.text(),
+        dataResponse.arrayBuffer(),
+      ]);
+      const dataFile = new File([dataBuffer], 'template.parquet', {
+        type: 'application/octet-stream',
+      });
+
+      this.yamlText = contractText;
+      this.yamlName = 'template.yaml';
       this.schemaStarted = true;
       this.clearResults();
+      if (typeof this.loadDataFile === 'function') {
+        await this.loadDataFile(dataFile);
+      }
       if (typeof this.syncSchemaFromYaml === 'function') {
         this.syncSchemaFromYaml({ preserveCurrentOnError: false });
       }
@@ -162,7 +180,7 @@ window.ClinicalModules.editor = {
       }
       this.persistEditorSession();
     } catch (error) {
-      this.schemaParseWarning = `Unable to load example contract: ${error.message}`;
+      this.schemaParseWarning = `Unable to load template: ${error.message}`;
     }
   },
 

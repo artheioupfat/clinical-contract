@@ -1,47 +1,62 @@
 apiVersion: v3.1.0
 kind: DataContract
-id: export
-name: Export Contract
+id: clinical-template
+name: Clinical Template Contract
 version: 1.0.0
 status: active
 description:
-  purpose: "Export dataset containing medical event and sampling information"
-  usage: "Used for analytics and downstream processing"
-  limitations: "Historical data may contain legacy timestamps"
+  purpose: "Template dataset for demonstrating clinical-contract validation and checks"
+  usage: "Used in the browser playground to validate a YAML contract against a matching Parquet file"
+  limitations: "Synthetic data only; values are randomly generated for demonstration purposes"
 
 schema:
   - name: export
     physicalType: TABLE
-    description: Exported dataset containing patient event and laboratory sampling data
+    description: Synthetic clinical export used by the playground template
     properties:
-      - name: IPP
+      - name: PATIENT_ID
         logicalType: string
         physicalType: varchar
-        description: Identifiant patient permanent
+        description: Synthetic patient identifier generated for the template dataset
         required: true
         quality:
           - type: sql
-            description: IPP must be between 35 and 37 characters
-            query: "SELECT COUNT(*) FROM export WHERE LENGTH(IPP) NOT BETWEEN 35 AND 37"
+            description: PATIENT_ID must not be null
+            query: "SELECT COUNT(*) FROM export WHERE PATIENT_ID IS NULL"
             mustBe: 0
 
-      - name: IEP
-        logicalType: string
-        physicalType: varchar
-        description: Identifiant d'épisode patient
+      - name: STAY
+        logicalType: integer
+        physicalType: uint32
+        description: Synthetic hospital stay identifier
+        required: true
+        quality:
+          - type: sql
+            description: STAY must not be null
+            query: "SELECT COUNT(*) FROM export WHERE STAY IS NULL"
+            mustBe: 0
+
+      - name: VALUE
+        logicalType: float
+        physicalType: float64
+        description: Synthetic numeric measurement value
+        required: true
+
+      - name: LIFE_STATUS
+        logicalType: boolean
+        description: Synthetic life status flag
         required: true
 
       - name: EVENT_TIME
         logicalType: date
         physicalType: timestamp
-        description: Timestamp of the recorded event
+        description: Timestamp of the synthetic clinical event
         required: true
         quality:
           - type: sql
             description: EVENT_TIME must be after 1925-01-01
             query: "SELECT COUNT(*) FROM export WHERE EVENT_TIME < TIMESTAMP '1925-01-01 00:00:00'"
             mustBe: 0
-
 
 team:
   name: CDC Brest
@@ -55,11 +70,3 @@ team:
       role: Data Scientist
     - name: artur.lamard@chu-brest.fr
       role: Data Engineer
-    - name: lucas.bourneuf@chu-brest.fr
-      role: Administrator System
-    - name: bertrand.borel@chu-brest.fr
-      role: Data Scientist
-    - name: nathan.foulquier@chu-brest.fr
-      role: Data Scientist
-    - name: basile.fuchs@chu-brest.fr
-      role: Doctor
