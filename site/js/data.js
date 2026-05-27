@@ -129,10 +129,7 @@ window.ClinicalModules.data = {
   async pickDataFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
-    this.dataFile = file;
-    this.dataFileName = file.name;
-    this.dataFileSize = file.size || 0;
-    await this.refreshDataInsights();
+    await this.loadDataFile(file);
     event.target.value = '';
   },
 
@@ -140,6 +137,10 @@ window.ClinicalModules.data = {
     this.draggingData = false;
     const file = [...event.dataTransfer.files].find((f) => /\.(parquet|csv)$/i.test(f.name));
     if (!file) return;
+    await this.loadDataFile(file);
+  },
+
+  async loadDataFile(file) {
     this.dataFile = file;
     this.dataFileName = file.name;
     this.dataFileSize = file.size || 0;
