@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="./css/tailwind.css" />
   </head>
   <body>
-    <div x-data="clinicalApp()" x-init="init()" class="app-root" :class="switchOn ? 'app-root--dark' : ''">
-      <div class="app-frame" :class="switchOn ? 'theme-dark page-night' : ''">
+    <div x-data="clinicalApp()" x-init="init()" class="app-root">
+      <div class="app-frame" :class="switchOn ? 'theme-dark' : ''">
         <div data-include="./partials/header.html"></div>
 
         <main class="app-main">
