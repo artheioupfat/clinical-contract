@@ -471,8 +471,8 @@
   .schema-empty {
     @apply flex min-h-0 flex-1 items-center justify-center p-6;
     background:
-      radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.16) 1px, transparent 0),
-      radial-gradient(circle at 50% 0%, rgba(232, 242, 251, 0.95) 0%, rgba(255, 255, 255, 0.9) 46%, rgba(244, 248, 252, 0.92) 100%);
+      radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.16) 1px, transparent 0);
+      /*radial-gradient(circle at 50% 0%, rgba(232, 242, 251, 0.95) 0%, rgba(255, 255, 255, 0.9) 46%, rgba(244, 248, 252, 0.92) 100%);*/
     background-size: 22px 22px, 100% 100%;
   }
 
@@ -1427,8 +1427,8 @@
 
   .theme-dark .schema-empty {
     background:
-      radial-gradient(circle at 1px 1px, rgba(166, 176, 189, 0.18) 1px, transparent 0),
-      radial-gradient(circle at 50% 0%, rgba(32, 40, 51, 0.92) 0%, rgba(20, 24, 29, 0.96) 42%, rgba(5, 6, 8, 1) 100%);
+      radial-gradient(circle at 1px 1px, rgba(166, 176, 189, 0.18) 1px, transparent 0);
+      /*radial-gradient(circle at 50% 0%, rgba(32, 40, 51, 0.92) 0%, rgba(20, 24, 29, 0.96) 42%, rgba(5, 6, 8, 1) 100%);*/
     background-size: 22px 22px, 100% 100%;
   }
 
