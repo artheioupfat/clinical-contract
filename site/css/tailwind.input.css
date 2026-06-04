@@ -76,7 +76,8 @@
   }
 
   .pine-logo-box {
-    @apply flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg bg-white shadow-inner shadow-slate-900/10;
+    @apply flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg bg-white;
+    border: 1px solid var(--cc-border);
   }
 
   .pine-logo-image {
@@ -477,7 +478,7 @@
   }
 
   .schema-empty-card {
-    @apply max-w-xl rounded-xl border bg-white p-7 text-center shadow-xl shadow-slate-900/5;
+    @apply max-w-xl rounded-lg border bg-white p-6 text-center;
     border-color: var(--cc-border);
   }
 
@@ -669,12 +670,12 @@
   }
 
   .schema-editor .schema-input {
-    @apply border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900 shadow-none;
+    @apply border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900;
     border-radius: 0.5rem;
   }
 
   .schema-editor .schema-input--description {
-    @apply border-blue-200 bg-blue-50/70 text-slate-950 shadow-inner shadow-blue-950/5;
+    @apply border-blue-200 bg-blue-50/70 text-slate-950;
   }
 
   .schema-editor .schema-input--required {
@@ -834,7 +835,7 @@
   }
 
   .team-member-input {
-    @apply border-blue-200 bg-blue-50/70 text-slate-950 shadow-inner shadow-blue-950/5;
+    @apply border-blue-200 bg-blue-50/70 text-slate-950;
   }
 
   /* Quality checks */
@@ -892,7 +893,7 @@
   }
 
   .entity-modal {
-    @apply w-full max-w-3xl rounded-lg border border-slate-200 bg-white shadow-2xl shadow-slate-950/20;
+    @apply w-full max-w-3xl rounded-lg border border-slate-200 bg-white;
   }
 
   .entity-modal__header {
