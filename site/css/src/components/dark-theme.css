@@ -60,8 +60,8 @@
   .theme-dark :is(.entity-modal__close, .pine-tab, .view-switch-btn) { color: var(--cc-night-muted); }
   .theme-dark :is(.panel-eyebrow, .schema-empty-kicker) { color: var(--cc-primary-strong); }
   .theme-dark .pine-theme-button {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.14);
+    background: transparent;
+    border-color: transparent;
     color: white;
   }
   .theme-dark .pine-theme-button__icon--moon,
