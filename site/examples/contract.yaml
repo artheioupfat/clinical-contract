@@ -9,6 +9,13 @@ description:
   usage: "Used in the browser playground to validate a YAML contract against a matching Parquet file"
   limitations: "Synthetic data only; values are randomly generated for demonstration purposes"
 
+study:
+  startDate: "2024-01-01"
+  endDate: "2024-12-31"
+  type: "cohort"
+  objective: "predictive"
+  healthDomain: "synthetic clinical data"
+
 schema:
   - name: export
     physicalType: TABLE

@@ -1,0 +1,50 @@
+@layer base {
+  :root {
+    --cc-primary: #005ca9;
+    --cc-primary-strong: #003f7d;
+    --cc-primary-soft: #e8f2fb;
+    --cc-primary-ring: #72b7ea;
+    --cc-surface: #f4f8fc;
+    --cc-surface-muted: #edf4fa;
+    --cc-border: #c9dbe8;
+    --cc-text: #102033;
+    --cc-muted: #64748b;
+    --cc-night: #050608;
+    --cc-night-panel: #0b0d10;
+    --cc-night-raised: #14181d;
+    --cc-night-elevated: #202833;
+    --cc-night-hover: #252d38;
+    --cc-night-border: #2d3642;
+    --cc-night-border-strong: #3f4b59;
+    --cc-night-text: #f3f6f8;
+    --cc-night-muted: #a6b0bd;
+    --cc-success: #12805c;
+    --cc-success-soft: #e7f6ef;
+    --cc-danger: #be3b4a;
+    --cc-danger-soft: #fdecef;
+    --cc-warning: #b7791f;
+    --cc-warning-soft: #fff7df;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply m-0 antialiased;
+    background-color: var(--cc-surface);
+    color: var(--cc-text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  .sr-only {
+    @apply absolute m-[-1px] h-px w-px overflow-hidden whitespace-nowrap border-0 p-0;
+    clip: rect(0, 0, 0, 0);
+  }
+}

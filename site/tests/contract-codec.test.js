@@ -24,6 +24,14 @@ function sampleContract() {
       usage: 'Consumed by analytics jobs.',
       limitations: 'Historical rows may be incomplete.',
     },
+    study: {
+      startDate: '2024-01-01',
+      endDate: '2024-12-31',
+      type: 'cohort',
+      objective: 'predictive',
+      healthDomain: 'oncology',
+      sponsor: 'kept',
+    },
     xRoot: 'kept',
     schema: [
       {
@@ -88,6 +96,12 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
 
   assert.equal(draft.id, 'orders-contract');
   assert.equal(draft.descriptionPurpose, 'Protect downstream order analytics.');
+  assert.equal(draft.studyStartDate, '2024-01-01');
+  assert.equal(draft.studyEndDate, '2024-12-31');
+  assert.equal(draft.studyType, 'cohort');
+  assert.equal(draft.studyObjective, 'predictive');
+  assert.equal(draft.healthDomain, 'oncology');
+  assert.equal(draft.studyExtras.sponsor, 'kept');
   assert.equal(draft.tableName, 'orders');
   assert.equal(draft.tableExtras.xTable, 'kept');
   assert.equal(decoded.rootExtras.xRoot, 'kept');
@@ -116,6 +130,14 @@ test('draftToContractObject writes quality under its column and preserves extras
   const property = contract.schema[0].properties[0];
 
   assert.equal(contract.xRoot, 'kept');
+  assert.deepEqual(contract.study, {
+    sponsor: 'kept',
+    startDate: '2024-01-01',
+    endDate: '2024-12-31',
+    type: 'cohort',
+    objective: 'predictive',
+    healthDomain: 'oncology',
+  });
   assert.equal(contract.schema[0].physicalType, 'TABLE');
   assert.equal(contract.schema[0].xTable, 'kept');
   assert.equal(contract.schema[1].name, 'secondary_schema');

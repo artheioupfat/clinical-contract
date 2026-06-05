@@ -1,0 +1,55 @@
+@layer components {
+  /* Team */
+  .team-list-shell {
+    @apply overflow-hidden rounded-lg border border-slate-200 bg-white;
+  }
+
+  .team-empty {
+    @apply rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500;
+  }
+
+  .team-table {
+    @apply min-w-full divide-y divide-slate-200;
+  }
+
+  .team-table thead {
+    @apply bg-slate-50;
+  }
+
+  .team-table th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+  }
+
+  .team-table tbody {
+    @apply divide-y divide-slate-100;
+  }
+
+  .team-table tr {
+    @apply text-sm text-slate-800;
+  }
+
+  .team-table__row {
+    @apply cursor-pointer transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500;
+  }
+
+  .team-table__name {
+    @apply px-4 py-3 font-semibold;
+  }
+
+  .team-table__role {
+    @apply px-4 py-3 text-slate-600;
+  }
+
+  .team-table__action {
+    @apply px-4 py-3 text-right;
+  }
+
+  .team-edit-button {
+    @apply relative z-[1] inline-flex cursor-pointer items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500;
+  }
+
+  .team-member-input {
+    @apply border-blue-200 bg-blue-50/70 text-slate-950;
+  }
+
+}

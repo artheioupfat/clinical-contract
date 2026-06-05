@@ -1,0 +1,56 @@
+@layer components {
+  /* Runtime progress and footer */
+  .runtime-progress {
+    @apply border-t px-4 py-2;
+    background: var(--cc-surface);
+    border-color: var(--cc-border);
+  }
+
+  .runtime-progress__meta {
+    @apply mb-1 flex items-center justify-between text-[11px] font-semibold text-slate-600;
+  }
+
+  .runtime-progress-track {
+    @apply relative h-2 w-full overflow-hidden rounded-full bg-slate-200;
+  }
+
+  .runtime-progress-fill {
+    @apply absolute inset-y-0 left-0 block h-full w-0 rounded-full bg-[#005ca9] transition-[width] duration-200 ease-linear;
+  }
+
+  .app-footer {
+    @apply flex items-center justify-start gap-4 border-t px-4 py-2 text-xs;
+    background: var(--cc-surface);
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .footer-left {
+    @apply flex min-w-0 items-center gap-3;
+  }
+
+  .runtime-badge {
+    @apply inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em];
+  }
+
+  .runtime-badge--ready {
+    background: var(--cc-success-soft);
+    color: var(--cc-success);
+  }
+
+  .runtime-badge--loading {
+    background: var(--cc-danger-soft);
+    color: var(--cc-danger);
+  }
+
+  .runtime-badge--failed {
+    background: var(--cc-danger-soft);
+    color: var(--cc-danger);
+  }
+
+  .footer-error {
+    @apply max-w-[55vw] truncate font-medium;
+    color: var(--cc-danger);
+  }
+
+}

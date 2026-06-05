@@ -1,0 +1,64 @@
+@layer components {
+  /* Responsive layout */
+  @media (min-width: 1024px) {
+    .app-grid {
+      grid-template-columns: minmax(28rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
+    }
+
+    .app-grid--schema {
+      grid-template-columns: minmax(32rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
+    }
+
+    .panel--editor {
+      @apply border-b-0;
+    }
+
+    .split-resizer {
+      @apply flex cursor-col-resize items-center justify-center border-x outline-none;
+      background: var(--cc-surface);
+      border-color: var(--cc-border);
+      touch-action: none;
+    }
+
+    .split-resizer:hover,
+    .split-resizer--active,
+    .split-resizer:focus-visible {
+      background: var(--cc-primary-soft);
+    }
+
+    .split-resizer:hover .split-resizer__handle,
+    .split-resizer--active .split-resizer__handle,
+    .split-resizer:focus-visible .split-resizer__handle {
+      background: var(--cc-primary);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .pager-item--desktop {
+      @apply inline-flex;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .panel-head {
+      @apply flex-wrap;
+    }
+
+    .dropzone {
+      @apply flex-col items-start;
+    }
+
+    .dropzone-filename {
+      @apply max-w-full;
+    }
+
+    .preview-pagination {
+      @apply flex-col items-start;
+    }
+
+    .schema-workflow {
+      @apply grid-cols-1;
+    }
+  }
+
+}

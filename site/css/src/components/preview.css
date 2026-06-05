@@ -1,0 +1,119 @@
+@layer components {
+  /* Dataset preview */
+  .results-table-wrap--preview {
+    @apply overflow-hidden;
+  }
+
+  .preview-layout {
+    @apply flex h-full min-h-0 flex-col;
+  }
+
+  .preview-scroll {
+    @apply min-h-0 flex-1 overflow-auto;
+  }
+
+  .preview-table {
+    @apply min-w-full border-collapse;
+    width: max-content;
+    table-layout: auto;
+  }
+
+  .preview-table thead th {
+    @apply sticky top-0 z-[1] border-b bg-white;
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .preview-table tbody td {
+    @apply border-b;
+    border-color: #e5eef5;
+    color: var(--cc-text);
+  }
+
+  .preview-th,
+  .preview-td {
+    @apply px-3 py-3 text-left text-[13px] whitespace-nowrap;
+    min-width: 12rem;
+    max-width: 24rem;
+  }
+
+  .preview-th {
+    @apply text-[11px] font-bold uppercase tracking-[0.08em];
+  }
+
+  .preview-th--first,
+  .preview-td--first,
+  .preview-th--single {
+    min-width: 16rem;
+  }
+
+  .preview-cell {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .preview-empty {
+    @apply px-3.5 py-3 text-slate-500;
+  }
+
+  .preview-empty--error {
+    @apply text-rose-700;
+  }
+
+  .preview-pagination {
+    @apply flex items-center justify-between gap-3 border-t bg-white px-3 py-3;
+    border-color: var(--cc-border);
+  }
+
+  .preview-pagination__meta {
+    @apply m-0 text-[13px] text-slate-600;
+  }
+
+  .preview-pagination__meta span {
+    @apply font-semibold;
+    color: var(--cc-text);
+  }
+
+  .pager {
+    @apply m-0 inline-flex list-none items-stretch overflow-hidden rounded-lg border p-0;
+    border-color: var(--cc-border);
+  }
+
+  .pager-item--desktop {
+    @apply hidden;
+  }
+
+  .pager-btn,
+  .pager-ellipsis {
+    @apply inline-flex h-[2.15rem] min-w-9 items-center justify-center border-0 border-r bg-white px-3 text-[13px];
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .pager li:last-child .pager-btn {
+    @apply border-r-0;
+  }
+
+  .pager-btn {
+    @apply cursor-pointer;
+  }
+
+  .pager-btn:hover:not(:disabled) {
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+  }
+
+  .pager-btn--active {
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+    box-shadow: inset 0 -2px 0 var(--cc-primary);
+  }
+
+  .pager-btn:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .pager-ellipsis {
+    @apply text-slate-400;
+  }
+
+}
