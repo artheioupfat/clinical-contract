@@ -24,27 +24,20 @@
               </svg>
             </a>
 
-            <div class="pine-theme-toggle">
-              <input id="theme-switch" type="checkbox" name="theme-switch" class="sr-only" :checked="switchOn" />
-              <button
-                x-ref="switchButton"
-                type="button"
-                @click="toggleThemeSwitch()"
-                class="pine-theme-switch"
-                :class="switchOn ? 'pine-theme-switch--on' : 'pine-theme-switch--off'"
-                x-cloak
-              >
-                <span class="pine-theme-switch__thumb" :class="switchOn ? 'pine-theme-switch__thumb--on' : 'pine-theme-switch__thumb--off'"></span>
-              </button>
-              <label
-                @click="$refs.switchButton.click(); $refs.switchButton.focus()"
-                for="theme-switch"
-                class="pine-theme-switch-label"
-                :class="switchOn ? 'pine-theme-switch-label--on' : 'pine-theme-switch-label--off'"
-                x-cloak
-              >
-                <span x-text="switchOn ? 'Light' : 'Dark'"></span>
-              </label>
-            </div>
+            <button
+              type="button"
+              @click="toggleThemeSwitch()"
+              class="pine-theme-button"
+              :aria-label="switchOn ? 'Switch to light theme' : 'Switch to dark theme'"
+              x-cloak
+            >
+              <svg x-show="!switchOn" class="pine-theme-button__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 2.75v2.1M12 19.15v2.1M4.15 4.15l1.5 1.5M18.35 18.35l1.5 1.5M2.75 12h2.1M19.15 12h2.1M4.15 19.85l1.5-1.5M18.35 5.65l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg x-show="switchOn" class="pine-theme-button__icon pine-theme-button__icon--moon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                <path d="M20.05 14.7A7.45 7.45 0 0 1 9.3 3.95a8.2 8.2 0 1 0 10.75 10.75Z" stroke="#ffffff" stroke-width="1.9" stroke-linejoin="round" />
+              </svg>
+            </button>
           </div>
         </header>

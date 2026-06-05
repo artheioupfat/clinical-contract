@@ -57,8 +57,19 @@
     color: white;
   }
 
-  .theme-dark :is(.entity-modal__close, .pine-tab, .pine-theme-switch-label--off, .view-switch-btn) { color: var(--cc-night-muted); }
-  .theme-dark :is(.panel-eyebrow, .pine-theme-switch-label--on, .schema-empty-kicker) { color: var(--cc-primary-strong); }
+  .theme-dark :is(.entity-modal__close, .pine-tab, .view-switch-btn) { color: var(--cc-night-muted); }
+  .theme-dark :is(.panel-eyebrow, .schema-empty-kicker) { color: var(--cc-primary-strong); }
+  .theme-dark .pine-theme-button {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: white;
+  }
+  .theme-dark .pine-theme-button__icon--moon,
+  .theme-dark .pine-theme-button__icon--moon * {
+    color: white;
+    stroke: white;
+  }
+  .theme-dark .pine-theme-button:hover { background: var(--cc-night-elevated); color: white; }
   .theme-dark :is(.pine-tab--active, .view-switch-btn--active) { box-shadow: inset 0 0 0 1px var(--cc-primary-ring); }
 
   /* Editor and builder surfaces */
