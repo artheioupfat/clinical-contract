@@ -119,6 +119,45 @@
                             <span class="schema-form-label">Limitations <span class="schema-required" x-show="showRequiredFor('descriptionLimitations')" x-cloak>* required</span></span>
                             <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionLimitations')" class="schema-input schema-form-control" placeholder="Known caveats, scope, or historical issues"></textarea>
                           </label>
+                          <div class="schema-inline-grid schema-wide-field">
+                            <label class="schema-form-field">
+                              <span class="schema-form-label">Start Date</span>
+                              <input type="date" x-model="schemaDraft.studyStartDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                            </label>
+                            <label class="schema-form-field">
+                              <span class="schema-form-label">End Date</span>
+                              <input type="date" x-model="schemaDraft.studyEndDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                            </label>
+                          </div>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label">Study Type</span>
+                            <select x-model="schemaDraft.studyType" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
+                              <option value="">Not specified</option>
+                              <option value="cohort">Cohort</option>
+                              <option value="cross-sectional">Cross-sectional</option>
+                              <option value="case-control">Case-control</option>
+                              <option value="registry">Registry</option>
+                              <option value="clinical-trial">Clinical trial</option>
+                              <option value="retrospective">Retrospective</option>
+                              <option value="prospective">Prospective</option>
+                            </select>
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label">Study Objective</span>
+                            <select x-model="schemaDraft.studyObjective" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
+                              <option value="">Not specified</option>
+                              <option value="predictive">Predictive</option>
+                              <option value="therapeutic">Therapeutic</option>
+                              <option value="diagnostic">Diagnostic</option>
+                              <option value="epidemiological">Epidemiological</option>
+                              <option value="descriptive">Descriptive</option>
+                              <option value="operational">Operational</option>
+                            </select>
+                          </label>
+                          <label class="schema-form-field schema-wide-field">
+                            <span class="schema-form-label">Health Domain</span>
+                            <input type="text" x-model="schemaDraft.healthDomain" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" placeholder="Example: oncology, cardiology, emergency care" />
+                          </label>
                           <details class="schema-advanced schema-wide-field" :open="hasAdvancedRequiredHints()">
                             <summary>Advanced contract metadata</summary>
                             <div class="schema-advanced-grid">

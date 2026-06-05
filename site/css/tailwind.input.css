@@ -633,6 +633,10 @@
     @apply md:col-span-2;
   }
 
+  .schema-inline-grid {
+    @apply grid gap-3 md:grid-cols-2;
+  }
+
   .schema-advanced {
     @apply rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2;
   }

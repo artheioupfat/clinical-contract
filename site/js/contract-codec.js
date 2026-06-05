@@ -128,6 +128,11 @@
       descriptionPurpose: '',
       descriptionUsage: '',
       descriptionLimitations: '',
+      studyStartDate: '',
+      studyEndDate: '',
+      studyType: '',
+      studyObjective: '',
+      healthDomain: '',
       tableName: '',
       tableDescription: '',
       properties: options.withProperty ? [createSchemaProperty({}, { nextRowId })] : [],
@@ -137,6 +142,7 @@
       teamMembers: [],
       teamExtras: {},
       tableExtras: {},
+      studyExtras: {},
     };
   }
 
@@ -152,8 +158,31 @@
   function contractObjectToDraft(contract, options = {}) {
     const parsed = contract && typeof contract === 'object' && !Array.isArray(contract) ? contract : {};
     const nextRowId = createIdFactory(options);
-    const handledRoot = new Set(['apiVersion', 'kind', 'id', 'name', 'version', 'status', 'description', 'schema', 'team']);
+    const handledRoot = new Set(['apiVersion', 'kind', 'id', 'name', 'version', 'status', 'description', 'study', 'schema', 'team']);
     const rootExtras = collectExtras(parsed, handledRoot);
+
+    const study = parsed.study && typeof parsed.study === 'object' && !Array.isArray(parsed.study) ? parsed.study : {};
+    const handledStudy = new Set([
+      'startDate',
+      'start_date',
+      'start-date',
+      'endDate',
+      'end_date',
+      'end-date',
+      'type',
+      'studyType',
+      'study_type',
+      'study-type',
+      'objective',
+      'studyObjective',
+      'study_objective',
+      'study-objective',
+      'healthDomain',
+      'health_domain',
+      'health-domain',
+      'domain',
+    ]);
+    const studyExtras = collectExtras(study, handledStudy);
 
     const schemaArray = Array.isArray(parsed.schema) ? parsed.schema : [];
     const firstSchema = schemaArray[0] && typeof schemaArray[0] === 'object' ? schemaArray[0] : {};
@@ -249,6 +278,11 @@
         descriptionPurpose: description.purpose,
         descriptionUsage: description.usage,
         descriptionLimitations: description.limitations,
+        studyStartDate: readFirstDefined(study, ['startDate', 'start_date', 'start-date']),
+        studyEndDate: readFirstDefined(study, ['endDate', 'end_date', 'end-date']),
+        studyType: readFirstDefined(study, ['type', 'studyType', 'study_type', 'study-type']),
+        studyObjective: readFirstDefined(study, ['objective', 'studyObjective', 'study_objective', 'study-objective']),
+        healthDomain: readFirstDefined(study, ['healthDomain', 'health_domain', 'health-domain', 'domain']),
         tableName: firstSchema.name || '',
         tableDescription: firstSchema.description || '',
         properties: normalizedProperties,
@@ -258,6 +292,7 @@
         teamMembers,
         teamExtras,
         tableExtras,
+        studyExtras,
       },
       rootExtras,
       otherSchemas: deepClone(otherSchemas),
@@ -278,6 +313,15 @@
       usage: draft.descriptionUsage || '',
       limitations: draft.descriptionLimitations || '',
     };
+
+    const study = deepClone(draft.studyExtras || {});
+    if (draft.studyStartDate && String(draft.studyStartDate).trim()) study.startDate = String(draft.studyStartDate).trim();
+    if (draft.studyEndDate && String(draft.studyEndDate).trim()) study.endDate = String(draft.studyEndDate).trim();
+    if (draft.studyType && String(draft.studyType).trim()) study.type = String(draft.studyType).trim();
+    if (draft.studyObjective && String(draft.studyObjective).trim()) study.objective = String(draft.studyObjective).trim();
+    if (draft.healthDomain && String(draft.healthDomain).trim()) study.healthDomain = String(draft.healthDomain).trim();
+    if (Object.keys(study).length) top.study = study;
+    else delete top.study;
 
     const table = deepClone(draft.tableExtras || {});
     table.name = draft.tableName || '';
