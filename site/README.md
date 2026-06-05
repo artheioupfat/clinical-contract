@@ -23,7 +23,10 @@ Then open `http://localhost:8000`.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
 - `partials/data-panel.html`: data upload, results tabs, and dataset preview.
 - `partials/runtime-footer.html`: runtime progress bar and compact footer.
-- `css/tailwind.input.css`: Tailwind source with the component layer.
+- `css/tailwind.input.css`: small Tailwind manifest listing CSS partials.
+- `css/src/base.css`: design tokens and base document rules.
+- `css/src/components/`: organized component styles grouped by feature.
+- `css/build-input.mjs`: expands the manifest into a temporary Tailwind input.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
 - `js/app.js`: Alpine root state and application composition.
 - `js/include-html.js`: loads static partials, then starts Alpine.
@@ -61,7 +64,8 @@ Keep `include-html.js` last: it injects the partials and only then loads Alpine,
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
 - Edit page markup in `partials/`; keep `index.html` as the lightweight shell.
-- Edit `css/tailwind.input.css`, then run `npm run build:site:css` to update `css/tailwind.css`.
+- Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.
+- Do not edit `css/tailwind.css` directly; it is the compiled production bundle.
 - Add or update `site/tests/contract-codec.test.js` when changing YAML/draft behavior.
 - Keep the site static: no backend, no hardcoded local paths, and relative assets only.
 - Serve the site through HTTP during development. Partial loading does not work reliably from `file://`.

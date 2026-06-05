@@ -1,0 +1,77 @@
+@layer components {
+  /* Columns */
+  .column-list-shell {
+    @apply overflow-hidden rounded-lg border border-slate-200 bg-white;
+  }
+
+  .column-empty {
+    @apply rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500;
+  }
+
+  .column-table {
+    @apply min-w-full divide-y divide-slate-200;
+  }
+
+  .column-table thead {
+    @apply bg-slate-50;
+  }
+
+  .column-table th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+  }
+
+  .column-table tbody {
+    @apply divide-y divide-slate-100;
+  }
+
+  .column-table tr {
+    @apply text-sm text-slate-800;
+  }
+
+  .column-table__row {
+    @apply cursor-pointer transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-blue-500;
+  }
+
+  .column-table__column {
+    @apply px-4 py-3 font-semibold;
+  }
+
+  .column-table__type,
+  .column-table__required,
+  .column-table__description {
+    @apply px-4 py-3 text-slate-600;
+  }
+
+  .column-table__description {
+    @apply max-w-[26rem] truncate;
+  }
+
+  .column-table__action {
+    @apply px-4 py-3 text-right;
+  }
+
+  .column-edit-button {
+    @apply relative z-[1] inline-flex cursor-pointer items-center justify-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500;
+  }
+
+  .column-required-checkbox {
+    @apply mt-2 h-5 w-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500;
+  }
+
+  .column-required-field {
+    @apply flex flex-col items-start gap-2;
+  }
+
+  .column-required-field .column-required-checkbox {
+    @apply mt-0;
+  }
+
+  .column-description-field {
+    @apply mt-1 border-t border-slate-200 pt-4;
+  }
+
+  .column-description-textarea {
+    @apply block min-h-[140px] w-full resize-y;
+  }
+
+}

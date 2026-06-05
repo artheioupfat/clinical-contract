@@ -28,6 +28,7 @@ htmlcov/
 # Frontend
 node_modules/
 site_dist/
+site/css/.tailwind.generated.css
 
 # IDE
 .vscode/

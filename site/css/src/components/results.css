@@ -1,0 +1,122 @@
+@layer components {
+  /* Results tabs and status tables */
+  .results-shell {
+    @apply flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-lg border;
+    border-color: var(--cc-border);
+  }
+
+  .pine-tabs {
+    @apply flex gap-1.5 border-b p-2;
+    background: var(--cc-surface);
+    border-color: var(--cc-border);
+  }
+
+  .pine-tab {
+    @apply cursor-pointer rounded-md bg-transparent px-2.5 py-1.5 text-xs font-semibold;
+    color: var(--cc-muted);
+  }
+
+  .pine-tab--active {
+    @apply bg-white shadow-[inset_0_0_0_1px_rgb(201_219_232)];
+    color: var(--cc-primary-strong);
+  }
+
+  .pine-tab--preview {
+    @apply ml-auto;
+  }
+
+  .pine-tab-label {
+    @apply inline-flex items-center gap-2;
+  }
+
+  .tab-dot {
+    @apply inline-block h-2.5 w-2.5 rounded-full bg-slate-400;
+  }
+
+  .tab-dot--passed {
+    background: var(--cc-success);
+  }
+
+  .tab-dot--failed {
+    background: var(--cc-danger);
+  }
+
+  .results-table-wrap {
+    @apply min-h-0 min-w-0 flex-1 overflow-auto;
+  }
+
+  .results-table {
+    @apply w-full border-collapse text-[0.85rem];
+  }
+
+  .results-table thead th {
+    @apply sticky top-0 z-[1] border-b bg-white px-3.5 py-3 text-left text-[11px] font-bold uppercase tracking-[0.12em];
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .results-table tbody td {
+    @apply border-b px-3.5 py-3.5 align-top;
+    border-color: #e5eef5;
+    color: var(--cc-text);
+  }
+
+  .results-table tbody tr:hover {
+    background: var(--cc-surface);
+  }
+
+  .empty-row {
+    @apply text-center text-slate-400;
+  }
+
+  .status-chip {
+    @apply inline-flex items-center gap-2 font-semibold capitalize;
+  }
+
+  .status-dot {
+    @apply h-2.5 w-2.5 rounded-full bg-slate-400;
+  }
+
+  .status-chip--passed {
+    color: var(--cc-success);
+  }
+
+  .status-dot--passed {
+    background: var(--cc-success);
+  }
+
+  .status-chip--failed,
+  .status-chip--error {
+    color: var(--cc-danger);
+  }
+
+  .status-dot--failed,
+  .status-dot--error {
+    background: var(--cc-danger);
+  }
+
+  .status-chip--warning {
+    color: var(--cc-warning);
+  }
+
+  .status-dot--warning {
+    @apply bg-amber-500;
+  }
+
+  /* Data file metadata */
+  .data-meta-stack {
+    @apply flex flex-col items-end gap-0.5 text-right;
+    color: var(--cc-muted);
+  }
+
+  .data-stats {
+    @apply whitespace-pre text-[13px] font-semibold leading-tight;
+    color: var(--cc-muted);
+  }
+
+  .data-file-size {
+    @apply text-[12px] font-medium leading-tight;
+    color: var(--cc-muted);
+  }
+
+}

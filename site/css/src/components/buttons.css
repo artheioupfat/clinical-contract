@@ -1,0 +1,35 @@
+@layer components {
+  /* Buttons */
+  .pine-btn {
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-[13px] font-medium transition;
+    border-color: var(--cc-border);
+    color: var(--cc-text);
+  }
+
+  .pine-btn:hover:not(:disabled) {
+    background: var(--cc-primary-soft);
+    border-color: var(--cc-primary-ring);
+    color: var(--cc-primary-strong);
+  }
+
+  .pine-btn:disabled {
+    @apply cursor-not-allowed opacity-45;
+  }
+
+  .pine-btn--primary {
+    border-color: var(--cc-primary);
+    background: var(--cc-primary);
+    color: white;
+  }
+
+  .pine-btn--primary:hover:not(:disabled) {
+    border-color: var(--cc-primary-strong);
+    background: var(--cc-primary-strong);
+    color: white;
+  }
+
+  .pine-btn--success {
+    color: var(--cc-success);
+  }
+
+}

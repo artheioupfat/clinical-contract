@@ -1,0 +1,185 @@
+@layer components {
+  /* App shell */
+  .app-root {
+    @apply h-screen overflow-hidden;
+  }
+
+  .app-frame {
+    @apply flex h-screen flex-col overflow-hidden;
+    background: white;
+  }
+
+  /* Header and brand */
+  .pine-header {
+    @apply flex flex-nowrap items-center justify-between gap-4 border-b px-4 py-2;
+    background: linear-gradient(180deg, #fbfdff 0%, var(--cc-surface) 100%);
+    border-color: var(--cc-border);
+  }
+
+  .pine-brand {
+    @apply flex min-w-0 items-center gap-2.5;
+  }
+
+  .pine-logo-box {
+    @apply flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg bg-white;
+    border: 1px solid var(--cc-border);
+  }
+
+  .pine-logo-image {
+    @apply h-12 w-16 object-contain;
+  }
+
+  .pine-brand-row {
+    @apply flex min-w-0 items-center gap-2;
+  }
+
+  .pine-brand-title {
+    @apply m-0 truncate text-[15px] font-semibold tracking-tight;
+    color: var(--cc-text);
+  }
+
+  .pine-badge {
+    @apply rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em];
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+  }
+
+  /* Header actions */
+  .header-actions {
+    @apply flex shrink-0 flex-nowrap items-center gap-2;
+  }
+
+  .github-link {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition;
+    color: var(--cc-text);
+  }
+
+  .github-link:hover {
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+  }
+
+  .github-link:focus-visible {
+    @apply outline outline-2 outline-offset-2;
+    outline-color: var(--cc-primary);
+  }
+
+  .github-link__icon {
+    @apply h-5 w-5 shrink-0;
+  }
+
+  .pine-theme-toggle {
+    @apply flex shrink-0 flex-nowrap items-center gap-2;
+  }
+
+  .pine-theme-switch {
+    @apply relative inline-flex h-6 w-10 cursor-pointer rounded-full border-0 p-0.5 transition-colors;
+  }
+
+  .pine-theme-switch:focus-visible {
+    @apply outline outline-2 outline-offset-2;
+    outline-color: var(--cc-primary);
+  }
+
+  .pine-theme-switch--off {
+    @apply bg-slate-200;
+  }
+
+  .pine-theme-switch--on {
+    background: var(--cc-primary);
+  }
+
+  .pine-theme-switch__thumb {
+    @apply block h-5 w-5 rounded-full bg-white shadow-md shadow-slate-900/20 transition-transform;
+  }
+
+  .pine-theme-switch__thumb--off {
+    @apply translate-x-0;
+  }
+
+  .pine-theme-switch__thumb--on {
+    @apply translate-x-4;
+  }
+
+  .pine-theme-switch-label {
+    @apply select-none text-[13px] font-semibold;
+  }
+
+  .pine-theme-switch-label--off {
+    @apply text-slate-500;
+  }
+
+  .pine-theme-switch-label--on {
+    color: var(--cc-primary);
+  }
+
+  /* Split layout */
+  .app-main {
+    @apply min-h-0 flex-1;
+  }
+
+  .app-grid {
+    @apply grid h-full min-h-0 grid-cols-1;
+  }
+
+  .split-resizer {
+    @apply hidden;
+  }
+
+  .split-resizer__handle {
+    @apply block h-10 w-1 rounded-full transition;
+    background: var(--cc-border);
+  }
+
+  .is-resizing-split,
+  .is-resizing-split * {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+
+  /* Panels and toolbar */
+  .panel {
+    @apply flex min-h-0 min-w-0 flex-col;
+  }
+
+  .panel--editor {
+    @apply border-b;
+    border-color: var(--cc-border);
+  }
+
+  .panel-head {
+    @apply flex items-center justify-between gap-4 border-b px-4 py-2.5;
+    border-color: var(--cc-border);
+  }
+
+  .panel-eyebrow {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    color: var(--cc-primary);
+  }
+
+  .panel-title {
+    @apply mt-0.5 text-[14px] font-semibold;
+    color: var(--cc-text);
+  }
+
+  .pine-toolbar {
+    @apply flex flex-wrap items-center justify-end gap-1.5;
+  }
+
+  .view-switch {
+    @apply inline-flex items-center rounded-lg border p-0.5;
+    background: var(--cc-surface-muted);
+    border-color: var(--cc-border);
+  }
+
+  .view-switch-btn {
+    @apply rounded-md px-2.5 py-1.5 text-xs font-semibold transition;
+    color: var(--cc-muted);
+  }
+
+  .view-switch-btn--active {
+    @apply bg-white shadow-[inset_0_0_0_1px_rgb(201_219_232)];
+    color: var(--cc-primary-strong);
+  }
+
+}
