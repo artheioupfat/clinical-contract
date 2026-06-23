@@ -1,30 +1,35 @@
 window.ClinicalModules = window.ClinicalModules || {};
 
+const normalizeResultState = (value) => String(value || '').trim().toLowerCase();
+const isPassedState = (value) => ['ok', 'passed', 'present', 'success', 'valid'].includes(normalizeResultState(value));
+const isFailedState = (value) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(normalizeResultState(value));
+
 window.ClinicalModules.results = {
   tabDotClass(state) {
-    if (state === 'passed' || state === 'success') return 'tab-dot--passed';
-    if (state === 'failed' || state === 'error') return 'tab-dot--failed';
+    if (normalizeResultState(state) === 'idle') return 'tab-dot--idle';
+    if (isPassedState(state)) return 'tab-dot--passed';
+    if (isFailedState(state)) return 'tab-dot--failed';
     return '';
   },
 
   statusChipClass(status) {
-    const normalized = String(status || '').toLowerCase();
-    if (normalized === 'passed' || normalized === 'ok' || normalized === 'success') {
+    const normalized = normalizeResultState(status);
+    if (isPassedState(normalized)) {
       return 'status-chip--passed';
     }
-    if (normalized === 'failed' || normalized === 'error') {
-      return `status-chip--${normalized}`;
+    if (isFailedState(normalized)) {
+      return normalized === 'error' ? 'status-chip--error' : 'status-chip--failed';
     }
     return 'status-chip--warning';
   },
 
   statusDotClass(status) {
-    const normalized = String(status || '').toLowerCase();
-    if (normalized === 'passed' || normalized === 'ok' || normalized === 'success') {
+    const normalized = normalizeResultState(status);
+    if (isPassedState(normalized)) {
       return 'status-dot--passed';
     }
-    if (normalized === 'failed' || normalized === 'error') {
-      return `status-dot--${normalized}`;
+    if (isFailedState(normalized)) {
+      return normalized === 'error' ? 'status-dot--error' : 'status-dot--failed';
     }
     return 'status-dot--warning';
   },

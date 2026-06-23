@@ -30,7 +30,8 @@
   }
 
   .tab-dot {
-    @apply inline-block h-2.5 w-2.5 rounded-full bg-slate-400;
+    @apply inline-block h-2.5 w-2.5 rounded-full;
+    background: var(--cc-danger);
   }
 
   .tab-dot--passed {
@@ -39,6 +40,10 @@
 
   .tab-dot--failed {
     background: var(--cc-danger);
+  }
+
+  .tab-dot--idle {
+    @apply bg-slate-400;
   }
 
   .results-table-wrap {
@@ -74,7 +79,8 @@
   }
 
   .status-dot {
-    @apply h-2.5 w-2.5 rounded-full bg-slate-400;
+    @apply h-2.5 w-2.5 rounded-full;
+    background: var(--cc-danger);
   }
 
   .status-chip--passed {

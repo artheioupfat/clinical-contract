@@ -137,17 +137,21 @@ document.addEventListener('alpine:init', () => {
 
     get validateTabState() {
       if (!this.validateRows.length) return 'idle';
-      return this.validateRows.some((row) => row.status === 'failed') ? 'failed' : 'passed';
+      return this.validateRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
+        ? 'failed'
+        : 'passed';
     },
 
     get schemaTabState() {
       if (!this.schemaRows.length) return 'idle';
-      return this.schemaRows.some((row) => row.status === 'failed') ? 'failed' : 'passed';
+      return this.schemaRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
+        ? 'failed'
+        : 'passed';
     },
 
     get qualityTabState() {
       if (!this.qualityRows.length) return 'idle';
-      return this.qualityRows.some((row) => row.status === 'failed' || row.status === 'error')
+      return this.qualityRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
         ? 'failed'
         : 'passed';
     },
