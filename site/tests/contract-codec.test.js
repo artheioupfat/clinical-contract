@@ -315,6 +315,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
 
   const data = global.window.ClinicalModules.data;
   let released = 0;
+  let persistedFileCleared = 0;
   const input = { value: '/tmp/dataset.parquet' };
   const context = {
     dataFile: { name: 'dataset.parquet' },
@@ -330,6 +331,10 @@ test('data module deletes the current file and clears dataset-dependent state', 
     activeTab: 'preview',
     logoVariant: 'green',
     $refs: { dataInput: input },
+    clearPersistedDataFile() {
+      persistedFileCleared += 1;
+      return Promise.resolve();
+    },
     releasePreviewSession() {
       released += 1;
     },
@@ -341,6 +346,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
   data.deleteDataFile.call(context);
 
   assert.equal(released, 1);
+  assert.equal(persistedFileCleared, 1);
   assert.equal(context.dataFile, null);
   assert.equal(context.dataFileName, '');
   assert.equal(context.dataFileSize, 0);
@@ -353,4 +359,64 @@ test('data module deletes the current file and clears dataset-dependent state', 
   assert.equal(context.activeTab, 'validate');
   assert.equal(context.logoVariant, 'neutral');
   assert.equal(input.value, '');
+});
+
+test('data module persists each loaded file before analyzing it', async () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
+  let persisted = null;
+  let refreshed = 0;
+  const context = {
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    async persistDataFileSession(value) {
+      persisted = value;
+    },
+    async refreshDataInsights() {
+      refreshed += 1;
+    },
+  };
+
+  await data.loadDataFile.call(context, file);
+
+  assert.equal(persisted, file);
+  assert.equal(refreshed, 1);
+  assert.equal(context.dataFileName, 'dataset.csv');
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+});
+
+test('data module reconstructs the persisted browser file after reload', async () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  const context = {
+    pythonReady: false,
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    async readPersistedDataFile() {
+      return {
+        name: 'dataset.parquet',
+        type: 'application/octet-stream',
+        lastModified: 1234,
+        data: new Blob(['parquet-bytes']),
+      };
+    },
+  };
+
+  const restored = await data.restoreDataFileSession.call(context);
+
+  assert.equal(restored, true);
+  assert.equal(context.dataFile.name, 'dataset.parquet');
+  assert.equal(context.dataFileSize, 13);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
 });

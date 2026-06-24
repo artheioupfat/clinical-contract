@@ -183,13 +183,15 @@ document.addEventListener('alpine:init', () => {
       this.initThemeSwitch();
       this.initSplitPane();
       this.restoreEditorSession();
+      await this.restoreDataFileSession();
       this.registerEditorSessionPersistence();
       this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
+        const wasReady = this.pythonReady;
         this.onPythonRuntimeReady();
-        if (this.dataFile) {
+        if (!wasReady && this.dataFile) {
           await this.refreshDataInsights();
         }
       });
@@ -200,15 +202,17 @@ document.addEventListener('alpine:init', () => {
         this.destroySplitPane();
       });
 
-      this.runtimeBridgePoll = window.setInterval(() => {
+      this.runtimeBridgePoll = window.setInterval(async () => {
         if (this.pythonReady) return;
         if (typeof window.pyValidateContract === 'function') {
           this.onPythonRuntimeReady();
+          if (this.dataFile) await this.refreshDataInsights();
         }
       }, 250);
 
-      if (typeof window.pyValidateContract === 'function') {
+      if (!this.pythonReady && typeof window.pyValidateContract === 'function') {
         this.onPythonRuntimeReady();
+        if (this.dataFile) await this.refreshDataInsights();
       }
 
       if (typeof this.syncSchemaFromYaml === 'function') {
