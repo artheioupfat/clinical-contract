@@ -41,6 +41,21 @@
     @apply mt-6 flex flex-wrap items-center justify-center gap-3;
   }
 
+  .schema-empty-template {
+    @apply mt-3 text-xs;
+    color: var(--cc-muted);
+  }
+
+  .schema-empty-template-link {
+    @apply cursor-pointer border-0 bg-transparent p-0 font-semibold underline decoration-slate-300 underline-offset-2 transition;
+    color: var(--cc-primary);
+  }
+
+  .schema-empty-template-link:hover,
+  .schema-empty-template-link:focus-visible {
+    color: var(--cc-primary-strong);
+  }
+
   /* Builder navigation */
   .schema-workflow {
     @apply grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_1fr];

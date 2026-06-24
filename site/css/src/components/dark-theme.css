@@ -41,7 +41,7 @@
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.dropzone-subtitle, .entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .runtime-progress__meta, .schema-empty-copy, .schema-form-label, .schema-nav-footer, .schema-nav-item-subtitle, .schema-nav-subtitle, .schema-stage-desc) {
+  .theme-dark :is(.dropzone-subtitle, .entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .runtime-progress__meta, .schema-empty-copy, .schema-empty-template, .schema-form-label, .schema-nav-footer, .schema-nav-item-subtitle, .schema-nav-subtitle, .schema-stage-desc) {
     color: var(--cc-night-muted);
   }
 
