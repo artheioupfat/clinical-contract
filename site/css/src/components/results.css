@@ -31,7 +31,7 @@
 
   .tab-dot {
     @apply inline-block h-2.5 w-2.5 rounded-full;
-    background: var(--cc-danger);
+    @apply bg-slate-400;
   }
 
   .tab-dot--passed {

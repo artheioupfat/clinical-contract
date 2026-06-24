@@ -58,7 +58,7 @@
                   <div class="pine-tabs">
                     <button type="button" class="pine-tab" :class="activeTab === 'validate' ? 'pine-tab--active' : ''" @click="activeTab = 'validate'">
                       <span class="pine-tab-label">
-                        <span class="tab-dot" :class="validateTabState === 'failed' ? 'tab-dot--failed' : 'tab-dot--passed'"></span>
+                        <span class="tab-dot" :class="tabDotClass(validateTabState)"></span>
                         <span>Validate</span>
                       </span>
                     </button>

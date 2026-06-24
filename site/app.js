@@ -83,6 +83,9 @@ document.addEventListener('alpine:init', () => {
     validateRows: [],
     schemaRows: [],
     qualityRows: [],
+    validateRunState: 'idle',
+    schemaRunState: 'idle',
+    qualityRunState: 'idle',
     previewColumns: [],
     previewRows: [],
     previewTotalRows: 0,
@@ -136,24 +139,15 @@ document.addEventListener('alpine:init', () => {
     },
 
     get validateTabState() {
-      if (!this.validateRows.length) return 'idle';
-      return this.validateRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.validateRunState;
     },
 
     get schemaTabState() {
-      if (!this.schemaRows.length) return 'idle';
-      return this.schemaRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.schemaRunState;
     },
 
     get qualityTabState() {
-      if (!this.qualityRows.length) return 'idle';
-      return this.qualityRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.qualityRunState;
     },
 
     get previewStartRow() {

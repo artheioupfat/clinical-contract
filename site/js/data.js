@@ -144,6 +144,10 @@ window.ClinicalModules.data = {
     this.dataFile = file;
     this.dataFileName = file.name;
     this.dataFileSize = file.size || 0;
+    this.schemaRows = [];
+    this.qualityRows = [];
+    this.schemaRunState = 'idle';
+    this.qualityRunState = 'idle';
     await this.refreshDataInsights();
   },
 
@@ -159,6 +163,8 @@ window.ClinicalModules.data = {
     this.draggingData = false;
     this.schemaRows = [];
     this.qualityRows = [];
+    this.schemaRunState = 'idle';
+    this.qualityRunState = 'idle';
     this.logoVariant = 'neutral';
 
     if (['schema', 'quality', 'preview'].includes(this.activeTab)) {

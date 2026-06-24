@@ -284,6 +284,30 @@ test('results module maps capitalized failed states to red dots', () => {
   assert.equal(results.statusDotClass(' missing '), 'status-dot--failed');
 });
 
+test('clearing results restores every result tab to its idle state', () => {
+  global.window = { ClinicalModules: {} };
+  delete require.cache[require.resolve('../js/results.js')];
+  require('../js/results.js');
+
+  const results = global.window.ClinicalModules.results;
+  const context = {
+    validateRows: [{ status: 'passed' }],
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    validateRunState: 'passed',
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    logoVariant: 'green',
+  };
+
+  results.clearResults.call(context);
+
+  assert.equal(context.validateRunState, 'idle');
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+  assert.equal(context.logoVariant, 'neutral');
+});
+
 test('data module deletes the current file and clears dataset-dependent state', () => {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
   delete require.cache[require.resolve('../js/data.js')];
@@ -301,6 +325,8 @@ test('data module deletes the current file and clears dataset-dependent state', 
     draggingData: true,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
     activeTab: 'preview',
     logoVariant: 'green',
     $refs: { dataInput: input },
@@ -322,6 +348,8 @@ test('data module deletes the current file and clears dataset-dependent state', 
   assert.equal(context.dataRows, null);
   assert.deepEqual(context.schemaRows, []);
   assert.deepEqual(context.qualityRows, []);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
   assert.equal(context.activeTab, 'validate');
   assert.equal(context.logoVariant, 'neutral');
   assert.equal(input.value, '');
