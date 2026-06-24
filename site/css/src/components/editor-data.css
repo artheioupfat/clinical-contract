@@ -5,14 +5,14 @@
   }
 
   .editor-gutter {
-    @apply overflow-hidden border-r px-0 pb-4 pt-4 text-right font-mono text-[13px] font-medium leading-[1.65];
+    @apply overflow-hidden border-r px-0 pb-4 pt-4 text-right font-mono text-[13px] font-medium leading-[1.6];
     background: var(--cc-surface);
     border-color: var(--cc-border);
     color: #7c98ad;
   }
 
   .editor-line-number {
-    @apply h-[1.65em] pr-2.5;
+    @apply h-[1.6em] pr-2.5;
   }
 
   .editor-textarea {

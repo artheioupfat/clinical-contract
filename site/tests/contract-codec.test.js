@@ -220,3 +220,18 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   assert.equal(row._lastLogicalType, 'string');
   assert.equal(pushed, 1);
 });
+
+test('results module maps capitalized failed states to red dots', () => {
+  global.window = { ClinicalModules: {} };
+  delete require.cache[require.resolve('../js/results.js')];
+  require('../js/results.js');
+
+  const results = global.window.ClinicalModules.results;
+
+  assert.equal(results.tabDotClass('idle'), 'tab-dot--idle');
+  assert.equal(results.tabDotClass('Failed'), 'tab-dot--failed');
+  assert.equal(results.tabDotClass(' failed '), 'tab-dot--failed');
+  assert.equal(results.tabDotClass('Error'), 'tab-dot--failed');
+  assert.equal(results.statusDotClass('Failed'), 'status-dot--failed');
+  assert.equal(results.statusDotClass(' missing '), 'status-dot--failed');
+});

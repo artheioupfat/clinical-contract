@@ -46,7 +46,7 @@
                   <div class="pine-tabs">
                     <button type="button" class="pine-tab" :class="activeTab === 'validate' ? 'pine-tab--active' : ''" @click="activeTab = 'validate'">
                       <span class="pine-tab-label">
-                        <span class="tab-dot" :class="tabDotClass(validateTabState)"></span>
+                        <span class="tab-dot" :class="validateTabState === 'failed' ? 'tab-dot--failed' : 'tab-dot--passed'"></span>
                         <span>Validate</span>
                       </span>
                     </button>
@@ -92,7 +92,7 @@
                             <td x-text="row.field"></td>
                             <td>
                               <span class="status-chip" :class="statusChipClass(row.status)">
-                                <span class="status-dot" :class="statusDotClass(row.status)"></span>
+                                <span class="status-dot" :class="row.present === false || ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()) ? 'status-dot--failed' : 'status-dot--passed'"></span>
                                 <span x-text="row.status"></span>
                               </span>
                             </td>
