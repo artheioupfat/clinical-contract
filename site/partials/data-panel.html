@@ -6,12 +6,22 @@
                   <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
                 </div>
                 <div class="pine-toolbar">
-                  <div class="data-meta-stack" x-show="dataStatsText() || dataFileSizeText()" x-cloak>
-                    <div class="data-stats" x-show="dataStatsText()" x-text="dataStatsText()"></div>
-                    <div class="data-file-size" x-show="dataFileSizeText()" x-text="dataFileSizeText()"></div>
-                  </div>
-                  <button type="button" @click="$refs.dataInput.click()" class="pine-btn">Load data</button>
+                  <button type="button" x-show="!dataFile" x-cloak @click="$refs.dataInput.click()" class="pine-btn">Load data</button>
                   <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />
+                  <button
+                    type="button"
+                    x-show="dataFile"
+                    x-cloak
+                    @click="deleteDataFile()"
+                    :disabled="busy || previewLoading"
+                    class="pine-btn pine-btn--danger pine-btn--icon"
+                    aria-label="Delete data file"
+                    title="Delete data file?"
+                  >
+                    <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
+                    </svg>
+                  </button>
                   <button type="button" @click="runCheck()" :disabled="busy || !pythonReady || !dataFile" class="pine-btn pine-btn--success">Run checks</button>
                 </div>
               </div>
@@ -20,6 +30,8 @@
                 <!-- Dataset input: CSV/Parquet drag-and-drop and file picker. -->
                 <div
                   class="dropzone"
+                  x-show="!dataFile"
+                  x-cloak
                   :class="draggingData ? 'dropzone--active' : ''"
                   @dblclick="$refs.dataInput.click()"
                   @dragenter.prevent="draggingData = true"

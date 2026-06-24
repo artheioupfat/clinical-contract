@@ -32,4 +32,23 @@
     color: var(--cc-success);
   }
 
+  .pine-btn--icon {
+    @apply h-9 w-9 shrink-0 p-0;
+  }
+
+  .pine-btn__icon {
+    @apply h-[18px] w-[18px];
+  }
+
+  .pine-btn--danger {
+    border-color: var(--cc-danger);
+    color: var(--cc-danger);
+  }
+
+  .pine-btn--danger:hover:not(:disabled) {
+    background: var(--cc-danger-soft);
+    border-color: var(--cc-danger);
+    color: var(--cc-danger);
+  }
+
 }

@@ -235,3 +235,46 @@ test('results module maps capitalized failed states to red dots', () => {
   assert.equal(results.statusDotClass('Failed'), 'status-dot--failed');
   assert.equal(results.statusDotClass(' missing '), 'status-dot--failed');
 });
+
+test('data module deletes the current file and clears dataset-dependent state', () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  let released = 0;
+  const input = { value: '/tmp/dataset.parquet' };
+  const context = {
+    dataFile: { name: 'dataset.parquet' },
+    dataFileName: 'dataset.parquet',
+    dataFileSize: 2048,
+    dataColumns: 4,
+    dataRows: 10,
+    draggingData: true,
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    activeTab: 'preview',
+    logoVariant: 'green',
+    $refs: { dataInput: input },
+    releasePreviewSession() {
+      released += 1;
+    },
+    clearPreviewData() {
+      this.previewRows = [];
+    },
+  };
+
+  data.deleteDataFile.call(context);
+
+  assert.equal(released, 1);
+  assert.equal(context.dataFile, null);
+  assert.equal(context.dataFileName, '');
+  assert.equal(context.dataFileSize, 0);
+  assert.equal(context.dataColumns, null);
+  assert.equal(context.dataRows, null);
+  assert.deepEqual(context.schemaRows, []);
+  assert.deepEqual(context.qualityRows, []);
+  assert.equal(context.activeTab, 'validate');
+  assert.equal(context.logoVariant, 'neutral');
+  assert.equal(input.value, '');
+});

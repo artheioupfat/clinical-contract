@@ -19,7 +19,7 @@
   }
 
   .app-footer {
-    @apply flex items-center justify-start gap-4 border-t px-4 py-2 text-xs;
+    @apply flex items-center justify-between gap-4 border-t px-4 py-2 text-xs;
     background: var(--cc-surface);
     border-color: var(--cc-border);
     color: var(--cc-muted);
@@ -27,6 +27,24 @@
 
   .footer-left {
     @apply flex min-w-0 items-center gap-3;
+  }
+
+  .footer-context {
+    @apply flex items-center gap-2 tabular-nums;
+  }
+
+  .footer-right {
+    @apply flex shrink-0 items-center gap-3 tabular-nums;
+  }
+
+  .footer-context strong,
+  .footer-right strong {
+    @apply font-semibold;
+    color: var(--cc-text);
+  }
+
+  .footer-separator {
+    color: var(--cc-border);
   }
 
   .runtime-badge {

@@ -13,7 +13,18 @@
         <footer class="app-footer">
           <div class="footer-left">
             <span class="runtime-badge" :class="runtimeBadgeClass()" x-text="runtimeBadgeLabel()"></span>
-            <span x-text="yamlText.split('\n').length + ' lines'"></span>
+            <span class="footer-context">
+              <strong>Contract</strong>
+              <span class="footer-separator" aria-hidden="true">|</span>
+              <span x-text="yamlText.split('\n').length + ' lines'"></span>
+            </span>
             <span class="footer-error" x-show="runtimeError" x-cloak x-text="runtimeError"></span>
+          </div>
+          <div class="footer-right" x-show="dataFile" x-cloak>
+            <strong>Data file</strong>
+            <span class="footer-separator" aria-hidden="true">|</span>
+            <span x-show="dataColumns !== null"><strong>Cols:</strong> <span x-text="dataColumns"></span></span>
+            <span x-show="dataRows !== null"><strong>Rows:</strong> <span x-text="dataRows"></span></span>
+            <span x-show="dataFileSize"><strong>Size:</strong> <span x-text="formatFileSize(dataFileSize)"></span></span>
           </div>
         </footer>

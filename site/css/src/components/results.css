@@ -109,20 +109,4 @@
     @apply bg-amber-500;
   }
 
-  /* Data file metadata */
-  .data-meta-stack {
-    @apply flex flex-col items-end gap-0.5 text-right;
-    color: var(--cc-muted);
-  }
-
-  .data-stats {
-    @apply whitespace-pre text-[13px] font-semibold leading-tight;
-    color: var(--cc-muted);
-  }
-
-  .data-file-size {
-    @apply text-[12px] font-medium leading-tight;
-    color: var(--cc-muted);
-  }
-
 }

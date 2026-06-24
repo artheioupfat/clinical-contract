@@ -147,6 +147,28 @@ window.ClinicalModules.data = {
     await this.refreshDataInsights();
   },
 
+  deleteDataFile() {
+    this.releasePreviewSession();
+    this.clearPreviewData();
+
+    this.dataFile = null;
+    this.dataFileName = '';
+    this.dataFileSize = 0;
+    this.dataColumns = null;
+    this.dataRows = null;
+    this.draggingData = false;
+    this.schemaRows = [];
+    this.qualityRows = [];
+    this.logoVariant = 'neutral';
+
+    if (['schema', 'quality', 'preview'].includes(this.activeTab)) {
+      this.activeTab = 'validate';
+    }
+    if (this.$refs?.dataInput) {
+      this.$refs.dataInput.value = '';
+    }
+  },
+
   dataStatsText() {
     if (this.dataColumns === null || this.dataRows === null) return '';
     return `Cols: ${this.dataColumns}    Rows: ${this.dataRows}`;
