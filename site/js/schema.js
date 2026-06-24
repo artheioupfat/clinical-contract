@@ -34,10 +34,6 @@ window.ClinicalModules.schema = {
     this.persistEditorSession();
   },
 
-  openResetContractModal() {
-    this.resetContractModalOpen = true;
-  },
-
   closeResetContractModal() {
     this.resetContractModalOpen = false;
   },
@@ -354,14 +350,6 @@ window.ClinicalModules.schema = {
   syncSchemaFromYamlEditor() {
     if (this.editorView !== 'yaml') return;
     this.syncSchemaFromYaml({ preserveCurrentOnError: true });
-  },
-
-  buildContractObjectFromSchema() {
-    return this.ensureContractCodec().draftToContractObject(
-      this.schemaDraft || {},
-      this.schemaRootExtras || {},
-      this.schemaOtherSchemas || []
-    );
   },
 
   pushSchemaToYaml() {

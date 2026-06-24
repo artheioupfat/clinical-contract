@@ -11,6 +11,13 @@ function nextIdFactory() {
   };
 }
 
+function resetDataCheckStateForTest() {
+  this.schemaRows = [];
+  this.qualityRows = [];
+  this.schemaRunState = 'idle';
+  this.qualityRunState = 'idle';
+}
+
 function sampleContract() {
   return {
     apiVersion: 'v3.1.0',
@@ -298,6 +305,7 @@ test('clearing results restores every result tab to its idle state', () => {
     schemaRunState: 'passed',
     qualityRunState: 'passed',
     logoVariant: 'green',
+    resetDataCheckState: results.resetDataCheckState,
   };
 
   results.clearResults.call(context);
@@ -306,6 +314,31 @@ test('clearing results restores every result tab to its idle state', () => {
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
   assert.equal(context.logoVariant, 'neutral');
+});
+
+test('resetDataCheckState clears only schema and quality execution state', () => {
+  global.window = { ClinicalModules: {} };
+  delete require.cache[require.resolve('../js/results.js')];
+  require('../js/results.js');
+
+  const results = global.window.ClinicalModules.results;
+  const context = {
+    validateRows: [{ status: 'passed' }],
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'failed' }],
+    validateRunState: 'passed',
+    schemaRunState: 'passed',
+    qualityRunState: 'failed',
+  };
+
+  results.resetDataCheckState.call(context);
+
+  assert.deepEqual(context.validateRows, [{ status: 'passed' }]);
+  assert.equal(context.validateRunState, 'passed');
+  assert.deepEqual(context.schemaRows, []);
+  assert.deepEqual(context.qualityRows, []);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
 });
 
 test('data module deletes the current file and clears dataset-dependent state', () => {
@@ -331,6 +364,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
     activeTab: 'preview',
     logoVariant: 'green',
     $refs: { dataInput: input },
+    resetDataCheckState: resetDataCheckStateForTest,
     clearPersistedDataFile() {
       persistedFileCleared += 1;
       return Promise.resolve();
@@ -375,6 +409,7 @@ test('data module persists each loaded file before analyzing it', async () => {
     qualityRows: [{ status: 'passed' }],
     schemaRunState: 'passed',
     qualityRunState: 'passed',
+    resetDataCheckState: resetDataCheckStateForTest,
     async persistDataFileSession(value) {
       persisted = value;
     },
@@ -402,6 +437,7 @@ test('data module reconstructs the persisted browser file after reload', async (
     pythonReady: false,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
+    resetDataCheckState: resetDataCheckStateForTest,
     async readPersistedDataFile() {
       return {
         name: 'dataset.parquet',

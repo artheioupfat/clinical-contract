@@ -97,10 +97,7 @@ window.ClinicalModules.data = {
       this.dataFileSize = this.dataFile.size;
       this.dataColumns = null;
       this.dataRows = null;
-      this.schemaRows = [];
-      this.qualityRows = [];
-      this.schemaRunState = 'idle';
-      this.qualityRunState = 'idle';
+      this.resetDataCheckState();
 
       if (this.pythonReady) await this.refreshDataInsights();
       return true;
@@ -273,10 +270,7 @@ window.ClinicalModules.data = {
     this.dataFile = file;
     this.dataFileName = file.name;
     this.dataFileSize = file.size || 0;
-    this.schemaRows = [];
-    this.qualityRows = [];
-    this.schemaRunState = 'idle';
-    this.qualityRunState = 'idle';
+    this.resetDataCheckState();
     try {
       await this.persistDataFileSession(file);
     } catch (error) {
@@ -299,10 +293,7 @@ window.ClinicalModules.data = {
     this.dataColumns = null;
     this.dataRows = null;
     this.draggingData = false;
-    this.schemaRows = [];
-    this.qualityRows = [];
-    this.schemaRunState = 'idle';
-    this.qualityRunState = 'idle';
+    this.resetDataCheckState();
     this.logoVariant = 'neutral';
 
     if (['schema', 'quality', 'preview'].includes(this.activeTab)) {
@@ -311,16 +302,6 @@ window.ClinicalModules.data = {
     if (this.$refs?.dataInput) {
       this.$refs.dataInput.value = '';
     }
-  },
-
-  dataStatsText() {
-    if (this.dataColumns === null || this.dataRows === null) return '';
-    return `Cols: ${this.dataColumns}    Rows: ${this.dataRows}`;
-  },
-
-  dataFileSizeText() {
-    if (!this.dataFileSize) return '';
-    return `Data file: ${this.formatFileSize(this.dataFileSize)}`;
   },
 
   formatFileSize(bytes) {

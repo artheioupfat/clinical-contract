@@ -52,13 +52,17 @@ window.ClinicalModules.results = {
     });
   },
 
-  clearResults() {
-    this.validateRows = [];
+  resetDataCheckState() {
     this.schemaRows = [];
     this.qualityRows = [];
-    this.validateRunState = 'idle';
     this.schemaRunState = 'idle';
     this.qualityRunState = 'idle';
+  },
+
+  clearResults() {
+    this.validateRows = [];
+    this.validateRunState = 'idle';
+    this.resetDataCheckState();
     this.logoVariant = 'neutral';
   },
 
@@ -100,11 +104,8 @@ window.ClinicalModules.results = {
     this.busy = true;
     this.showRequiredHints = true;
     this.validateRows = [];
-    this.schemaRows = [];
-    this.qualityRows = [];
     this.validateRunState = 'idle';
-    this.schemaRunState = 'idle';
-    this.qualityRunState = 'idle';
+    this.resetDataCheckState();
 
     try {
       const buffer = await this.dataFile.arrayBuffer();
