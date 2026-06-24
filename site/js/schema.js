@@ -44,6 +44,7 @@ window.ClinicalModules.schema = {
 
   resetContractDraft() {
     this.resetContractModalOpen = false;
+    this.deleteDataFile();
     this.yamlText = '';
     this.yamlName = '';
     this.schemaStarted = false;

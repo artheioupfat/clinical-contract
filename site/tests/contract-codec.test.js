@@ -221,6 +221,54 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   assert.equal(pushed, 1);
 });
 
+test('resetting a contract also deletes the loaded data file', () => {
+  global.window = {
+    ClinicalModules: {},
+    ClinicalContractCodec: codec,
+  };
+  delete require.cache[require.resolve('../js/schema.js')];
+  require('../js/schema.js');
+
+  const schema = global.window.ClinicalModules.schema;
+  let dataDeleted = 0;
+  let draftSeeded = 0;
+  let resultsCleared = 0;
+  let sessionCleared = 0;
+  const context = {
+    resetContractModalOpen: true,
+    yamlText: 'id: example',
+    yamlName: 'example.yaml',
+    schemaStarted: true,
+    schemaParseWarning: 'warning',
+    showRequiredHints: true,
+    schemaSection: 'schema',
+    deleteDataFile() {
+      dataDeleted += 1;
+    },
+    seedSchemaDraft() {
+      draftSeeded += 1;
+    },
+    clearResults() {
+      resultsCleared += 1;
+    },
+    clearEditorSession() {
+      sessionCleared += 1;
+    },
+  };
+
+  schema.resetContractDraft.call(context);
+
+  assert.equal(dataDeleted, 1);
+  assert.equal(draftSeeded, 1);
+  assert.equal(resultsCleared, 1);
+  assert.equal(sessionCleared, 1);
+  assert.equal(context.resetContractModalOpen, false);
+  assert.equal(context.yamlText, '');
+  assert.equal(context.yamlName, '');
+  assert.equal(context.schemaStarted, false);
+  assert.equal(context.schemaSection, 'fundamentals');
+});
+
 test('results module maps capitalized failed states to red dots', () => {
   global.window = { ClinicalModules: {} };
   delete require.cache[require.resolve('../js/results.js')];
@@ -234,4 +282,141 @@ test('results module maps capitalized failed states to red dots', () => {
   assert.equal(results.tabDotClass('Error'), 'tab-dot--failed');
   assert.equal(results.statusDotClass('Failed'), 'status-dot--failed');
   assert.equal(results.statusDotClass(' missing '), 'status-dot--failed');
+});
+
+test('clearing results restores every result tab to its idle state', () => {
+  global.window = { ClinicalModules: {} };
+  delete require.cache[require.resolve('../js/results.js')];
+  require('../js/results.js');
+
+  const results = global.window.ClinicalModules.results;
+  const context = {
+    validateRows: [{ status: 'passed' }],
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    validateRunState: 'passed',
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    logoVariant: 'green',
+  };
+
+  results.clearResults.call(context);
+
+  assert.equal(context.validateRunState, 'idle');
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+  assert.equal(context.logoVariant, 'neutral');
+});
+
+test('data module deletes the current file and clears dataset-dependent state', () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  let released = 0;
+  let persistedFileCleared = 0;
+  const input = { value: '/tmp/dataset.parquet' };
+  const context = {
+    dataFile: { name: 'dataset.parquet' },
+    dataFileName: 'dataset.parquet',
+    dataFileSize: 2048,
+    dataColumns: 4,
+    dataRows: 10,
+    draggingData: true,
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    activeTab: 'preview',
+    logoVariant: 'green',
+    $refs: { dataInput: input },
+    clearPersistedDataFile() {
+      persistedFileCleared += 1;
+      return Promise.resolve();
+    },
+    releasePreviewSession() {
+      released += 1;
+    },
+    clearPreviewData() {
+      this.previewRows = [];
+    },
+  };
+
+  data.deleteDataFile.call(context);
+
+  assert.equal(released, 1);
+  assert.equal(persistedFileCleared, 1);
+  assert.equal(context.dataFile, null);
+  assert.equal(context.dataFileName, '');
+  assert.equal(context.dataFileSize, 0);
+  assert.equal(context.dataColumns, null);
+  assert.equal(context.dataRows, null);
+  assert.deepEqual(context.schemaRows, []);
+  assert.deepEqual(context.qualityRows, []);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+  assert.equal(context.activeTab, 'validate');
+  assert.equal(context.logoVariant, 'neutral');
+  assert.equal(input.value, '');
+});
+
+test('data module persists each loaded file before analyzing it', async () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
+  let persisted = null;
+  let refreshed = 0;
+  const context = {
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    async persistDataFileSession(value) {
+      persisted = value;
+    },
+    async refreshDataInsights() {
+      refreshed += 1;
+    },
+  };
+
+  await data.loadDataFile.call(context, file);
+
+  assert.equal(persisted, file);
+  assert.equal(refreshed, 1);
+  assert.equal(context.dataFileName, 'dataset.csv');
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+});
+
+test('data module reconstructs the persisted browser file after reload', async () => {
+  global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  const context = {
+    pythonReady: false,
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    async readPersistedDataFile() {
+      return {
+        name: 'dataset.parquet',
+        type: 'application/octet-stream',
+        lastModified: 1234,
+        data: new Blob(['parquet-bytes']),
+      };
+    },
+  };
+
+  const restored = await data.restoreDataFileSession.call(context);
+
+  assert.equal(restored, true);
+  assert.equal(context.dataFile.name, 'dataset.parquet');
+  assert.equal(context.dataFileSize, 13);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
 });

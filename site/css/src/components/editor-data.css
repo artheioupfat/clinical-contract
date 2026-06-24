@@ -30,9 +30,10 @@
   }
 
   .dropzone {
-    @apply flex min-h-[78px] cursor-pointer items-center justify-between gap-4 rounded-lg border border-dashed p-3.5 transition;
+    @apply flex min-h-[52px] w-[calc(100%-15rem)] max-w-lg cursor-pointer items-center justify-center gap-3 self-center rounded-md border border-dashed px-3 py-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
     background: var(--cc-surface);
     border-color: var(--cc-border);
+    outline-color: var(--cc-primary);
   }
 
   .dropzone--active {
@@ -45,27 +46,23 @@
   }
 
   .dropzone-icon-wrap {
-    @apply flex h-10 w-10 items-center justify-center rounded-lg;
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-md;
     background: var(--cc-primary-soft);
     color: var(--cc-primary);
   }
 
   .dropzone-icon {
-    @apply h-5 w-5;
+    @apply h-[18px] w-[18px];
   }
 
   .dropzone-title {
-    @apply text-sm font-semibold;
+    @apply text-[13px] font-semibold leading-tight;
     color: var(--cc-text);
   }
 
   .dropzone-subtitle {
-    @apply text-xs;
+    @apply mt-0.5 text-[11px] leading-tight;
     color: var(--cc-muted);
-  }
-
-  .dropzone-filename {
-    @apply max-w-[40%] overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-400;
   }
 
 }

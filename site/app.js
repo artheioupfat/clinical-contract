@@ -1,6 +1,5 @@
 document.addEventListener('alpine:init', () => {
   const constants = window.ClinicalConstants || {};
-  const messages = constants.messages || {};
   const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
@@ -83,6 +82,9 @@ document.addEventListener('alpine:init', () => {
     validateRows: [],
     schemaRows: [],
     qualityRows: [],
+    validateRunState: 'idle',
+    schemaRunState: 'idle',
+    qualityRunState: 'idle',
     previewColumns: [],
     previewRows: [],
     previewTotalRows: 0,
@@ -126,34 +128,16 @@ document.addEventListener('alpine:init', () => {
       return Array.from({ length: count }, (_, i) => i + 1);
     },
 
-    get runtimeProgressLabel() {
-      if (this.runtimeError) {
-        return messages.runtimeFailed || 'Python runtime error';
-      }
-      return this.pythonReady
-        ? messages.runtimeReady || 'Python runtime ready'
-        : messages.runtimeLoading || 'Loading Python runtime...';
-    },
-
     get validateTabState() {
-      if (!this.validateRows.length) return 'idle';
-      return this.validateRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.validateRunState;
     },
 
     get schemaTabState() {
-      if (!this.schemaRows.length) return 'idle';
-      return this.schemaRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.schemaRunState;
     },
 
     get qualityTabState() {
-      if (!this.qualityRows.length) return 'idle';
-      return this.qualityRows.some((row) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(String(row.status || '').trim().toLowerCase()))
-        ? 'failed'
-        : 'passed';
+      return this.qualityRunState;
     },
 
     get previewStartRow() {
@@ -189,13 +173,15 @@ document.addEventListener('alpine:init', () => {
       this.initThemeSwitch();
       this.initSplitPane();
       this.restoreEditorSession();
+      await this.restoreDataFileSession();
       this.registerEditorSessionPersistence();
       this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();
 
       window.addEventListener('clinical-python-ready', async () => {
+        const wasReady = this.pythonReady;
         this.onPythonRuntimeReady();
-        if (this.dataFile) {
+        if (!wasReady && this.dataFile) {
           await this.refreshDataInsights();
         }
       });
@@ -206,15 +192,17 @@ document.addEventListener('alpine:init', () => {
         this.destroySplitPane();
       });
 
-      this.runtimeBridgePoll = window.setInterval(() => {
+      this.runtimeBridgePoll = window.setInterval(async () => {
         if (this.pythonReady) return;
         if (typeof window.pyValidateContract === 'function') {
           this.onPythonRuntimeReady();
+          if (this.dataFile) await this.refreshDataInsights();
         }
       }, 250);
 
-      if (typeof window.pyValidateContract === 'function') {
+      if (!this.pythonReady && typeof window.pyValidateContract === 'function') {
         this.onPythonRuntimeReady();
+        if (this.dataFile) await this.refreshDataInsights();
       }
 
       if (typeof this.syncSchemaFromYaml === 'function') {

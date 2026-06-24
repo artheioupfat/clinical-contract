@@ -56,6 +56,9 @@ window.ClinicalModules.results = {
     this.validateRows = [];
     this.schemaRows = [];
     this.qualityRows = [];
+    this.validateRunState = 'idle';
+    this.schemaRunState = 'idle';
+    this.qualityRunState = 'idle';
     this.logoVariant = 'neutral';
   },
 
@@ -69,6 +72,7 @@ window.ClinicalModules.results = {
     try {
       const payload = JSON.parse(window.pyValidateContract(this.yamlText));
       this.validateRows = this.normalizeValidateRows(payload.fields || []);
+      this.validateRunState = payload.success ? 'passed' : 'failed';
       if (payload.success) {
         this.showRequiredHints = false;
         this.setLogoSuccess();
@@ -77,6 +81,7 @@ window.ClinicalModules.results = {
       }
     } catch (error) {
       console.error(error);
+      this.validateRunState = 'failed';
       this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {
@@ -94,6 +99,12 @@ window.ClinicalModules.results = {
 
     this.busy = true;
     this.showRequiredHints = true;
+    this.validateRows = [];
+    this.schemaRows = [];
+    this.qualityRows = [];
+    this.validateRunState = 'idle';
+    this.schemaRunState = 'idle';
+    this.qualityRunState = 'idle';
 
     try {
       const buffer = await this.dataFile.arrayBuffer();
@@ -102,15 +113,19 @@ window.ClinicalModules.results = {
       this.validateRows = this.normalizeValidateRows(payload.validate?.fields || []);
       this.schemaRows = this.normalizeSchemaRows(payload.schema_rows || []);
       this.qualityRows = payload.quality_rows || [];
+      this.validateRunState = payload.validate?.success ? 'passed' : 'failed';
 
       if (!payload.validate?.success) {
         this.activeTab = 'validate';
         this.setLogoFailure();
       } else if (!payload.schema_success) {
+        this.schemaRunState = 'failed';
         this.showRequiredHints = false;
         this.activeTab = 'schema';
         this.setLogoFailure();
       } else {
+        this.schemaRunState = 'passed';
+        this.qualityRunState = payload.report_success ? 'passed' : 'failed';
         this.showRequiredHints = false;
         this.activeTab = 'quality';
         if (payload.report_success) this.setLogoSuccess();
@@ -118,6 +133,8 @@ window.ClinicalModules.results = {
       }
     } catch (error) {
       console.error(error);
+      if (this.validateRunState === 'idle') this.validateRunState = 'failed';
+      else this.schemaRunState = 'failed';
       this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {

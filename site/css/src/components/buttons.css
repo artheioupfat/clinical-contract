@@ -28,8 +28,47 @@
     color: white;
   }
 
-  .pine-btn--success {
-    color: var(--cc-success);
+  .pine-btn--action {
+    border-color: #005ca9;
+    background: #005ca9;
+    color: white;
+  }
+
+  .pine-btn--action:hover:not(:disabled) {
+    border-color: #004b87;
+    background: #004b87;
+    color: white;
+  }
+
+  .pine-btn--action-success {
+    border-color: #12805c;
+    background: #12805c;
+    color: white;
+  }
+
+  .pine-btn--action-success:hover:not(:disabled) {
+    border-color: #0d684b;
+    background: #0d684b;
+    color: white;
+  }
+
+  .pine-btn--icon {
+    @apply h-9 w-9 shrink-0 p-0;
+  }
+
+  .pine-btn__icon {
+    @apply h-[18px] w-[18px];
+  }
+
+  .pine-btn--danger {
+    border-color: var(--cc-danger);
+    color: var(--cc-danger);
+  }
+
+  .pine-btn--danger:hover:not(:disabled) {
+    background: var(--cc-danger-soft);
+    border-color: var(--cc-danger);
+    color: var(--cc-danger);
   }
 
 }

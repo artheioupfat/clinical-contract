@@ -5,11 +5,11 @@
   }
 
   .entity-modal {
-    @apply w-full max-w-3xl rounded-lg border border-slate-200 bg-white;
+    @apply flex max-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-slate-200 bg-white;
   }
 
   .entity-modal__header {
-    @apply flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4;
+    @apply flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4;
   }
 
   .entity-modal__kicker,
@@ -26,7 +26,7 @@
   }
 
   .entity-modal__body {
-    @apply grid gap-4 px-5 py-5 md:grid-cols-2;
+    @apply grid min-h-0 overflow-y-auto gap-4 px-5 py-5 md:grid-cols-2;
   }
 
   .entity-modal__field {
@@ -67,6 +67,10 @@
     tab-size: 2;
   }
 
+  .quality-description-textarea {
+    @apply min-h-[84px] max-h-[30vh] resize-y;
+  }
+
   .quality-sql-editor__textarea::placeholder {
     @apply text-slate-600;
   }
@@ -76,7 +80,7 @@
   }
 
   .entity-modal__footer {
-    @apply flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4;
+    @apply flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 px-5 py-4;
   }
 
   .entity-modal__remove {

@@ -48,10 +48,6 @@
       @apply flex-col items-start;
     }
 
-    .dropzone-filename {
-      @apply max-w-full;
-    }
-
     .preview-pagination {
       @apply flex-col items-start;
     }
