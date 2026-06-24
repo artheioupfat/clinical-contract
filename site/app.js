@@ -1,6 +1,5 @@
 document.addEventListener('alpine:init', () => {
   const constants = window.ClinicalConstants || {};
-  const messages = constants.messages || {};
   const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
@@ -127,15 +126,6 @@ document.addEventListener('alpine:init', () => {
     get lineNumbers() {
       const count = Math.max(1, this.yamlText.split('\n').length);
       return Array.from({ length: count }, (_, i) => i + 1);
-    },
-
-    get runtimeProgressLabel() {
-      if (this.runtimeError) {
-        return messages.runtimeFailed || 'Python runtime error';
-      }
-      return this.pythonReady
-        ? messages.runtimeReady || 'Python runtime ready'
-        : messages.runtimeLoading || 'Loading Python runtime...';
     },
 
     get validateTabState() {

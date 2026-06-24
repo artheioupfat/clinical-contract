@@ -31,9 +31,9 @@
   }
 
   .theme-dark .pine-logo-box { background: white; }
-  .theme-dark :is(.app-footer, .runtime-progress) { background: var(--cc-night-panel); color: var(--cc-night-muted); }
+  .theme-dark .app-footer { background: var(--cc-night-panel); color: var(--cc-night-muted); }
 
-  .theme-dark :is(.app-footer, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .runtime-progress, .schema-nav, .schema-nav-footer, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar) {
+  .theme-dark :is(.app-footer, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .schema-nav, .schema-nav-footer, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar) {
     border-color: var(--cc-night-border);
   }
 
@@ -41,7 +41,7 @@
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.dropzone-subtitle, .entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .runtime-progress__meta, .schema-empty-copy, .schema-empty-template, .schema-form-label, .schema-nav-footer, .schema-nav-item-subtitle, .schema-nav-subtitle, .schema-stage-desc) {
+  .theme-dark :is(.dropzone-subtitle, .entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .schema-empty-copy, .schema-empty-template, .schema-form-label, .schema-nav-footer, .schema-nav-item-subtitle, .schema-nav-subtitle, .schema-stage-desc) {
     color: var(--cc-night-muted);
   }
 

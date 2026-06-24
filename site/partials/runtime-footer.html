@@ -1,26 +1,21 @@
-        <!-- Runtime progress: PyScript/Pyodide boot feedback. -->
-        <div class="runtime-progress" x-show="showRuntimeProgress" x-transition.opacity.duration.250ms x-cloak>
-          <div class="runtime-progress__meta">
-            <span x-text="runtimeProgressLabel"></span>
-            <span x-text="`${runtimeProgress}%`"></span>
-          </div>
-          <div class="runtime-progress-track">
-            <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>
-          </div>
-        </div>
-
         <!-- Footer: compact runtime status and editor metadata. -->
         <footer class="app-footer">
           <div class="footer-left">
             <span class="runtime-badge" :class="runtimeBadgeClass()" x-text="runtimeBadgeLabel()"></span>
-            <span class="footer-context">
+            <div class="footer-runtime-progress" x-show="showRuntimeProgress" x-transition.opacity.duration.250ms x-cloak>
+              <div class="runtime-progress-track" role="progressbar" aria-label="Python runtime loading" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="runtimeProgress">
+                <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>
+              </div>
+              <span class="footer-runtime-progress__value" x-text="`${runtimeProgress}%`"></span>
+            </div>
+            <span class="footer-context" x-show="schemaStarted && !showRuntimeProgress" x-cloak>
               <strong>Contract</strong>
               <span class="footer-separator" aria-hidden="true">|</span>
               <span x-text="yamlText.split('\n').length + ' lines'"></span>
             </span>
             <span class="footer-error" x-show="runtimeError" x-cloak x-text="runtimeError"></span>
           </div>
-          <div class="footer-right" x-show="dataFile" x-cloak>
+          <div class="footer-right" x-show="dataFile && !showRuntimeProgress" x-cloak>
             <strong>Data file</strong>
             <span class="footer-separator" aria-hidden="true">|</span>
             <span x-show="dataColumns !== null"><strong>Cols:</strong> <span x-text="dataColumns"></span></span>
