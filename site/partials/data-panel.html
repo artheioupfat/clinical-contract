@@ -6,7 +6,6 @@
                   <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
                 </div>
                 <div class="pine-toolbar">
-                  <button type="button" x-show="!dataFile" x-cloak @click="$refs.dataInput.click()" class="pine-btn">Load data</button>
                   <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />
                   <button
                     type="button"
@@ -32,8 +31,13 @@
                   class="dropzone"
                   x-show="!dataFile"
                   x-cloak
+                  role="button"
+                  tabindex="0"
+                  aria-label="Drop a parquet or CSV file, or press Enter to browse"
                   :class="draggingData ? 'dropzone--active' : ''"
                   @dblclick="$refs.dataInput.click()"
+                  @keydown.enter.prevent="$refs.dataInput.click()"
+                  @keydown.space.prevent="$refs.dataInput.click()"
                   @dragenter.prevent="draggingData = true"
                   @dragover.prevent="draggingData = true"
                   @dragleave.prevent="draggingData = false"
@@ -47,10 +51,9 @@
                     </div>
                     <div>
                       <div class="dropzone-title">Drag and drop parquet or csv here</div>
-                      <div class="dropzone-subtitle">Or use "Load data" to pick a local file.</div>
+                      <div class="dropzone-subtitle">Double-click to browse files.</div>
                     </div>
                   </div>
-                  <div class="dropzone-filename" x-text="dataFileName || 'No file selected'"></div>
                 </div>
 
                 <!-- Results: validate, schema, quality, and paginated dataset preview. -->
