@@ -214,7 +214,7 @@
   }
 
   .schema-editor .schema-input {
-    @apply border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900;
+    @apply border border-slate-200 bg-white px-2.5 py-1.5 text-[13px] text-slate-900 outline-none focus:border-blue-500;
     border-radius: 0.5rem;
   }
 
