@@ -13,7 +13,7 @@
                   <button type="button" @click="$refs.yamlInput.click()" class="pine-btn">Load contract</button>
                   <input x-ref="yamlInput" type="file" class="sr-only" accept=".yaml,.yml" @change="importYaml($event)" />
                   <button type="button" @click="downloadYaml()" class="pine-btn">Download contract</button>
-                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady" class="pine-btn pine-btn--primary">Validate</button>
+                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady" class="pine-btn pine-btn--action">Validate</button>
                 </div>
               </div>
 
@@ -427,7 +427,7 @@
 
                             <div class="reset-modal__body">
                               <p>
-                                This will remove the contract currently being edited in the builder and return to the start screen.
+                                This will remove the contract currently being edited, delete the loaded data file, and return to the start screen.
                                 You can download the YAML first if you want to keep a local copy.
                               </p>
                             </div>

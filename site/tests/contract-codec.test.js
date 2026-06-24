@@ -221,6 +221,54 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   assert.equal(pushed, 1);
 });
 
+test('resetting a contract also deletes the loaded data file', () => {
+  global.window = {
+    ClinicalModules: {},
+    ClinicalContractCodec: codec,
+  };
+  delete require.cache[require.resolve('../js/schema.js')];
+  require('../js/schema.js');
+
+  const schema = global.window.ClinicalModules.schema;
+  let dataDeleted = 0;
+  let draftSeeded = 0;
+  let resultsCleared = 0;
+  let sessionCleared = 0;
+  const context = {
+    resetContractModalOpen: true,
+    yamlText: 'id: example',
+    yamlName: 'example.yaml',
+    schemaStarted: true,
+    schemaParseWarning: 'warning',
+    showRequiredHints: true,
+    schemaSection: 'schema',
+    deleteDataFile() {
+      dataDeleted += 1;
+    },
+    seedSchemaDraft() {
+      draftSeeded += 1;
+    },
+    clearResults() {
+      resultsCleared += 1;
+    },
+    clearEditorSession() {
+      sessionCleared += 1;
+    },
+  };
+
+  schema.resetContractDraft.call(context);
+
+  assert.equal(dataDeleted, 1);
+  assert.equal(draftSeeded, 1);
+  assert.equal(resultsCleared, 1);
+  assert.equal(sessionCleared, 1);
+  assert.equal(context.resetContractModalOpen, false);
+  assert.equal(context.yamlText, '');
+  assert.equal(context.yamlName, '');
+  assert.equal(context.schemaStarted, false);
+  assert.equal(context.schemaSection, 'fundamentals');
+});
+
 test('results module maps capitalized failed states to red dots', () => {
   global.window = { ClinicalModules: {} };
   delete require.cache[require.resolve('../js/results.js')];
