@@ -6,6 +6,7 @@ document.addEventListener('alpine:init', () => {
   const runtime = modules.runtime || {};
   const editor = modules.editor || {};
   const data = modules.data || {};
+  const dataStorage = modules.dataStorage || {};
   const results = modules.results || {};
   const schema = modules.schema || {};
 
@@ -214,6 +215,7 @@ document.addEventListener('alpine:init', () => {
     ...runtime,
     ...editor,
     ...schema,
+    ...dataStorage,
     ...data,
     ...results,
   }));
