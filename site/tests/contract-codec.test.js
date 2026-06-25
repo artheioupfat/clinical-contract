@@ -228,6 +228,40 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   assert.equal(pushed, 1);
 });
 
+test('schema module keeps the current builder section when returning from YAML', () => {
+  global.window = {
+    ClinicalModules: {},
+    ClinicalContractCodec: codec,
+  };
+  delete require.cache[require.resolve('../js/schema.js')];
+  require('../js/schema.js');
+
+  const schema = global.window.ClinicalModules.schema;
+  let synced = 0;
+  let persisted = 0;
+  const context = {
+    editorView: 'yaml',
+    schemaSection: 'quality',
+    schemaDraft: {
+      properties: [{ name: 'patient_id' }],
+    },
+    syncSchemaFromYaml(options) {
+      synced += 1;
+      assert.deepEqual(options, { preserveCurrentOnError: true });
+    },
+    persistEditorSession() {
+      persisted += 1;
+    },
+  };
+
+  schema.setEditorView.call(context, 'schema');
+
+  assert.equal(context.editorView, 'schema');
+  assert.equal(context.schemaSection, 'quality');
+  assert.equal(synced, 1);
+  assert.equal(persisted, 1);
+});
+
 test('resetting a contract also deletes the loaded data file', () => {
   global.window = {
     ClinicalModules: {},

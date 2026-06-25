@@ -272,7 +272,6 @@ window.ClinicalModules.schema = {
     if (mode === this.editorView) return;
     if (mode === 'schema') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: true });
-      this.setSchemaSection(this.schemaDraft.properties?.length ? 'schema' : 'fundamentals');
     }
     this.editorView = mode;
     this.persistEditorSession();
