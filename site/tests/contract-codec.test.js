@@ -11,13 +11,6 @@ function nextIdFactory() {
   };
 }
 
-function resetDataCheckStateForTest() {
-  this.schemaRows = [];
-  this.qualityRows = [];
-  this.schemaRunState = 'idle';
-  this.qualityRunState = 'idle';
-}
-
 function sampleContract() {
   return {
     apiVersion: 'v3.1.0',
@@ -339,6 +332,7 @@ test('clearing results restores every result tab to its idle state', () => {
     schemaRunState: 'passed',
     qualityRunState: 'passed',
     logoVariant: 'green',
+    resetValidateState: results.resetValidateState,
     resetDataCheckState: results.resetDataCheckState,
   };
 
@@ -377,9 +371,12 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
 
 test('data module deletes the current file and clears dataset-dependent state', () => {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/results.js')];
   delete require.cache[require.resolve('../js/data.js')];
+  require('../js/results.js');
   require('../js/data.js');
 
+  const results = global.window.ClinicalModules.results;
   const data = global.window.ClinicalModules.data;
   let released = 0;
   let persistedFileCleared = 0;
@@ -398,7 +395,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
     activeTab: 'preview',
     logoVariant: 'green',
     $refs: { dataInput: input },
-    resetDataCheckState: resetDataCheckStateForTest,
+    resetDataCheckState: results.resetDataCheckState,
     clearPersistedDataFile() {
       persistedFileCleared += 1;
       return Promise.resolve();
@@ -431,9 +428,12 @@ test('data module deletes the current file and clears dataset-dependent state', 
 
 test('data module persists each loaded file before refreshing insights', async () => {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/results.js')];
   delete require.cache[require.resolve('../js/data.js')];
+  require('../js/results.js');
   require('../js/data.js');
 
+  const results = global.window.ClinicalModules.results;
   const data = global.window.ClinicalModules.data;
   const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
   let persisted = null;
@@ -443,7 +443,7 @@ test('data module persists each loaded file before refreshing insights', async (
     qualityRows: [{ status: 'passed' }],
     schemaRunState: 'passed',
     qualityRunState: 'passed',
-    resetDataCheckState: resetDataCheckStateForTest,
+    resetDataCheckState: results.resetDataCheckState,
     async persistDataFileSession(value) {
       persisted = value;
     },
@@ -532,15 +532,18 @@ test('data storage module creates and reuses a browser session id', () => {
 
 test('data module reconstructs the persisted browser file after reload', async () => {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
+  delete require.cache[require.resolve('../js/results.js')];
   delete require.cache[require.resolve('../js/data.js')];
+  require('../js/results.js');
   require('../js/data.js');
 
+  const results = global.window.ClinicalModules.results;
   const data = global.window.ClinicalModules.data;
   const context = {
     pythonReady: false,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
-    resetDataCheckState: resetDataCheckStateForTest,
+    resetDataCheckState: results.resetDataCheckState,
     async readPersistedDataFile() {
       return {
         name: 'dataset.parquet',
