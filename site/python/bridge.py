@@ -193,29 +193,6 @@ def _get_query_columns(conn, relation_sql: str) -> list[str]:
     return [str(desc[0]) for desc in cursor.description]
 
 
-def py_analyze_data_file(data_buffer, file_name: str = "") -> str:
-    data_bytes = _buffer_to_bytes(data_buffer)
-    source_path, temp_path, ext = _materialize_data_source(data_bytes)
-    source_path_literal = _safe_path_literal(source_path)
-
-    try:
-        import duckdb
-        with duckdb.connect() as conn:
-            relation_sql, _ = _resolve_source_relation(conn, source_path_literal, ext, file_name=file_name)
-            query_columns = _get_query_columns(conn, relation_sql)
-            count_row = conn.execute(
-                f"SELECT COUNT(*) FROM {relation_sql}"
-            ).fetchone()
-
-            payload = {
-                "columns": len(query_columns),
-                "rows": int(count_row[0] or 0),
-                "summary": f"Detected {len(query_columns)} column(s) and {int(count_row[0] or 0)} row(s)",
-            }
-        return json.dumps(payload)
-    finally:
-        _cleanup_temp_path(temp_path)
-
 def py_prepare_data_preview(data_buffer, file_name: str = "") -> str:
     data_bytes = _buffer_to_bytes(data_buffer)
     source_path, temp_path, ext = _materialize_data_source(data_bytes)
@@ -353,7 +330,6 @@ def py_release_data_preview(handle: str) -> str:
 
 window.pyValidateContract = ffi.create_proxy(py_validate_contract)
 window.pyRunContractCheck = ffi.create_proxy(py_run_contract_check)
-window.pyAnalyzeDataFile = ffi.create_proxy(py_analyze_data_file)
 window.pyPrepareDataPreview = ffi.create_proxy(py_prepare_data_preview)
 window.pyFetchDataPreviewPage = ffi.create_proxy(py_fetch_data_preview_page)
 window.pyReleaseDataPreview = ffi.create_proxy(py_release_data_preview)

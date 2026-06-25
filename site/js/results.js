@@ -59,9 +59,13 @@ window.ClinicalModules.results = {
     this.qualityRunState = 'idle';
   },
 
-  clearResults() {
+  resetValidateState() {
     this.validateRows = [];
     this.validateRunState = 'idle';
+  },
+
+  clearResults() {
+    this.resetValidateState();
     this.resetDataCheckState();
     this.logoVariant = 'neutral';
   },
@@ -103,8 +107,7 @@ window.ClinicalModules.results = {
 
     this.busy = true;
     this.showRequiredHints = true;
-    this.validateRows = [];
-    this.validateRunState = 'idle';
+    this.resetValidateState();
     this.resetDataCheckState();
 
     try {

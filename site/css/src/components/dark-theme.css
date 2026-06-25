@@ -97,8 +97,8 @@
   .theme-dark :is(.schema-editor .schema-input--description, .team-member-input) { background: var(--cc-night-elevated); border-color: #4b5a6b; color: white; }
   .theme-dark .schema-editor .schema-input--required { background: rgba(76, 5, 25, 0.4); border-color: #fb7185; }
   .theme-dark :is(.footer-error, .preview-empty--error, .schema-required) { color: #fda4af; }
-  .theme-dark .schema-add-btn { background: #0ea5e9; border-color: #0ea5e9; color: #020617; }
-  .theme-dark .schema-add-btn:hover:not(:disabled) { background: #38bdf8; border-color: #38bdf8; }
+  .theme-dark .schema-add-btn { background: #005ca9; border-color: #005ca9; color: white; }
+  .theme-dark .schema-add-btn:hover:not(:disabled) { background: #004b87; border-color: #004b87; color: white; }
   .theme-dark .schema-add-btn:disabled { background: var(--cc-dark-control); border-color: var(--cc-night-border); color: #93c5fd; opacity: 0.6; }
 
   /* Code and SQL blocks */

@@ -4,86 +4,6 @@ const dataConstants = window.ClinicalConstants || {};
 const dataMessages = dataConstants.messages || {};
 
 window.ClinicalModules.data = {
-  dataStorageDbName: 'clinical-contract-browser-storage',
-  dataStorageStoreName: 'session-files',
-  dataStorageSessionKey: 'clinical-contract-data-session-v1',
-
-  openDataStorage() {
-    return new Promise((resolve, reject) => {
-      if (!window.indexedDB) {
-        reject(new Error('IndexedDB is unavailable.'));
-        return;
-      }
-
-      const request = window.indexedDB.open(this.dataStorageDbName, 1);
-      request.onupgradeneeded = () => {
-        const database = request.result;
-        if (!database.objectStoreNames.contains(this.dataStorageStoreName)) {
-          database.createObjectStore(this.dataStorageStoreName, { keyPath: 'sessionId' });
-        }
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error || new Error('Unable to open browser data storage.'));
-    });
-  },
-
-  getDataStorageSessionId(create = false) {
-    try {
-      let sessionId = sessionStorage.getItem(this.dataStorageSessionKey);
-      if (!sessionId && create) {
-        sessionId = window.crypto?.randomUUID?.()
-          || `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        sessionStorage.setItem(this.dataStorageSessionKey, sessionId);
-      }
-      return sessionId;
-    } catch (_error) {
-      return null;
-    }
-  },
-
-  async persistDataFileSession(file) {
-    if (!file) return;
-    const sessionId = this.getDataStorageSessionId(true);
-    if (!sessionId) return;
-
-    const database = await this.openDataStorage();
-    try {
-      await new Promise((resolve, reject) => {
-        const transaction = database.transaction(this.dataStorageStoreName, 'readwrite');
-        transaction.objectStore(this.dataStorageStoreName).put({
-          sessionId,
-          name: file.name || 'dataset',
-          type: file.type || 'application/octet-stream',
-          lastModified: file.lastModified || Date.now(),
-          data: file,
-          savedAt: Date.now(),
-        });
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error || new Error('Unable to store the data file.'));
-        transaction.onabort = () => reject(transaction.error || new Error('Data file storage was aborted.'));
-      });
-    } finally {
-      database.close();
-    }
-  },
-
-  async readPersistedDataFile() {
-    const sessionId = this.getDataStorageSessionId(false);
-    if (!sessionId) return null;
-
-    const database = await this.openDataStorage();
-    try {
-      return await new Promise((resolve, reject) => {
-        const transaction = database.transaction(this.dataStorageStoreName, 'readonly');
-        const request = transaction.objectStore(this.dataStorageStoreName).get(sessionId);
-        request.onsuccess = () => resolve(request.result || null);
-        request.onerror = () => reject(request.error || new Error('Unable to restore the data file.'));
-      });
-    } finally {
-      database.close();
-    }
-  },
-
   async restoreDataFileSession() {
     try {
       const stored = await this.readPersistedDataFile();
@@ -107,54 +27,10 @@ window.ClinicalModules.data = {
     }
   },
 
-  async clearPersistedDataFile() {
-    const sessionId = this.getDataStorageSessionId(false);
-    try {
-      sessionStorage.removeItem(this.dataStorageSessionKey);
-    } catch (_error) {
-      // Ignore storage failures.
-    }
-    if (!sessionId) return;
-
-    const database = await this.openDataStorage();
-    try {
-      await new Promise((resolve, reject) => {
-        const transaction = database.transaction(this.dataStorageStoreName, 'readwrite');
-        transaction.objectStore(this.dataStorageStoreName).delete(sessionId);
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error || new Error('Unable to delete the stored data file.'));
-        transaction.onabort = () => reject(transaction.error || new Error('Stored data file deletion was aborted.'));
-      });
-    } finally {
-      database.close();
-    }
-  },
-
-  async analyzeDataFile(file, dataBuffer = null) {
-    this.dataColumns = null;
-    this.dataRows = null;
-    if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) {
-      this.setDataRuntimeUnavailable();
-      return;
-    }
-    try {
-      const buffer = dataBuffer || (await file.arrayBuffer());
-      const payload = JSON.parse(window.pyAnalyzeDataFile(buffer, file.name || ''));
-      this.dataColumns = payload.columns;
-      this.dataRows = payload.rows;
-    } catch (error) {
-      console.error(error);
-      this.dataColumns = null;
-      this.dataRows = null;
-      this.previewError = `${dataMessages.dataAnalysisError || 'Data analysis error'}: ${error.message}`;
-    }
-  },
-
   async refreshDataInsights() {
     if (!this.dataFile) return;
     try {
       const buffer = await this.dataFile.arrayBuffer();
-      await this.analyzeDataFile(this.dataFile, buffer);
       await this.preparePreview(this.dataFile, buffer);
     } catch (error) {
       console.error(error);
@@ -185,6 +61,8 @@ window.ClinicalModules.data = {
   async preparePreview(file, dataBuffer = null) {
     this.releasePreviewSession();
     this.clearPreviewData();
+    this.dataColumns = null;
+    this.dataRows = null;
 
     if (!this.pythonReady || !file || !window.pyPrepareDataPreview) {
       this.setDataRuntimeUnavailable();
@@ -199,17 +77,22 @@ window.ClinicalModules.data = {
         return;
       }
 
+      const columns = payload.columns || [];
       this.previewHandle = payload.handle || null;
-      this.previewColumns = payload.columns || [];
+      this.previewColumns = columns;
       this.previewTotalRows = payload.total_rows || 0;
       this.previewPageSize = payload.page_size || this.previewPageSizeDefault;
       this.previewTotalPages = payload.total_pages || 0;
+      this.dataColumns = columns.length;
+      this.dataRows = this.previewTotalRows;
 
       if (this.previewHandle) {
         await this.loadPreviewPage(1);
       }
     } catch (error) {
       console.error(error);
+      this.dataColumns = null;
+      this.dataRows = null;
       this.previewError = error.message;
     }
   },
