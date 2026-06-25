@@ -429,7 +429,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
   assert.equal(input.value, '');
 });
 
-test('data module persists each loaded file before analyzing it', async () => {
+test('data module persists each loaded file before refreshing insights', async () => {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
   delete require.cache[require.resolve('../js/data.js')];
   require('../js/data.js');
@@ -459,6 +459,46 @@ test('data module persists each loaded file before analyzing it', async () => {
   assert.equal(context.dataFileName, 'dataset.csv');
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
+});
+
+test('data module derives status bar stats from preview preparation', async () => {
+  global.window = {
+    ClinicalModules: {},
+    ClinicalConstants: {},
+    pyPrepareDataPreview() {
+      return JSON.stringify({
+        handle: 'preview-1',
+        columns: ['patient_id', 'event_date', 'age'],
+        total_rows: 5000,
+        page_size: 50,
+        total_pages: 100,
+        error: '',
+      });
+    },
+  };
+  delete require.cache[require.resolve('../js/data.js')];
+  require('../js/data.js');
+
+  const data = global.window.ClinicalModules.data;
+  const context = {
+    pythonReady: true,
+    previewHandle: null,
+    previewPageSizeDefault: 50,
+    dataColumns: null,
+    dataRows: null,
+    releasePreviewSession: data.releasePreviewSession,
+    clearPreviewData: data.clearPreviewData,
+    async loadPreviewPage(page) {
+      this.previewPage = page;
+    },
+  };
+
+  await data.preparePreview.call(context, new File(['id\n1'], 'dataset.csv'));
+
+  assert.equal(context.dataColumns, 3);
+  assert.equal(context.dataRows, 5000);
+  assert.deepEqual(context.previewColumns, ['patient_id', 'event_date', 'age']);
+  assert.equal(context.previewTotalRows, 5000);
 });
 
 test('data module reconstructs the persisted browser file after reload', async () => {

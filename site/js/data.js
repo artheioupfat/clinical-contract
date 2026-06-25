@@ -130,31 +130,10 @@ window.ClinicalModules.data = {
     }
   },
 
-  async analyzeDataFile(file, dataBuffer = null) {
-    this.dataColumns = null;
-    this.dataRows = null;
-    if (!this.pythonReady || !file || !window.pyAnalyzeDataFile) {
-      this.setDataRuntimeUnavailable();
-      return;
-    }
-    try {
-      const buffer = dataBuffer || (await file.arrayBuffer());
-      const payload = JSON.parse(window.pyAnalyzeDataFile(buffer, file.name || ''));
-      this.dataColumns = payload.columns;
-      this.dataRows = payload.rows;
-    } catch (error) {
-      console.error(error);
-      this.dataColumns = null;
-      this.dataRows = null;
-      this.previewError = `${dataMessages.dataAnalysisError || 'Data analysis error'}: ${error.message}`;
-    }
-  },
-
   async refreshDataInsights() {
     if (!this.dataFile) return;
     try {
       const buffer = await this.dataFile.arrayBuffer();
-      await this.analyzeDataFile(this.dataFile, buffer);
       await this.preparePreview(this.dataFile, buffer);
     } catch (error) {
       console.error(error);
@@ -185,6 +164,8 @@ window.ClinicalModules.data = {
   async preparePreview(file, dataBuffer = null) {
     this.releasePreviewSession();
     this.clearPreviewData();
+    this.dataColumns = null;
+    this.dataRows = null;
 
     if (!this.pythonReady || !file || !window.pyPrepareDataPreview) {
       this.setDataRuntimeUnavailable();
@@ -199,17 +180,22 @@ window.ClinicalModules.data = {
         return;
       }
 
+      const columns = payload.columns || [];
       this.previewHandle = payload.handle || null;
-      this.previewColumns = payload.columns || [];
+      this.previewColumns = columns;
       this.previewTotalRows = payload.total_rows || 0;
       this.previewPageSize = payload.page_size || this.previewPageSizeDefault;
       this.previewTotalPages = payload.total_pages || 0;
+      this.dataColumns = columns.length;
+      this.dataRows = this.previewTotalRows;
 
       if (this.previewHandle) {
         await this.loadPreviewPage(1);
       }
     } catch (error) {
       console.error(error);
+      this.dataColumns = null;
+      this.dataRows = null;
       this.previewError = error.message;
     }
   },
