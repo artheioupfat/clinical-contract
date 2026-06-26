@@ -27,6 +27,8 @@
 
               <div class="checker-body">
                 <!-- Dataset input: CSV/Parquet drag-and-drop and file picker. -->
+                <div class="data-warning" x-show="dataStorageWarning" x-cloak x-text="dataStorageWarning"></div>
+
                 <div
                   class="dropzone"
                   x-show="!dataFile"

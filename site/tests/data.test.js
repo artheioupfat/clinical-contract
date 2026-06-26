@@ -91,6 +91,32 @@ test('data module persists each loaded file before refreshing insights', async (
   assert.equal(context.qualityRunState, 'idle');
 });
 
+test('data module exposes browser storage failures to the UI state', async () => {
+  const { data, results } = loadResultsAndDataModules();
+  const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  const context = {
+    schemaRows: [],
+    qualityRows: [],
+    dataStorageWarning: '',
+    resetDataCheckState: results.resetDataCheckState,
+    async persistDataFileSession() {
+      throw new Error('Quota exceeded');
+    },
+    async refreshDataInsights() {},
+  };
+
+  try {
+    await data.loadDataFile.call(context, file);
+
+    assert.equal(context.dataFile, file);
+    assert.match(context.dataStorageWarning, /browser storage failed: Quota exceeded/);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
 test('data module derives status bar stats from preview preparation', async () => {
   global.window = {
     ClinicalModules: {},
@@ -133,11 +159,15 @@ test('data module derives status bar stats from preview preparation', async () =
 
 test('data module reconstructs the persisted browser file after reload', async () => {
   const { data, results } = loadResultsAndDataModules();
+  let pruned = 0;
   const context = {
     pythonReady: false,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
     resetDataCheckState: results.resetDataCheckState,
+    async pruneExpiredDataFileSessions() {
+      pruned += 1;
+    },
     async readPersistedDataFile() {
       return {
         name: 'dataset.parquet',
@@ -151,6 +181,7 @@ test('data module reconstructs the persisted browser file after reload', async (
   const restored = await data.restoreDataFileSession.call(context);
 
   assert.equal(restored, true);
+  assert.equal(pruned, 1);
   assert.equal(context.dataFile.name, 'dataset.parquet');
   assert.equal(context.dataFileSize, 13);
   assert.equal(context.schemaRunState, 'idle');

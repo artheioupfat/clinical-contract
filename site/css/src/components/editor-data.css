@@ -29,6 +29,13 @@
     @apply flex min-h-0 min-w-0 flex-1 flex-col gap-3 p-4;
   }
 
+  .data-warning {
+    @apply rounded-md border px-3 py-2 text-xs font-medium;
+    background: var(--cc-warning-soft);
+    border-color: color-mix(in srgb, var(--cc-warning) 30%, transparent);
+    color: var(--cc-warning);
+  }
+
   .dropzone {
     @apply flex min-h-[52px] w-[calc(100%-15rem)] max-w-lg cursor-pointer items-center justify-center gap-3 self-center rounded-md border border-dashed px-3 py-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
     background: var(--cc-surface);

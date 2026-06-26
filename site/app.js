@@ -14,6 +14,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
     yamlName: '',
+    editorStorageWarning: '',
     editorView: 'schema',
     schemaStarted: false,
     schemaParseWarning: '',
@@ -65,6 +66,7 @@ document.addEventListener('alpine:init', () => {
     dataFileSize: 0,
     dataColumns: null,
     dataRows: null,
+    dataStorageWarning: '',
     draggingData: false,
     busy: false,
     pythonReady: false,
