@@ -138,6 +138,8 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
     "real": "float",
     "float64": "double",
     "double": "double",
+    "bool": "boolean",
+    "boolean": "boolean",
     "binary": "binary",
     "blob": "binary",
 }
@@ -192,6 +194,21 @@ def _types_compatible(yaml_type: str, parquet_type: str) -> bool:
 
 def _physical_types_compatible(contract_type: str, detected_type: str) -> bool:
     return _normalize_physical_type(contract_type) == _normalize_physical_type(detected_type)
+
+
+def _property_types_compatible(logical_type: str, physical_type: str, detected_type: str) -> bool:
+    if physical_type:
+        normalized_logical = _normalize_logical_type(logical_type)
+        normalized_physical = _normalize_physical_type(physical_type)
+        normalized_detected = _normalize_type_name(detected_type)
+        if (
+            normalized_logical == "boolean"
+            and normalized_physical == "binary"
+            and normalized_detected in TYPE_MAP["boolean"]
+        ):
+            return True
+        return _physical_types_compatible(physical_type, detected_type)
+    return _types_compatible(logical_type, detected_type)
 
 
 def _data_type_for_display(data_type: str) -> str:
@@ -551,10 +568,10 @@ class DataContract(BaseModel):
                     continue
 
                 detected_type = _data_type_for_display(parquet_type)
-                type_matches = (
-                    _physical_types_compatible(prop.physicalType, parquet_type)
-                    if prop.physicalType
-                    else _types_compatible(prop.logicalType, parquet_type)
+                type_matches = _property_types_compatible(
+                    prop.logicalType,
+                    prop.physicalType,
+                    parquet_type,
                 )
 
                 if not type_matches:

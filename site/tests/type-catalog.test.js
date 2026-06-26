@@ -16,5 +16,5 @@ test('type catalog exposes logical and physical options for the editor', () => {
     'uint64',
   ]);
   assert.ok(catalog.physicalTypeByLogical.string.includes('varchar'));
-  assert.ok(catalog.physicalTypeByLogical.boolean.includes('binary'));
+  assert.deepEqual(catalog.physicalTypeByLogical.boolean, ['boolean', 'binary']);
 });
