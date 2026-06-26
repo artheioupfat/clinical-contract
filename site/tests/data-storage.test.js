@@ -29,3 +29,15 @@ test('data storage module creates and reuses a browser session id', () => {
   assert.equal(dataStorage.getDataStorageSessionId(true), 'session-id-1');
   assert.equal(dataStorage.getDataStorageSessionId(false), 'session-id-1');
 });
+
+test('data storage module marks old persisted files as expired', () => {
+  global.window = { ClinicalModules: {} };
+  delete require.cache[require.resolve('../js/data-storage.js')];
+  require('../js/data-storage.js');
+
+  const dataStorage = global.window.ClinicalModules.dataStorage;
+  const now = Date.UTC(2026, 0, 2);
+  assert.equal(dataStorage.isStoredDataFileExpired({ savedAt: now }, now), false);
+  assert.equal(dataStorage.isStoredDataFileExpired({ savedAt: now - dataStorage.dataStorageMaxAgeMs - 1 }, now), true);
+  assert.equal(dataStorage.isStoredDataFileExpired({}, now), true);
+});

@@ -3,10 +3,17 @@ window.ClinicalModules = window.ClinicalModules || {};
 window.ClinicalModules.editor = {
   indentUnit: '  ',
   editorSessionKey: 'clinical-contract-editor-session-v1',
+  editorSessionMaxAgeMs: 24 * 60 * 60 * 1000,
+
+  isEditorSessionExpired(session, now = Date.now()) {
+    const savedAt = Date.parse(String(session?.savedAt || ''));
+    return !Number.isFinite(savedAt) || now - savedAt > this.editorSessionMaxAgeMs;
+  },
 
   clearEditorSession() {
     try {
       sessionStorage.removeItem(this.editorSessionKey);
+      this.editorStorageWarning = '';
     } catch (_error) {
       // Ignore storage failures.
     }
@@ -19,6 +26,10 @@ window.ClinicalModules.editor = {
 
       const session = JSON.parse(rawSession);
       if (!session || typeof session !== 'object') return;
+      if (this.isEditorSessionExpired(session)) {
+        this.clearEditorSession();
+        return;
+      }
 
       this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
       this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
@@ -31,6 +42,7 @@ window.ClinicalModules.editor = {
       if (this.schemaStarted && typeof this.syncSchemaFromYaml === 'function') {
         this.syncSchemaFromYaml({ preserveCurrentOnError: false });
       }
+      this.editorStorageWarning = '';
     } catch (_error) {
       this.clearEditorSession();
     }
@@ -59,8 +71,9 @@ window.ClinicalModules.editor = {
       }
 
       sessionStorage.setItem(this.editorSessionKey, JSON.stringify(payload));
-    } catch (_error) {
-      // Ignore storage failures.
+      this.editorStorageWarning = '';
+    } catch (error) {
+      this.editorStorageWarning = `Contract draft could not be stored in this browser session: ${error.message}`;
     }
   },
 

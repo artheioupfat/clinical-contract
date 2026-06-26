@@ -1,5 +1,6 @@
 document.addEventListener('alpine:init', () => {
   const constants = window.ClinicalConstants || {};
+  const typeCatalog = window.ClinicalTypeCatalog || {};
   const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
@@ -13,6 +14,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
     yamlName: '',
+    editorStorageWarning: '',
     editorView: 'schema',
     schemaStarted: false,
     schemaParseWarning: '',
@@ -31,20 +33,8 @@ document.addEventListener('alpine:init', () => {
     qualityEditorRuleId: null,
     teamEditorMemberId: null,
     resetContractModalOpen: false,
-    logicalTypeOptions: [
-      'string',
-      'date',
-      'integer',
-      'float',
-      'boolean',
-    ],
-    physicalTypeByLogical: {
-      string: ['varchar', 'text', 'string', 'char'],
-      date: ['timestamp', 'datetime'],
-      integer: ['int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'],
-      float: ['float32', 'float64'],
-      boolean: ['binary'],
-    },
+    logicalTypeOptions: typeCatalog.logicalTypeOptions || [],
+    physicalTypeByLogical: typeCatalog.physicalTypeByLogical || {},
     schemaDraft: {
       apiVersion: 'v3.1.0',
       kind: 'DataContract',
@@ -76,6 +66,7 @@ document.addEventListener('alpine:init', () => {
     dataFileSize: 0,
     dataColumns: null,
     dataRows: null,
+    dataStorageWarning: '',
     draggingData: false,
     busy: false,
     pythonReady: false,

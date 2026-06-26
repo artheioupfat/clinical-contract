@@ -6,6 +6,9 @@ const dataMessages = dataConstants.messages || {};
 window.ClinicalModules.data = {
   async restoreDataFileSession() {
     try {
+      if (typeof this.pruneExpiredDataFileSessions === 'function') {
+        await this.pruneExpiredDataFileSessions();
+      }
       const stored = await this.readPersistedDataFile();
       if (!stored?.data) return false;
 
@@ -20,9 +23,11 @@ window.ClinicalModules.data = {
       this.resetDataCheckState();
 
       if (this.pythonReady) await this.refreshDataInsights();
+      this.dataStorageWarning = '';
       return true;
     } catch (error) {
       console.warn(`Unable to restore the data file: ${error.message}`);
+      this.dataStorageWarning = `Stored data file could not be restored: ${error.message}`;
       return false;
     }
   },
@@ -153,11 +158,13 @@ window.ClinicalModules.data = {
     this.dataFile = file;
     this.dataFileName = file.name;
     this.dataFileSize = file.size || 0;
+    this.dataStorageWarning = '';
     this.resetDataCheckState();
     try {
       await this.persistDataFileSession(file);
     } catch (error) {
       console.warn(`Unable to persist the data file: ${error.message}`);
+      this.dataStorageWarning = `This file is loaded for the current session, but browser storage failed: ${error.message}`;
     }
     await this.refreshDataInsights();
   },
@@ -165,7 +172,10 @@ window.ClinicalModules.data = {
   deleteDataFile() {
     const cleanup = this.clearPersistedDataFile();
     if (cleanup?.catch) {
-      cleanup.catch((error) => console.warn(`Unable to clear the stored data file: ${error.message}`));
+      cleanup.catch((error) => {
+        console.warn(`Unable to clear the stored data file: ${error.message}`);
+        this.dataStorageWarning = `Stored data cleanup failed: ${error.message}`;
+      });
     }
     this.releasePreviewSession();
     this.clearPreviewData();
@@ -175,6 +185,7 @@ window.ClinicalModules.data = {
     this.dataFileSize = 0;
     this.dataColumns = null;
     this.dataRows = null;
+    this.dataStorageWarning = '';
     this.draggingData = false;
     this.resetDataCheckState();
     this.logoVariant = 'neutral';

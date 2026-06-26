@@ -1,10 +1,18 @@
 """
 Tests pour clinical-contract.
 """
+import json
+import re
 import pytest
 from clinical_contract import load_contract, load_raw
-from clinical_contract.contract import DataContract
+from clinical_contract.contract import (
+    DataContract,
+    _is_supported_logical_type,
+    _is_supported_physical_type,
+)
+from clinical_contract.type_catalog import EDITOR_TYPE_CATALOG
 from clinical_contract.models import CheckStatus, ColumnCheckStatus
+from pathlib import Path
 
 # ------------------------------------------------------------------ #
 # YAML de test                                                         #
@@ -989,3 +997,31 @@ schema:
     assert report.success is False
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert "missing logicalType or physicalType" in schema_field.display_value
+
+
+def test_site_type_catalog_matches_python_type_support():
+    catalog_path = Path(__file__).resolve().parents[1] / "site" / "js" / "type-catalog.js"
+    catalog_source = catalog_path.read_text(encoding="utf-8")
+    match = re.search(
+        r"const catalog = (\{.*?\});\s*// TYPE_CATALOG_JSON_END",
+        catalog_source,
+        flags=re.DOTALL,
+    )
+    assert match, "Unable to extract the site type catalog JSON. Run: npm run generate:site-types"
+
+    catalog = json.loads(match.group(1))
+    assert catalog == EDITOR_TYPE_CATALOG
+
+    logical_options = catalog["logicalTypeOptions"]
+    physical_options = [
+        physical_type
+        for options in catalog["physicalTypeByLogical"].values()
+        for physical_type in options
+    ]
+
+    assert logical_options
+    assert physical_options
+    for logical_type in logical_options:
+        assert _is_supported_logical_type(logical_type), logical_type
+    for physical_type in physical_options:
+        assert _is_supported_physical_type(physical_type), physical_type

@@ -16,6 +16,13 @@
                 </div>
               </div>
 
+              <div
+                x-show="editorStorageWarning"
+                x-cloak
+                class="schema-warning mx-4 mb-3"
+                x-text="editorStorageWarning"
+              ></div>
+
               <!-- YAML mode: plain code editor optimized for manual contract editing. -->
               <template x-if="editorView === 'yaml'">
                 <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">

@@ -80,7 +80,7 @@
   .theme-dark .editor-textarea, .theme-dark :is(.column-table tr, .quality-table tr, .team-table tr, .results-table tbody td, .preview-table tbody td) { color: #e2e8f0; }
   .theme-dark :is(.editor-textarea, .schema-input)::placeholder { color: #93c5fd; }
   .theme-dark .dropzone--active { background: #022c22; border-color: #10b981; }
-  .theme-dark .schema-warning { @apply border-amber-700 bg-amber-950 text-amber-200; }
+  .theme-dark :is(.data-warning, .schema-warning) { @apply border-amber-700 bg-amber-950 text-amber-200; }
   .theme-dark .schema-empty { background: radial-gradient(circle at 1px 1px, rgba(166, 176, 189, 0.18) 1px, transparent 0); background-size: 22px 22px, 100% 100%; }
   .theme-dark :is(.pine-tabs, .preview-pagination, .schema-card, .schema-empty-card, .schema-workflow, .schema-workspace) { background: var(--cc-surface); border-color: var(--cc-night-border); }
   .theme-dark .schema-nav { background: var(--cc-dark-nav); }

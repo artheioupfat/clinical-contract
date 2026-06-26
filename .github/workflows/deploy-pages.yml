@@ -34,6 +34,8 @@ jobs:
         run: |
           set -euo pipefail
           npm ci
+          npm run generate:site-types
+          git diff --exit-code site/js/type-catalog.js
           npm run test:site
           npm run build:site:css
 

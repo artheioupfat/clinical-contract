@@ -5,6 +5,12 @@ window.ClinicalModules.dataStorage = {
   dataStorageDbName: 'clinical-contract-browser-storage',
   dataStorageStoreName: 'session-files',
   dataStorageSessionKey: 'clinical-contract-data-session-v1',
+  dataStorageMaxAgeMs: 24 * 60 * 60 * 1000,
+
+  isStoredDataFileExpired(record, now = Date.now()) {
+    const savedAt = Number(record?.savedAt || 0);
+    return !savedAt || now - savedAt > this.dataStorageMaxAgeMs;
+  },
 
   openDataStorage() {
     return new Promise((resolve, reject) => {
@@ -44,6 +50,8 @@ window.ClinicalModules.dataStorage = {
     const sessionId = this.getDataStorageSessionId(true);
     if (!sessionId) return;
 
+    await this.pruneExpiredDataFileSessions();
+
     const database = await this.openDataStorage();
     try {
       await new Promise((resolve, reject) => {
@@ -71,12 +79,17 @@ window.ClinicalModules.dataStorage = {
 
     const database = await this.openDataStorage();
     try {
-      return await new Promise((resolve, reject) => {
+      const stored = await new Promise((resolve, reject) => {
         const transaction = database.transaction(this.dataStorageStoreName, 'readonly');
         const request = transaction.objectStore(this.dataStorageStoreName).get(sessionId);
         request.onsuccess = () => resolve(request.result || null);
         request.onerror = () => reject(request.error || new Error('Unable to restore the data file.'));
       });
+      if (this.isStoredDataFileExpired(stored)) {
+        await this.clearPersistedDataFile();
+        return null;
+      }
+      return stored;
     } finally {
       database.close();
     }
@@ -91,6 +104,10 @@ window.ClinicalModules.dataStorage = {
     }
     if (!sessionId) return;
 
+    await this.deleteStoredDataSession(sessionId);
+  },
+
+  async deleteStoredDataSession(sessionId) {
     const database = await this.openDataStorage();
     try {
       await new Promise((resolve, reject) => {
@@ -99,6 +116,31 @@ window.ClinicalModules.dataStorage = {
         transaction.oncomplete = () => resolve();
         transaction.onerror = () => reject(transaction.error || new Error('Unable to delete the stored data file.'));
         transaction.onabort = () => reject(transaction.error || new Error('Stored data file deletion was aborted.'));
+      });
+    } finally {
+      database.close();
+    }
+  },
+
+  async pruneExpiredDataFileSessions(now = Date.now()) {
+    const database = await this.openDataStorage();
+    try {
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction(this.dataStorageStoreName, 'readwrite');
+        const store = transaction.objectStore(this.dataStorageStoreName);
+        const request = store.openCursor();
+        request.onsuccess = () => {
+          const cursor = request.result;
+          if (!cursor) return;
+          if (this.isStoredDataFileExpired(cursor.value, now)) {
+            cursor.delete();
+          }
+          cursor.continue();
+        };
+        request.onerror = () => reject(request.error || new Error('Unable to scan stored data files.'));
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error || new Error('Unable to clean stored data files.'));
+        transaction.onabort = () => reject(transaction.error || new Error('Stored data cleanup was aborted.'));
       });
     } finally {
       database.close();
