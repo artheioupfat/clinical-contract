@@ -44,6 +44,7 @@ window.ClinicalModules.schema = {
     this.yamlText = '';
     this.yamlName = '';
     this.schemaStarted = false;
+    this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.schemaSection = 'fundamentals';
@@ -278,7 +279,13 @@ window.ClinicalModules.schema = {
   },
 
   startBlankContract() {
+    if (!this.pythonReady) {
+      this.schemaParseWarning = 'Python runtime is still loading. Please wait before starting a contract.';
+      return;
+    }
+
     this.schemaStarted = true;
+    this.checkerCollapsed = true;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.yamlName = 'datacontract.yaml';

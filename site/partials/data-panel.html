@@ -1,9 +1,22 @@
             <!-- Right panel: data loading, validation results, checks, and preview. -->
-            <section class="panel">
+            <section class="panel" x-show="schemaStarted && !checkerCollapsed" x-cloak>
               <div class="panel-head">
-                <div>
-                  <div class="panel-eyebrow">Checker</div>
-                  <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
+                <div class="checker-head-title">
+                  <button
+                    type="button"
+                    class="checker-collapse-btn"
+                    @click.stop="toggleCheckerPanel()"
+                    aria-label="Hide checker panel"
+                    title="Hide checker panel"
+                  >
+                    <svg class="checker-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6" />
+                    </svg>
+                  </button>
+                  <div>
+                    <div class="panel-eyebrow">Checker</div>
+                    <div class="panel-title" x-text="dataFileName || 'Drop a parquet/csv file'"></div>
+                  </div>
                 </div>
                 <div class="pine-toolbar">
                   <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />

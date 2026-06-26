@@ -15,7 +15,7 @@
             </span>
             <span class="footer-error" x-show="runtimeError" x-cloak x-text="runtimeError"></span>
           </div>
-          <div class="footer-right" x-show="dataFile && !showRuntimeProgress" x-cloak>
+          <div class="footer-right" x-show="schemaStarted && dataFile && !showRuntimeProgress" x-cloak>
             <strong>Data file</strong>
             <span class="footer-separator" aria-hidden="true">|</span>
             <span x-show="dataColumns !== null"><strong>Cols:</strong> <span x-text="dataColumns"></span></span>

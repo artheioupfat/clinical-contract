@@ -103,3 +103,45 @@ test('editor module exposes contract draft storage failures to the UI state', ()
 
   assert.match(context.editorStorageWarning, /Contract draft could not be stored.*Quota exceeded/);
 });
+
+test('editor module blocks contract imports until Python is ready', async () => {
+  const editor = loadEditorModule();
+  const context = {
+    pythonReady: false,
+    schemaParseWarning: '',
+    async handleYamlFile() {
+      throw new Error('YAML import should not run while Python is loading');
+    },
+  };
+  const event = {
+    target: {
+      files: [{ name: 'contract.yaml' }],
+      value: 'contract.yaml',
+    },
+  };
+
+  await editor.importYaml.call(context, event);
+
+  assert.equal(event.target.value, '');
+  assert.match(context.schemaParseWarning, /Python runtime is still loading/);
+});
+
+test('editor module blocks template loading until Python is ready', async () => {
+  const editor = loadEditorModule();
+  const originalFetch = global.fetch;
+  global.fetch = () => {
+    throw new Error('Template fetch should not run while Python is loading');
+  };
+  const context = {
+    pythonReady: false,
+    schemaParseWarning: '',
+  };
+
+  try {
+    await editor.loadExampleContract.call(context);
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.match(context.schemaParseWarning, /Python runtime is still loading/);
+});

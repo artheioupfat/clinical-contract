@@ -5,8 +5,16 @@
       grid-template-columns: minmax(28rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
     }
 
+    .app-grid--onboarding {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .app-grid--schema {
       grid-template-columns: minmax(32rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
+    }
+
+    .app-grid--checker-collapsed {
+      grid-template-columns: minmax(0, 1fr) 38px 0;
     }
 
     .panel--editor {
@@ -14,10 +22,13 @@
     }
 
     .split-resizer {
-      @apply flex cursor-col-resize items-center justify-center border-x outline-none;
+      @apply relative flex items-center justify-center border-x outline-none;
       background: var(--cc-surface);
       border-color: var(--cc-border);
-      touch-action: none;
+    }
+
+    .split-resizer--collapsed {
+      background: var(--cc-surface-muted);
     }
 
     .split-resizer:hover,

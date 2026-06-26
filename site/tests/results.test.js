@@ -61,3 +61,35 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
 });
+
+test('validate opens the checker panel before showing validation results', async () => {
+  const results = loadResultsModule();
+  global.window.pyValidateContract = () => JSON.stringify({
+    success: true,
+    fields: [{ field: 'id', present: true }],
+  });
+  const context = {
+    pythonReady: true,
+    busy: false,
+    checkerCollapsed: true,
+    activeTab: 'schema',
+    showRequiredHints: false,
+    yamlText: 'id: contract',
+    validateRows: [],
+    validateRunState: 'idle',
+    normalizeValidateRows: results.normalizeValidateRows,
+    setLogoSuccess() {
+      this.logoVariant = 'green';
+    },
+    setLogoFailure() {
+      this.logoVariant = 'red';
+    },
+  };
+
+  await results.validateContract.call(context);
+
+  assert.equal(context.checkerCollapsed, false);
+  assert.equal(context.activeTab, 'validate');
+  assert.equal(context.validateRunState, 'passed');
+  assert.equal(context.logoVariant, 'green');
+});

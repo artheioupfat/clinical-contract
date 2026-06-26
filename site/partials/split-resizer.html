@@ -1,16 +1,38 @@
-            <button
-              type="button"
+            <div
+              x-show="schemaStarted"
+              x-cloak
               class="split-resizer"
-              :class="splitDragging ? 'split-resizer--active' : ''"
-              @pointerdown.prevent="startSplitResize($event)"
-              @dblclick.prevent="resetSplitPane()"
-              @keydown="handleSplitKeydown($event)"
-              role="separator"
-              aria-label="Resize editor and checker panels"
-              aria-orientation="vertical"
-              :aria-valuenow="Math.round(splitPercent)"
-              aria-valuemin="35"
-              aria-valuemax="75"
+              :class="{ 'split-resizer--active': splitDragging, 'split-resizer--collapsed': checkerCollapsed }"
             >
-              <span class="split-resizer__handle" aria-hidden="true"></span>
-            </button>
+              <button
+                type="button"
+                x-show="checkerCollapsed"
+                x-cloak
+                class="checker-rail-btn"
+                @click.stop="toggleCheckerPanel()"
+                :aria-expanded="(!checkerCollapsed).toString()"
+                aria-label="Show checker panel"
+                title="Show checker panel"
+              >
+                <svg class="checker-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                x-show="!checkerCollapsed"
+                x-cloak
+                class="split-resizer__drag"
+                @pointerdown.prevent="startSplitResize($event)"
+                @dblclick.prevent="resetSplitPane()"
+                @keydown="handleSplitKeydown($event)"
+                role="separator"
+                aria-label="Resize editor and checker panels"
+                aria-orientation="vertical"
+                :aria-valuenow="Math.round(splitPercent)"
+                aria-valuemin="35"
+                aria-valuemax="75"
+              >
+                <span class="split-resizer__handle" aria-hidden="true"></span>
+              </button>
+            </div>

@@ -97,6 +97,7 @@ document.addEventListener('alpine:init', () => {
     runtimeErrorHandlersRegistered: false,
     splitPercent: 58,
     splitDragging: false,
+    checkerCollapsed: false,
     splitMoveHandler: null,
     splitEndHandler: null,
     logoVariant: 'neutral',
@@ -165,7 +166,15 @@ document.addEventListener('alpine:init', () => {
       this.initThemeSwitch();
       this.initSplitPane();
       this.restoreEditorSession();
-      await this.restoreDataFileSession();
+      if (this.schemaStarted) {
+        await this.restoreDataFileSession();
+      } else if (typeof this.clearPersistedDataFile === 'function') {
+        try {
+          await this.clearPersistedDataFile();
+        } catch (error) {
+          console.warn(`Unable to clear stale data file: ${error.message}`);
+        }
+      }
       this.registerEditorSessionPersistence();
       this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();

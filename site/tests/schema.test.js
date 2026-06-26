@@ -103,3 +103,48 @@ test('resetting a contract also deletes the loaded data file', () => {
   assert.equal(context.schemaStarted, false);
   assert.equal(context.schemaSection, 'fundamentals');
 });
+
+test('schema module blocks blank contract creation until Python is ready', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    pythonReady: false,
+    schemaStarted: false,
+    schemaParseWarning: '',
+    clearResults() {
+      throw new Error('Contract should not start while Python is loading');
+    },
+  };
+
+  schema.startBlankContract.call(context);
+
+  assert.equal(context.schemaStarted, false);
+  assert.match(context.schemaParseWarning, /Python runtime is still loading/);
+});
+
+test('schema module starts blank contracts with the checker collapsed', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    pythonReady: true,
+    schemaStarted: false,
+    checkerCollapsed: false,
+    schemaParseWarning: 'old warning',
+    showRequiredHints: true,
+    yamlName: '',
+    ensureContractCodec: () => codec,
+    nextSchemaRowId: schema.nextSchemaRowId,
+    schemaRowCounter: 0,
+    clearResults() {},
+    seedSchemaDraft: schema.seedSchemaDraft,
+    pushSchemaToYaml() {},
+    setSchemaSection(section) {
+      this.schemaSection = section;
+    },
+    persistEditorSession() {},
+  };
+
+  schema.startBlankContract.call(context);
+
+  assert.equal(context.schemaStarted, true);
+  assert.equal(context.checkerCollapsed, true);
+  assert.equal(context.schemaSection, 'fundamentals');
+});
