@@ -16,6 +16,13 @@
     @apply cursor-not-allowed opacity-45;
   }
 
+  .pine-btn.pine-btn--locked {
+    background: var(--cc-surface-muted);
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+    opacity: 0.65;
+  }
+
   .pine-btn--primary {
     border-color: var(--cc-primary);
     background: var(--cc-primary);

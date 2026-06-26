@@ -1,5 +1,7 @@
             <button
               type="button"
+              x-show="schemaStarted"
+              x-cloak
               class="split-resizer"
               :class="splitDragging ? 'split-resizer--active' : ''"
               @pointerdown.prevent="startSplitResize($event)"

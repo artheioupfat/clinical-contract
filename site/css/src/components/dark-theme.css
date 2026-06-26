@@ -26,6 +26,16 @@
     color: var(--cc-night-text);
   }
 
+  .theme-dark .app-grid--onboarding {
+    background: radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.14) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+
+  .theme-dark .app-grid--onboarding .panel--editor {
+    background: var(--cc-night-panel);
+    border-color: var(--cc-night-border);
+  }
+
   .theme-dark .pine-header {
     background: linear-gradient(180deg, var(--cc-night-panel) 0%, var(--cc-night) 100%);
   }

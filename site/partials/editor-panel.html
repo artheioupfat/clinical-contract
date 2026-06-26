@@ -6,13 +6,13 @@
                   <div class="panel-title" x-text="yamlName || 'Untitled contract'"></div>
                 </div>
                 <div class="pine-toolbar">
-                  <div class="view-switch">
-                    <button type="button" :class="editorModeButtonClass('schema')" @click="setEditorView('schema')">Schema</button>
-                    <button type="button" :class="editorModeButtonClass('yaml')" @click="setEditorView('yaml')">YAML</button>
+                  <div class="view-switch" :class="!schemaStarted ? 'view-switch--locked' : ''" title="Create or load a contract to unlock">
+                    <button type="button" :class="editorModeButtonClass('schema')" @click="setEditorView('schema')" :disabled="!schemaStarted">Schema</button>
+                    <button type="button" :class="editorModeButtonClass('yaml')" @click="setEditorView('yaml')" :disabled="!schemaStarted">YAML</button>
                   </div>
                   <input x-ref="yamlInput" type="file" class="sr-only" accept=".yaml,.yml" @change="importYaml($event)" />
-                  <button type="button" @click="downloadYaml()" class="pine-btn">Download contract</button>
-                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady" class="pine-btn pine-btn--action">Validate</button>
+                  <button type="button" @click="downloadYaml()" :disabled="!schemaStarted || !yamlText.trim()" class="pine-btn" :class="!schemaStarted ? 'pine-btn--locked' : ''" title="Create or load a contract to unlock">Download contract</button>
+                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady || !schemaStarted" class="pine-btn pine-btn--action" :class="!schemaStarted ? 'pine-btn--locked' : ''" title="Create or load a contract to unlock">Validate</button>
                 </div>
               </div>
 
@@ -67,12 +67,33 @@
                           Build your contract step by step, or load an existing YAML contract.
                         </p>
                         <div class="schema-empty-actions">
-                          <button type="button" class="pine-btn pine-btn--primary" @click="startBlankContract()">Add schema</button>
-                          <button type="button" class="pine-btn" @click="$refs.yamlInput.click()">Load contract</button>
+                          <button
+                            type="button"
+                            class="pine-btn pine-btn--primary"
+                            :class="!pythonReady ? 'pine-btn--locked' : ''"
+                            :disabled="!pythonReady"
+                            :title="pythonReady ? 'Start a blank contract' : 'Python runtime is still loading'"
+                            @click="startBlankContract()"
+                          >Add schema</button>
+                          <button
+                            type="button"
+                            class="pine-btn"
+                            :class="!pythonReady ? 'pine-btn--locked' : ''"
+                            :disabled="!pythonReady"
+                            :title="pythonReady ? 'Load an existing YAML contract' : 'Python runtime is still loading'"
+                            @click="$refs.yamlInput.click()"
+                          >Load contract</button>
                         </div>
                         <p class="schema-empty-template">
                           You can also start from the
-                          <button type="button" class="schema-empty-template-link" @click="loadExampleContract()">template</button>.
+                          <button
+                            type="button"
+                            class="schema-empty-template-link"
+                            :class="!pythonReady ? 'schema-empty-template-link--locked' : ''"
+                            :disabled="!pythonReady"
+                            :title="pythonReady ? 'Load the bundled template contract and data file' : 'Python runtime is still loading'"
+                            @click="loadExampleContract()"
+                          >template</button>.
                         </p>
                       </div>
                     </div>

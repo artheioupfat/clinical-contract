@@ -278,6 +278,11 @@ window.ClinicalModules.schema = {
   },
 
   startBlankContract() {
+    if (!this.pythonReady) {
+      this.schemaParseWarning = 'Python runtime is still loading. Please wait before starting a contract.';
+      return;
+    }
+
     this.schemaStarted = true;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;

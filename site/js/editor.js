@@ -149,6 +149,12 @@ window.ClinicalModules.editor = {
   },
 
   async importYaml(event) {
+    if (!this.pythonReady) {
+      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading a contract.';
+      event.target.value = '';
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (!file) return;
     await this.handleYamlFile(file);
@@ -156,6 +162,11 @@ window.ClinicalModules.editor = {
   },
 
   async loadExampleContract() {
+    if (!this.pythonReady) {
+      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading the template.';
+      return;
+    }
+
     try {
       const [contractResponse, dataResponse] = await Promise.all([
         fetch('./examples/contract.yaml'),
@@ -210,6 +221,11 @@ window.ClinicalModules.editor = {
   },
 
   async dropYaml(event) {
+    if (!this.pythonReady) {
+      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading a contract.';
+      return;
+    }
+
     const file = [...event.dataTransfer.files].find((f) => /\.ya?ml$/i.test(f.name));
     if (!file) return;
     await this.handleYamlFile(file);
