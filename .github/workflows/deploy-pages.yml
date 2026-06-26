@@ -50,10 +50,7 @@ jobs:
 
           rm -rf site_dist/python/clinical_contract
           mkdir -p site_dist/python/clinical_contract
-          cp src/clinical_contract/__init__.py site_dist/python/clinical_contract/
-          cp src/clinical_contract/contract.py site_dist/python/clinical_contract/
-          cp src/clinical_contract/loader.py site_dist/python/clinical_contract/
-          cp src/clinical_contract/models.py site_dist/python/clinical_contract/
+          cp src/clinical_contract/*.py site_dist/python/clinical_contract/
           cp src/clinical_contract/py.typed site_dist/python/clinical_contract/
 
           if find site_dist -type l | grep -q .; then

@@ -7,3 +7,4 @@ packages = ["pyyaml", "duckdb", "pydantic"]
 "./python/clinical_contract/contract.py" = "./clinical_contract/contract.py"
 "./python/clinical_contract/loader.py" = "./clinical_contract/loader.py"
 "./python/clinical_contract/models.py" = "./clinical_contract/models.py"
+"./python/clinical_contract/type_catalog.py" = "./clinical_contract/type_catalog.py"
