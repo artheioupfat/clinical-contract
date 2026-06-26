@@ -44,6 +44,7 @@ window.ClinicalModules.schema = {
     this.yamlText = '';
     this.yamlName = '';
     this.schemaStarted = false;
+    this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.schemaSection = 'fundamentals';
@@ -284,6 +285,7 @@ window.ClinicalModules.schema = {
     }
 
     this.schemaStarted = true;
+    this.checkerCollapsed = true;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.yamlName = 'datacontract.yaml';

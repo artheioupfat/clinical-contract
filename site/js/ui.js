@@ -58,7 +58,23 @@ window.ClinicalModules.ui = {
     return `--editor-pane:${this.splitPercent}%;`;
   },
 
+  appGridClass() {
+    if (!this.schemaStarted) return 'app-grid app-grid--onboarding';
+    if (this.checkerCollapsed) return 'app-grid app-grid--checker-collapsed';
+    if (this.editorView === 'schema') return 'app-grid app-grid--schema';
+    return 'app-grid';
+  },
+
+  toggleCheckerPanel() {
+    this.checkerCollapsed = !this.checkerCollapsed;
+    if (this.checkerCollapsed) {
+      this.splitDragging = false;
+      document.body.classList.remove('is-resizing-split');
+    }
+  },
+
   startSplitResize(event) {
+    if (this.checkerCollapsed) return;
     if (window.matchMedia('(max-width: 1023px)').matches) return;
     this.splitDragging = true;
     document.body.classList.add('is-resizing-split');

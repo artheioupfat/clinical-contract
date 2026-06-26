@@ -75,6 +75,7 @@ window.ClinicalModules.results = {
       return;
     }
     this.busy = true;
+    this.checkerCollapsed = false;
     this.activeTab = 'validate';
     this.showRequiredHints = true;
     try {

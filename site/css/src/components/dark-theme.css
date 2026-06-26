@@ -57,13 +57,13 @@
 
   .theme-dark :is(.footer-context strong, .footer-right strong) { color: var(--cc-night-text); }
 
-  .theme-dark :is(.column-list-shell, .dropzone, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .schema-advanced, .schema-stage-pill, .team-list-shell, .view-switch) {
+  .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .dropzone, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .schema-advanced, .schema-stage-pill, .team-list-shell, .view-switch) {
     background: var(--cc-night-raised);
     border-color: var(--cc-night-border);
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.column-edit-button, .dropzone-icon-wrap, .github-link:hover, .pine-btn:hover:not(:disabled), .pine-tab--active, .quality-edit-button, .schema-nav-item--active, .team-edit-button, .view-switch-btn--active) {
+  .theme-dark :is(.checker-collapse-btn:hover, .checker-rail-btn:hover, .column-edit-button, .dropzone-icon-wrap, .github-link:hover, .pine-btn:hover:not(:disabled), .pine-tab--active, .quality-edit-button, .schema-nav-item--active, .team-edit-button, .view-switch-btn--active) {
     background: var(--cc-night-elevated);
     border-color: var(--cc-primary-ring);
     color: white;

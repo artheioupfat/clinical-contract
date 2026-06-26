@@ -113,9 +113,54 @@
     @apply hidden;
   }
 
+  .split-resizer__drag {
+    @apply flex h-full w-full items-center justify-center outline-none;
+    cursor: col-resize;
+    touch-action: none;
+  }
+
   .split-resizer__handle {
     @apply block h-10 w-1 rounded-full transition;
     background: var(--cc-border);
+  }
+
+  .checker-head-title {
+    @apply flex min-w-0 items-center gap-2;
+  }
+
+  .checker-collapse-btn {
+    @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border bg-white transition;
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .checker-rail-btn {
+    @apply absolute left-1/2 top-3 z-10 inline-flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border bg-white shadow-sm transition;
+    border-color: var(--cc-border);
+    color: var(--cc-muted);
+  }
+
+  .checker-collapse-btn:hover,
+  .checker-collapse-btn:focus-visible,
+  .checker-rail-btn:hover,
+  .checker-rail-btn:focus-visible {
+    background: var(--cc-primary);
+    border-color: var(--cc-primary);
+    color: white;
+  }
+
+  .checker-collapse-btn:focus-visible,
+  .checker-rail-btn:focus-visible {
+    @apply outline outline-2 outline-offset-2;
+    outline-color: var(--cc-primary-ring);
+  }
+
+  .checker-toggle-icon {
+    @apply h-4 w-4;
+  }
+
+  .split-resizer--collapsed .checker-rail-btn {
+    @apply top-1/2 -translate-y-1/2;
   }
 
   .is-resizing-split,

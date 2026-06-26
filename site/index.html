@@ -22,7 +22,7 @@
         <main class="app-main">
           <div
             x-ref="appGrid"
-            :class="!schemaStarted ? 'app-grid app-grid--onboarding' : (editorView === 'schema' ? 'app-grid app-grid--schema' : 'app-grid')"
+            :class="appGridClass()"
             :style="splitGridStyle()"
           >
             <div data-include="./partials/editor-panel.html"></div>

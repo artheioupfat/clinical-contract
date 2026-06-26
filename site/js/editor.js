@@ -190,6 +190,7 @@ window.ClinicalModules.editor = {
       this.yamlText = contractText;
       this.yamlName = 'template.yaml';
       this.schemaStarted = true;
+      this.checkerCollapsed = true;
       this.clearResults();
       if (typeof this.loadDataFile === 'function') {
         await this.loadDataFile(dataFile);
@@ -235,6 +236,7 @@ window.ClinicalModules.editor = {
     this.yamlText = await file.text();
     this.yamlName = file.name;
     this.schemaStarted = Boolean(this.yamlText.trim());
+    this.checkerCollapsed = this.schemaStarted;
     this.clearResults();
     if (typeof this.syncSchemaFromYaml === 'function') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: false });

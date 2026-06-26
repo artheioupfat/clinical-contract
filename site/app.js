@@ -97,6 +97,7 @@ document.addEventListener('alpine:init', () => {
     runtimeErrorHandlersRegistered: false,
     splitPercent: 58,
     splitDragging: false,
+    checkerCollapsed: false,
     splitMoveHandler: null,
     splitEndHandler: null,
     logoVariant: 'neutral',
