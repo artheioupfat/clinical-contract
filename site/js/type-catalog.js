@@ -1,15 +1,6 @@
-/* 
-This file is generates from src/clinical_contract/type_catalog.py
-This makes it possible to avoid type mismatches.
-Thnaks to scripts/generate_site_type_catalog.py
-
-
-npm run generate:site-types     command to generate this file 
-*/
-
-
 (function registerTypeCatalog(root) {
-
+// Generated from src/clinical_contract/type_catalog.py. Do not edit by hand.
+// TYPE_CATALOG_JSON_START
 const catalog = {
   "logicalTypeOptions": [
     "string",

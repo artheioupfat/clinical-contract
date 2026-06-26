@@ -1003,11 +1003,11 @@ def test_site_type_catalog_matches_python_type_support():
     catalog_path = Path(__file__).resolve().parents[1] / "site" / "js" / "type-catalog.js"
     catalog_source = catalog_path.read_text(encoding="utf-8")
     match = re.search(
-        r"// TYPE_CATALOG_JSON_START\s*const catalog = (\{.*?\});\s*// TYPE_CATALOG_JSON_END",
+        r"const catalog = (\{.*?\});\s*// TYPE_CATALOG_JSON_END",
         catalog_source,
         flags=re.DOTALL,
     )
-    assert match, "Unable to extract the site type catalog JSON"
+    assert match, "Unable to extract the site type catalog JSON. Run: npm run generate:site-types"
 
     catalog = json.loads(match.group(1))
     assert catalog == EDITOR_TYPE_CATALOG
