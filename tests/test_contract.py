@@ -688,6 +688,82 @@ schema:
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
+def test_check_schema_boolean_physical_type_matches_detected_boolean(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="patients",
+        column_name="is_active",
+        duckdb_type="BOOLEAN",
+    )
+    yaml_boolean = """
+apiVersion: v1.0.0
+kind: DataContract
+id: boolean-contract
+name: Boolean Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: is_active
+        logicalType: boolean
+        physicalType: boolean
+        description: Active flag
+        required: true
+"""
+    contract, _ = load_contract(yaml_boolean)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "boolean"
+    assert reports[0].columns[0].parquet_type == "boolean"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_binary_physical_type_matches_detected_boolean_when_logical_boolean(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="patients",
+        column_name="is_active",
+        duckdb_type="BOOLEAN",
+    )
+    yaml_boolean_binary = """
+apiVersion: v1.0.0
+kind: DataContract
+id: boolean-binary-contract
+name: Boolean Binary Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: is_active
+        logicalType: boolean
+        physicalType: binary
+        description: Active flag
+        required: false
+"""
+    contract, _ = load_contract(yaml_boolean_binary)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "binary"
+    assert reports[0].columns[0].parquet_type == "boolean"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
 def test_check_schema_displays_bigint_as_int64(tmp_path):
     parquet_file = _write_parquet_single_typed_column(
         tmp_path=tmp_path,
@@ -784,7 +860,7 @@ schema:
     properties:
       - name: is_active
         logicalType: boolen
-        physicalType: binary
+        physicalType: boolean
         description: ok
         required: true
 """

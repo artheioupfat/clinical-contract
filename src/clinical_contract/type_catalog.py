@@ -31,6 +31,6 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
             "uint64",
         ],
         "float": ["float32", "float64"],
-        "boolean": ["binary"],
+        "boolean": ["boolean", "binary"],
     },
 }

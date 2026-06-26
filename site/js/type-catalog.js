@@ -35,6 +35,7 @@ const catalog = {
       "float64"
     ],
     "boolean": [
+      "boolean",
       "binary"
     ]
   }
