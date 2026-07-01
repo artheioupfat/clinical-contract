@@ -1,322 +1,156 @@
 # clinical-contract
 
-> Ensure your data matches the expectations defined in YAML contracts — check schemas, data types, and quality rules automatically on Parquet and CSV files.
+> Write healthcare data contracts, validate their structure, and check CSV or Parquet datasets against them.
+
+[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg)](https://pypi.org/project/clinical-contract/)
+[![Python](https://img.shields.io/pypi/pyversions/clinical-contract.svg)](https://pypi.org/project/clinical-contract/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+`clinical-contract` is a lightweight tool for teams that need to describe, share, and verify clinical data expectations.
+
+It helps you:
+
+- write a data contract with a guided web editor or YAML;
+- validate that the contract is correctly composed;
+- check that a real `.parquet` or `.csv` file conforms to the expected schema;
+- run SQL quality rules with DuckDB;
+- use the same logic in the browser, the CLI, and Python pipelines.
+
+<p align="center">
+  <img src="docs/assets/site-demo.gif" alt="clinical-contract web editor demo" width="750">
+</p>
 
 
 
----
+## Live Web App
 
-## Overview
+The project includes a static browser application designed for GitHub Pages:
 
-`clinical-contract` is a data contract validation library designed for clinical and healthcare data pipelines. It bridges the gap between data documentation and data quality enforcement by allowing teams to define their data expectations in a human-readable YAML contract and automatically verify those expectations against real Parquet and CSV files.
+[Open the web editor](https://artheioupfat.github.io/clinical-contract/)
 
-A contract defines:
-- **Schema** — which columns exist, their logical and physical types
-- **Quality rules** — SQL-based assertions that must hold true on the data
+The web app lets users create or load a contract, edit it visually, inspect the generated YAML, validate the contract, upload a CSV/Parquet file, preview the dataset, and run schema/quality checks directly in the browser with PyScript, Pyodide, and DuckDB.
 
-The library is DuckDB-first and is compatible with [PyScript](https://pyscript.net), making it suitable for both server-side pipelines and browser-based tooling.
+## Why It Exists
 
----
+Clinical data exchanges often fail because the expected dataset is documented in one place while the real delivered file follows another reality.
 
-## Features
+`clinical-contract` keeps the expectation and the verification close together:
 
-- **YAML contract validation** — verify that a contract file is structurally complete before running it against data
-- **Schema verification** — check that required columns exist in the Parquet or CSV file with compatible types
-- **SQL quality checks** — execute custom SQL assertions and report pass/fail with obtained vs expected values
-- **Flexible type mapping** — loose type family matching (`string`, `varchar`, `text` are treated as equivalent; `int32`, `int64`, `integer` likewise)
-- **DuckDB engine** — one execution path for schema checks and SQL quality checks
-- **PyScript compatible** — runs in the browser via Pyodide/WebAssembly
-- **Clean CLI output** — formatted tables with ✅/❌ indicators directly in the terminal
-- **Programmable API** — use as a Python library in your own pipelines and CI workflows
+- the contract explains what the dataset should contain;
+- the checker verifies what the dataset actually contains;
+- the quality rules make important assumptions executable.
 
----
+This makes data delivery easier to review, easier to automate, and easier to discuss between data producers and data consumers.
 
-## Installation
+## What It Checks
 
+`clinical-contract` currently focuses on three practical layers:
+
+1. **Contract structure**
+   Required metadata, description fields, schema definitions, columns, and quality rules are validated before checking data.
+
+2. **Schema compatibility**
+   Required columns must exist and detected DuckDB types must match the contract logical or physical types.
+
+3. **Quality rules**
+   SQL checks are executed against the loaded CSV/Parquet file and reported as passed or failed.
+
+## Python Package
+
+The same engine is available as a Python package on PyPI.
 
 ```bash
 pip install clinical-contract
 ```
 
-> `duckdb` is installed as a core dependency.  
-
-
----
-
-## Quick Start
-
-### 1. Write a contract
-
-```yaml
-# datacontract.yaml
-apiVersion: v3.1.0
-kind: DataContract
-id: export-contract
-name: Export Contract
-version: 1.0.0
-status: active
-description:
-  purpose: "Export dataset containing medical events and sampling data"
-  usage: "Analytics and downstream processing"
-  limitations: "Historical data may contain legacy timestamps"
-
-schema:
-  - name: S
-    physicalType: TABLE
-    description: Exported dataset containing patient event data
-    properties:
-      - name: IPP
-        logicalType: string
-        physicalType: VARCHAR
-        description: Permanent patient identifier
-        required: true
-        quality:
-          - type: sql
-            description: IPP must not be null
-            query: "SELECT COUNT(*) FROM export WHERE IPP IS NULL"
-            mustBe: 0
-          - type: sql
-            description: IPP length must be between 35 and 37 characters
-            query: "SELECT COUNT(*) FROM export WHERE LENGTH(IPP) NOT BETWEEN 35 AND 37"
-            mustBe: 0
-
-      - name: EVENT_DATE
-        logicalType: date
-        physicalType: DATE
-        description: Medical event date
-        required: true
-        quality:
-          - type: sql
-            description: No dates in the future
-            query: "SELECT COUNT(*) FROM export WHERE EVENT_DATE > CURRENT_DATE"
-            mustBe: 0
-```
-
-### 2. Validate the contract structure
+Validate a contract:
 
 ```bash
-clinical-contract validate datacontract.yaml
+clinical-contract validate examples/example_contract.yaml
 ```
 
-```
-📋  Validation de la structure : datacontract.yaml
-
-┌─────────────┬────────┬──────────────────────┐
-│ Champ       │ Statut │ Valeur               │
-├─────────────┼────────┼──────────────────────┤
-│ apiVersion  │ ✅     │ v1.0.0              │
-│ kind        │ ✅     │ DataContract        │
-│ id          │ ✅     │ export-contract     │
-│ name        │ ✅     │ Export Contract     │
-│ version     │ ✅     │ 1.0.0               │
-│ status      │ ✅     │ active              │
-│ description │ ✅     │ présent             │
-│ schema      │ ✅     │ 6 colonnes détectées│
-└─────────────┴────────┴──────────────────────┘
-
-✅  Structure valide — tous les champs sont présents.
-```
-
-### 3. Run checks against a Parquet file
+Check a data file:
 
 ```bash
-clinical-contract check datacontract.yaml export.parquet
+clinical-contract check examples/example_contract.yaml data.parquet
 ```
 
-```
-🔍  Vérification du contrat
-    Contrat : datacontract.yaml
-    Parquet : export.parquet
-
-── Vérification du schéma ──────────────────────────────────────
-
-  Schema : export
-  ┌─────────────┬───────────┬──────────────┬──────────┐
-  │ Colonne     │ Type YAML │ Type Parquet │ Statut   │
-  ├─────────────┼───────────┼──────────────┼──────────┤
-  │ IPP         │ string    │ string       │ ✅       │
-  │ EVENT_DATE  │ date      │ date32       │ ✅       │
-  └─────────────┴───────────┴──────────────┴──────────┘
-
-  ✅ 2/2 colonnes valides
-
-── Quality checks ──────────────────────────────────────────────
-
-  ┌────────┬────────────┬──────────────────────────────┬──────────┬────────┬─────────┐
-  │ Schema │ Property   │ Description                  │ Résultat │ Obtenu │ Attendu │
-  ├────────┼────────────┼──────────────────────────────┼──────────┼────────┼─────────┤
-  │ export │ IPP        │ IPP must not be null         │ ✅       │ 0      │ 0       │
-  │ export │ IPP        │ IPP length 35-37 characters  │ ❌       │ 3      │ 0       │
-  │ export │ EVENT_DATE │ No dates in the future       │ ✅       │ 0      │ 0       │
-  └────────┴────────────┴──────────────────────────────┴──────────┴────────┴─────────┘
-
-  2/3 checks passés.
-```
-
----
-
-## CLI Reference
-
-### `clinical-contract validate <contract.yaml>`
-
-The validate command verifies that a YAML contract file is correctly written and conforms to the Open Data Contract Standard v3.1.0.
-This ensures that all required fields are present and correctly structured.
-
-**Required top-level fields:** `apiVersion`, `kind`, `id`, `name`, `version`, `status`, `description`, `schema`
-
-**Expected sub-fields:**
-
-- description must include: `purpose`, `usage`, `limitations`
-- schema must include for each item: `name`, `physicalType`, `description`, `properties`
-- properties (inside each schema) must include: `name`, `logicalType`, `physicalType`, `description`
-
-
-**Exit codes:** `0` if valid, `1` if any required field is missing or invalid (including unsupported `logicalType`).
-
----
-
-### `clinical-contract check <contract.yaml> <data_file> [backend]`
-
-Runs a full validation pipeline in three stages against a **Parquet or CSV file**:
-
-
-1. **YAML structure** — same checks as `validate`
-2. **Schema compatibility** — verifies that required columns exist in the Parquet or CSV file with compatible types. Quality checks are **blocked** if this step fails.
-3. **Quality checks** — executes each SQL assertion and reports the result
-
-**Backend options:** `auto` (default), `duckdb`
-
-
-**Exit codes:** `0` if all checks pass, `1` if any check fails or a column is missing/mistyped, `2` if an execution error occurs.
-
----
-
-## Type Mapping
-
-Types in the YAML contract are matched with a hybrid strategy:
-
-- **Strict integer-width matching** for explicit integer types:
-  `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64`
-- **Family-based matching** for generic types like `integer`, `string`, `timestamp`, etc.
-
-`uint32` is accepted in YAML and normalized to DuckDB canonical `uinteger` before comparison.
-
-| YAML logical type | Compatible Parquet types |
-|---|---|
-| `string`, `text`, `varchar` | `string`, `large_string`, `utf8`, `large_utf8` |
-| `integer`, `int` | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64`, `tinyint`, `smallint`, `integer`, `bigint`, `utinyint`, `usmallint`, `uinteger`, `ubigint` |
-| `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` | **Strict canonical match** (`int32` ↔ `integer`, `uint32` ↔ `uinteger`, etc.) |
-| `float`, `double`, `decimal` | `float32`, `float64`, `double`, `decimal128` |
-| `boolean`, `bool` | `bool`, `boolean` |
-| `date`, `date32` | `date32`, `date64` |
-| `datetime`, `timestamp` | `timestamp[ms]`, `timestamp[us]`, `timestamp[ns]`, `timestamp[s]`, timezone variants |
-| `binary`, `bytes` | `binary`, `large_binary` |
-
----
-
-## Python API
-
-Beyond the CLI, `clinical-contract` can be used directly in Python pipelines:
+Use it from Python:
 
 ```python
 from clinical_contract import load_contract
 
-# Load and parse the contract
-contract, raw = load_contract("datacontract.yaml")
+contract, raw = load_contract("examples/example_contract.yaml")
+report = contract.check("data.parquet")
 
-# Validate structure only
-from clinical_contract import DataContract
-validate_report = DataContract.validate_structure(raw)
-if not validate_report.success:
-    for f in validate_report.missing():
-        print(f"Missing field: {f.field}")
-
-# Check schema compatibility
-schema_reports = contract.check_schema("export.parquet")
-for report in schema_reports:
-    if not report.success:
-        for col in report.failures():
-            print(f"{col.column}: {col.status_icon}")
-
-# Run quality checks
-report = contract.check("export.parquet", backend="duckdb")
-
-print(f"Success: {report.success}")
-print(f"Code: {report.code}")  # 0 = pass, 1 = fail, 2 = error
-
-for result in report.failed():
-    print(f"  ❌ {result.description}")
-    print(f"     obtained={result.obtained}, expected={result.expected}")
+print(report.success)
 ```
 
----
+## Local Development
 
-
-## Contract Schema Reference
-
-```yaml
-apiVersion: string        # Contract specification version (e.g. v3.1.0)
-kind: DataContract        # Must be "DataContract"
-id: string                # Unique identifier for this contract
-name: string              # Human-readable name
-version: string           # Data version (semver recommended)
-status: string            # active | draft | deprecated
-
-description:
-  purpose: string         # Why this dataset exists
-  usage: string           # How it should be used
-  limitations: string     # Known limitations or caveats
-
-schema:
-  - name: string          # Table/view name (used in SQL queries)
-    physicalType: TABLE   # TABLE | VIEW
-    description: string
-    properties:
-      - name: string          # Column name (case-sensitive)
-        logicalType: string   # Semantic type (string, integer, date…)
-        physicalType: string  # Storage type (TEXT, INT, DATE…)
-        description: string
-        required: bool        # Default: false (missing optional columns do not fail schema check)
-        quality:              # Optional list of SQL assertions
-          - type: sql
-            description: string   # Human-readable description of the rule
-            query: string         # SQL returning a single COUNT(*)
-            mustBe: integer       # Expected result (usually 0)
-```
-
----
-
-## Development
+Clone the repository:
 
 ```bash
-# Clone the repository
 git clone https://github.com/artheioupfat/clinical-contract.git
 cd clinical-contract
-
-# Create a virtual environment
-uv sync
-
-source .venv/bin/activate
-
-
-#Installer les dépendances dev
-uv sync --extra dev
-
-#lancer les tests 
-pytest -v
-
-uv run pytest -v --cov=src/clinical_contract --cov-report=term-missing
 ```
 
----
+Install Python dependencies:
 
+```bash
+uv sync --extra dev
+```
+
+Run Python tests:
+
+```bash
+uv run pytest -v
+```
+
+Install web dependencies:
+
+```bash
+npm ci
+```
+
+Run site tests:
+
+```bash
+npm run test:site
+```
+
+Build the site CSS:
+
+```bash
+npm run build:site:css
+```
+
+Serve the static site locally:
+
+```bash
+python3 -m http.server 8000 --directory site
+```
+
+Then open `http://127.0.0.1:8000`.
+
+## Project Structure
+
+```text
+src/clinical_contract/   Python package and validation engine
+site/                    Static web app for GitHub Pages
+examples/                Example contracts
+tests/                   Python test suite
+site/tests/              JavaScript site tests
+```
+
+## Status
+
+The project is still evolving. The current focus is to keep the Python library, CLI, and browser app aligned around one DuckDB-based validation engine.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
-
----
+MIT — see LICENSE for details.
 
 ## Author
 
-**Arthur PRIGENT** — [GitHub](https://github.com/artheioupfat)
+Arthur PRIGENT — GitHub
