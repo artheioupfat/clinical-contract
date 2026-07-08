@@ -142,14 +142,17 @@ window.ClinicalModules.schema = {
 
   getPhysicalTypeOptions(row) {
     const logical = String(row?.logicalType || '').trim();
+    if (!logical) return [];
     const physicalMap = this.physicalTypeByLogical || {};
-    const defaults = Array.isArray(physicalMap[logical])
-      ? physicalMap[logical]
-      : [...new Set(Object.values(physicalMap).flat())];
+    const defaults = Array.isArray(physicalMap[logical]) ? physicalMap[logical] : [];
     const current = String(row?.physicalType || '').trim();
     if (!current) return defaults;
     if (defaults.includes(current)) return defaults;
     return [current, ...defaults];
+  },
+
+  shouldShowPhysicalType(row) {
+    return Boolean(String(row?.logicalType || '').trim());
   },
 
   onLogicalTypeChanged(row) {
@@ -157,7 +160,7 @@ window.ClinicalModules.schema = {
     const previousLogical = this.normalizeTypeToken(row._lastLogicalType);
     row.logicalType = nextLogical;
 
-    if (nextLogical !== previousLogical) {
+    if (!nextLogical || nextLogical !== previousLogical) {
       row.physicalType = '';
     }
     row._lastLogicalType = nextLogical;
@@ -165,6 +168,9 @@ window.ClinicalModules.schema = {
   },
 
   onPhysicalTypeChanged(row) {
+    if (!this.shouldShowPhysicalType(row)) {
+      row.physicalType = '';
+    }
     this.pushSchemaToYaml();
   },
 

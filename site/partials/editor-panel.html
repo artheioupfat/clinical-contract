@@ -317,7 +317,7 @@
                                 </select>
                               </label>
 
-                              <label class="entity-modal__field">
+                              <label class="entity-modal__field" x-show="shouldShowPhysicalType(row)" x-cloak>
                                 <span class="entity-modal__label">Physical type <span class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</span></span>
                                 <select
                                   :value="row.physicalType || ''"

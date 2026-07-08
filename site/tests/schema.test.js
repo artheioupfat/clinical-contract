@@ -36,6 +36,47 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   assert.equal(pushed, 1);
 });
 
+test('schema module hides physical types until a logical type is selected', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    physicalTypeByLogical: {
+      integer: ['int32', 'int64'],
+      string: ['varchar'],
+    },
+  };
+  const row = {
+    logicalType: '',
+    physicalType: 'int32',
+  };
+
+  assert.equal(schema.shouldShowPhysicalType.call(context, row), false);
+  assert.deepEqual(schema.getPhysicalTypeOptions.call(context, row), []);
+});
+
+test('schema module clears physical type when logical type is not specified', () => {
+  const schema = loadSchemaModule();
+  let pushed = 0;
+  const context = {
+    ensureContractCodec: () => codec,
+    normalizeTypeToken: schema.normalizeTypeToken,
+    pushSchemaToYaml() {
+      pushed += 1;
+    },
+  };
+  const row = {
+    logicalType: '',
+    _lastLogicalType: 'integer',
+    physicalType: 'int32',
+  };
+
+  schema.onLogicalTypeChanged.call(context, row);
+
+  assert.equal(row.logicalType, '');
+  assert.equal(row.physicalType, '');
+  assert.equal(row._lastLogicalType, '');
+  assert.equal(pushed, 1);
+});
+
 test('schema module keeps the current builder section when returning from YAML', () => {
   const schema = loadSchemaModule();
   let synced = 0;
