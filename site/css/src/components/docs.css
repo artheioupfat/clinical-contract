@@ -22,7 +22,7 @@
 
   .docs-nav-link {
     @apply inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold transition;
-    background: white;
+    background: transparent;
     color: var(--cc-text);
   }
 
@@ -168,7 +168,7 @@
   }
 
   .theme-dark .docs-nav-link {
-    background: var(--cc-night-raised);
+    background: transparent;
   }
 
   .theme-dark .docs-nav-link:hover,
