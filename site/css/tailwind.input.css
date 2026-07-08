@@ -19,5 +19,6 @@
 @import "./src/components/modals.css";
 @import "./src/components/preview.css";
 @import "./src/components/runtime.css";
+@import "./src/components/docs.css";
 @import "./src/components/responsive.css";
 @import "./src/components/dark-theme.css";
