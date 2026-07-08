@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documentation | clinical-contract</title>
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+    <link rel="stylesheet" href="./css/tailwind.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  </head>
+  <body>
+    <div x-data="docsPage()" x-init="init()" class="docs-root">
+      <div class="app-frame docs-frame" :class="switchOn ? 'theme-dark' : ''">
+        <header class="pine-header docs-header">
+          <a class="pine-brand docs-brand-link" href="./index.html" aria-label="Ouvrir l'éditeur clinical-contract">
+            <div class="pine-logo-box">
+              <img src="./logo/phare.png" alt="Logo clinical-contract" class="pine-logo-image" />
+            </div>
+            <div class="pine-brand-row">
+              <h1 class="pine-brand-title">clinical-contract</h1>
+              <span class="pine-badge">docs</span>
+            </div>
+          </a>
+
+          <nav class="docs-nav" aria-label="Navigation documentation">
+            <a href="./index.html" class="docs-nav-link">Éditeur</a>
+            <a href="./docs.html" class="docs-nav-link docs-nav-link--active" aria-current="page">Documentation</a>
+            <a href="https://github.com/artheioupfat/clinical-contract" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="Ouvrir clinical-contract sur GitHub">
+              <svg class="github-link__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.59 2 12.253c0 4.528 2.865 8.371 6.839 9.728.5.094.683-.222.683-.494 0-.244-.009-.89-.014-1.747-2.782.62-3.369-1.375-3.369-1.375-.455-1.184-1.11-1.5-1.11-1.5-.908-.636.069-.623.069-.623 1.004.073 1.532 1.057 1.532 1.057.892 1.567 2.341 1.115 2.91.853.091-.662.35-1.115.636-1.371-2.221-.259-4.555-1.139-4.555-5.067 0-1.119.39-2.034 1.03-2.751-.103-.26-.446-1.303.098-2.715 0 0 .84-.276 2.75 1.051A9.377 9.377 0 0 1 12 6.958a9.38 9.38 0 0 1 2.504.345c1.909-1.327 2.747-1.051 2.747-1.051.546 1.412.203 2.455.1 2.715.64.717 1.028 1.632 1.028 2.751 0 3.938-2.337 4.805-4.566 5.059.359.317.679.943.679 1.9 0 1.371-.013 2.477-.013 2.814 0 .274.18.593.688.493C19.138 20.62 22 16.78 22 12.253 22 6.59 17.523 2 12 2Z" />
+              </svg>
+            </a>
+            <button
+              type="button"
+              @click="toggleThemeSwitch()"
+              class="pine-theme-button"
+              :aria-label="switchOn ? 'Passer au thème clair' : 'Passer au thème sombre'"
+              x-cloak
+            >
+              <svg x-show="!switchOn" class="pine-theme-button__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.8" />
+                <path d="M12 2.75v2.1M12 19.15v2.1M4.15 4.15l1.5 1.5M18.35 18.35l1.5 1.5M2.75 12h2.1M19.15 12h2.1M4.15 19.85l1.5-1.5M18.35 5.65l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+              <svg x-show="switchOn" class="pine-theme-button__icon pine-theme-button__icon--moon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+                <path d="M20.05 14.7A7.45 7.45 0 0 1 9.3 3.95a8.2 8.2 0 1 0 10.75 10.75Z" stroke="#ffffff" stroke-width="1.9" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </nav>
+        </header>
+
+        <main class="docs-main">
+          <section class="docs-hero">
+            <h2>Encadrer les échanges de données avant réception.</h2>
+            <p>
+              Clinical Contract aide les équipes à définir un contrat clair,
+              vérifiable et partagé avant l'envoi d'un fichier CSV ou Parquet.
+            </p>
+          </section>
+
+          <section class="docs-layout" aria-live="polite">
+            <aside class="docs-toc" x-show="toc.length > 0" x-cloak>
+              <div class="docs-toc-title">Sommaire</div>
+              <nav aria-label="Sommaire de la documentation">
+                <template x-for="item in toc" :key="item.id">
+                  <a class="docs-toc-link" :href="`#${item.id}`" x-text="item.text"></a>
+                </template>
+              </nav>
+            </aside>
+
+            <section class="docs-shell">
+              <div x-show="loading" class="docs-state">Chargement de la documentation...</div>
+              <div x-show="error" x-cloak class="docs-state docs-state--error" x-text="error"></div>
+              <article x-show="!loading && !error" x-cloak class="docs-prose" x-html="content"></article>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="./js/docs.js"></script>
+  </body>
+</html>
