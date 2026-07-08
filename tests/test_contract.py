@@ -157,6 +157,47 @@ def _write_parquet_single_typed_column(tmp_path, table_name, column_name, duckdb
     return parquet_file
 
 
+def _write_parquet_from_select(tmp_path, filename, table_name, select_sql):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / filename
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+
+    with duckdb.connect() as conn:
+        conn.execute(f"CREATE TABLE {table_name} AS {select_sql}")
+        conn.execute(f"COPY {table_name} TO '{parquet_path_literal}' (FORMAT PARQUET)")
+
+    return parquet_file
+
+
+def _yaml_single_event_timestamp(logical_type, physical_type=None):
+    physical_type_line = (
+        f"        physicalType: {physical_type}\n"
+        if physical_type
+        else ""
+    )
+    return f"""
+apiVersion: v1.0.0
+kind: DataContract
+id: ts-contract
+name: Timestamp Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Table patients
+    properties:
+      - name: event_ts
+        logicalType: {logical_type}
+{physical_type_line}        description: Event timestamp
+        required: true
+"""
+
+
 # ------------------------------------------------------------------ #
 # Tests validate_structure                                             #
 # ------------------------------------------------------------------ #
@@ -397,42 +438,69 @@ def test_check_schema_csv_path_with_single_quote(tmp_path):
 
 
 def test_check_schema_timestamp_tz_compatible(tmp_path):
-    duckdb = pytest.importorskip("duckdb")
-
-    yaml_timestamp_tz = """
-apiVersion: v1.0.0
-kind: DataContract
-id: ts-contract
-name: Timestamp Contract
-version: 1.0.0
-status: active
-description:
-  purpose: "Test"
-  usage: "Tests unitaires"
-  limitations: "Aucune"
-schema:
-  - name: patients
-    physicalType: TABLE
-    description: Table patients
-    properties:
-      - name: event_ts
-        logicalType: timestamp[us, tz=Europe/Paris]
-        description: Horodatage
-        required: true
-"""
-    parquet_file = tmp_path / "patients.parquet"
-    parquet_path_literal = str(parquet_file).replace("'", "''")
-    with duckdb.connect() as conn:
-        conn.execute(
-            "CREATE TABLE patients AS "
-            "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts"
-        )
-        conn.execute(f"COPY patients TO '{parquet_path_literal}' (FORMAT PARQUET)")
-
-    contract, _ = load_contract(yaml_timestamp_tz)
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients.parquet",
+        "patients",
+        "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts",
+    )
+    contract, _ = load_contract(
+        _yaml_single_event_timestamp("timestamp[us, tz=Europe/Paris]")
+    )
     reports = contract.check_schema(str(parquet_file))
+
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_date_with_timestamp_timezone_physical_matches(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_tz.parquet",
+        "patients",
+        "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts",
+    )
+    contract, _ = load_contract(
+        _yaml_single_event_timestamp("date", "timestamp with timezone")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "timestamp with timezone"
+    assert reports[0].columns[0].parquet_type == "timestamp with time zone"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_timestamptz_physical_alias_matches(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_timestamptz.parquet",
+        "patients",
+        "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("date", "timestamptz"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "timestamptz"
+    assert reports[0].columns[0].parquet_type == "timestamp with time zone"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_date_with_timestamp_physical_rejects_timestamp_with_timezone(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_timestamp_strict.parquet",
+        "patients",
+        "SELECT TIMESTAMPTZ '2023-11-14 12:34:56+01:00' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("date", "timestamp"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "timestamp"
+    assert reports[0].columns[0].parquet_type == "timestamp with time zone"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_check_schema_physical_text_does_not_fallback_to_logical_string(tmp_path):
@@ -802,7 +870,46 @@ schema:
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
-def test_check_schema_date_matches_timestamp(tmp_path):
+def test_check_schema_date_with_timestamp_physical_matches_timestamp(tmp_path):
+    duckdb = pytest.importorskip("duckdb")
+    parquet_file = tmp_path / "events_event_date_timestamp.parquet"
+    parquet_path_literal = str(parquet_file).replace("'", "''")
+    with duckdb.connect() as conn:
+        conn.execute(
+            "CREATE TABLE events AS "
+            "SELECT TIMESTAMP '2024-01-01 10:30:00' AS event_date"
+        )
+        conn.execute(f"COPY events TO '{parquet_path_literal}' (FORMAT PARQUET)")
+    yaml_timestamp_physical = """
+apiVersion: v1.0.0
+kind: DataContract
+id: timestamp-contract
+name: Timestamp Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: events
+    physicalType: TABLE
+    description: Events table
+    properties:
+      - name: event_date
+        logicalType: date
+        physicalType: timestamp
+        description: Event date
+        required: true
+"""
+    contract, _ = load_contract(yaml_timestamp_physical)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_date_with_date_physical_rejects_timestamp(tmp_path):
     duckdb = pytest.importorskip("duckdb")
     parquet_file = tmp_path / "events_event_date_timestamp.parquet"
     parquet_path_literal = str(parquet_file).replace("'", "''")
@@ -830,15 +937,15 @@ schema:
     properties:
       - name: event_date
         logicalType: date
-        physicalType: timestamp
+        physicalType: date
         description: Event date
         required: true
 """
     contract, _ = load_contract(yaml_date)
     reports = contract.check_schema(str(parquet_file))
 
-    assert reports[0].success is True
-    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+    assert reports[0].success is False
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_validate_structure_boolen_alias_supported():
@@ -866,6 +973,13 @@ schema:
 """
     raw = load_raw(yaml_boolen)
     report = DataContract.validate_structure(raw)
+    assert report.success is True
+
+
+def test_validate_structure_timestamp_with_timezone_physical_supported():
+    raw = load_raw(_yaml_single_event_timestamp("date", "timestamp with timezone"))
+    report = DataContract.validate_structure(raw)
+
     assert report.success is True
 
 

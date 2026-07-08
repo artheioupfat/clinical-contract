@@ -17,8 +17,9 @@ const catalog = {
       "char"
     ],
     "date": [
+      "datetime",
       "timestamp",
-      "datetime"
+      "timestamp with timezone"
     ],
     "integer": [
       "int8",

@@ -19,7 +19,7 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
     ],
     "physicalTypeByLogical": {
         "string": ["varchar", "text", "string", "char"],
-        "date": ["timestamp", "datetime"],
+        "date": ["datetime", "timestamp", "timestamp with timezone"],
         "integer": [
             "int8",
             "int16",

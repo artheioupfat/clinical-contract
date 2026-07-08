@@ -1,7 +1,13 @@
         <!-- Footer: compact runtime status and editor metadata. -->
         <footer class="app-footer">
           <div class="footer-left">
-            <span class="runtime-badge" :class="runtimeBadgeClass()" x-text="runtimeBadgeLabel()"></span>
+            <span
+              class="runtime-badge"
+              x-show="!pythonReady || runtimeError"
+              x-cloak
+              :class="runtimeBadgeClass()"
+              x-text="runtimeBadgeLabel()"
+            ></span>
             <div class="footer-runtime-progress" x-show="showRuntimeProgress" x-transition.opacity.duration.250ms x-cloak>
               <div class="runtime-progress-track" role="progressbar" aria-label="Python runtime loading" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="runtimeProgress">
                 <span class="runtime-progress-fill" :style="`width:${runtimeProgress}%`"></span>

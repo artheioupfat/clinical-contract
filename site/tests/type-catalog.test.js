@@ -4,7 +4,18 @@ const assert = require('node:assert/strict');
 const catalog = require('../js/type-catalog.js');
 
 test('type catalog exposes logical and physical options for the editor', () => {
-  assert.deepEqual(catalog.logicalTypeOptions, ['string', 'date', 'integer', 'float', 'boolean']);
+  assert.deepEqual(catalog.logicalTypeOptions, [
+    'string',
+    'date',
+    'integer',
+    'float',
+    'boolean',
+  ]);
+  assert.deepEqual(catalog.physicalTypeByLogical.date, [
+    'datetime',
+    'timestamp',
+    'timestamp with timezone',
+  ]);
   assert.deepEqual(catalog.physicalTypeByLogical.integer, [
     'int8',
     'int16',
