@@ -1,7 +1,7 @@
 @layer components {
   /* Team */
   .team-list-shell {
-    @apply overflow-hidden rounded-lg border border-slate-200 bg-white;
+    @apply overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white;
   }
 
   .team-empty {
@@ -9,7 +9,7 @@
   }
 
   .team-table {
-    @apply min-w-full divide-y divide-slate-200;
+    @apply min-w-[760px] divide-y divide-slate-200;
   }
 
   .team-table thead {
@@ -37,11 +37,11 @@
   }
 
   .team-table__role {
-    @apply px-4 py-3 text-slate-600;
+    @apply max-w-[32rem] truncate px-4 py-3 text-slate-600;
   }
 
   .team-table__action {
-    @apply px-4 py-3 text-right;
+    @apply px-4 py-3 text-left;
   }
 
   .team-edit-button {
