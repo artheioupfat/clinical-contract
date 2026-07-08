@@ -22,37 +22,64 @@ from .models import (
 )
 
 # ------------------------------------------------------------------ #
-# Mapping souple des types YAML → familles de types Parquet           #
+# Type matching                                                       #
 # ------------------------------------------------------------------ #
 
-TYPE_MAP: dict[str, set[str]] = {
-    # GENÉRIQUES
-    "string":   {"string", "large_string", "utf8", "large_utf8", "text", "varchar"},
-    "integer":  {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
-                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
-    "int":      {"int8","int16","int32","int64","uint8","uint16","uint32","uint64",
-                 "tinyint","smallint","integer","bigint","utinyint","usmallint","uinteger","ubigint"},
-    "float":    {"float16","float32","float64","double","real","decimal128","decimal"},
-    "date":     {"date", "date32", "date64", "datetime", "timestamp",
-                 "timestamp_s", "timestamp_ms", "timestamp_us", "timestamp_ns",
-                 "timestamp with time zone", "timestamptz"},
-    "boolean":  {"bool","boolean","binary","large_binary","blob"},
-    "boolen":   {"bool","boolean","binary","large_binary","blob"},
-    "bool":     {"bool","boolean","binary","large_binary","blob"},
-    "binary":   {"binary","large_binary"},
+STRING_TYPES = {"string", "large_string", "utf8", "large_utf8", "text", "varchar"}
+INTEGER_TYPES = {
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "tinyint",
+    "smallint",
+    "integer",
+    "bigint",
+    "utinyint",
+    "usmallint",
+    "uinteger",
+    "ubigint",
+}
+FLOAT_TYPES = {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"}
+DATE_TYPES = {"date", "date32", "date64"}
+DATETIME_TYPES = {
+    "datetime",
+    "timestamp",
+    "timestamp_s",
+    "timestamp_ms",
+    "timestamp_us",
+    "timestamp_ns",
+    "timestamp with time zone",
+    "timestamptz",
+}
+BOOLEAN_TYPES = {"bool", "boolean", "binary", "large_binary", "blob"}
+BINARY_TYPES = {"binary", "large_binary"}
 
-    # SPÉCIFIQUES
-    "int8":   {"tinyint"},
-    "int16":  {"smallint"},
-    "int32":  {"integer"},
-    "int64":  {"bigint"},
-    "uint8":  {"utinyint"},
+TYPE_MAP: dict[str, set[str]] = {
+    # Generic logical families.
+    "string": STRING_TYPES,
+    "integer": INTEGER_TYPES,
+    "float": FLOAT_TYPES,
+    "date": DATE_TYPES | DATETIME_TYPES,
+    "boolean": BOOLEAN_TYPES,
+    "binary": BINARY_TYPES,
+
+    # Explicit integer widths are strict.
+    "int8": {"tinyint"},
+    "int16": {"smallint"},
+    "int32": {"integer"},
+    "int64": {"bigint"},
+    "uint8": {"utinyint"},
     "uint16": {"usmallint"},
     "uint32": {"uinteger"},
     "uint64": {"ubigint"},
-    "float32":{"float32"},
-    "float64":{"float64","double"},
-    "double": {"double","float64"},
+    "float32": {"float32"},
+    "float64": {"float64", "double"},
+    "double": {"double", "float64"},
     "date32": {"date32"},
     "date64": {"date64"},
 }
@@ -205,7 +232,7 @@ def _property_types_compatible(logical_type: str, physical_type: str, detected_t
         if (
             normalized_logical == "boolean"
             and normalized_physical == "binary"
-            and normalized_detected in TYPE_MAP["boolean"]
+            and normalized_detected in BOOLEAN_TYPES
         ):
             return True
         return _physical_types_compatible(physical_type, detected_type)
