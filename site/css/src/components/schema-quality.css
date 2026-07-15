@@ -1,7 +1,7 @@
 @layer components {
   /* Quality checks */
   .quality-list-shell {
-    @apply overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white;
+    @apply w-full overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white;
   }
 
   .quality-empty {
@@ -9,7 +9,7 @@
   }
 
   .quality-table {
-    @apply min-w-[760px] divide-y divide-slate-200;
+    @apply w-full min-w-[760px] divide-y divide-slate-200;
   }
 
   .quality-table thead {

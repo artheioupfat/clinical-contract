@@ -65,7 +65,7 @@
 
   /* Builder navigation */
   .schema-workflow {
-    @apply grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_1fr];
+    @apply grid min-h-0 min-w-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_minmax(0,1fr)];
   }
 
   .schema-nav {
@@ -125,15 +125,15 @@
 
   /* Builder stages and forms */
   .schema-workspace {
-    @apply min-h-0 overflow-hidden bg-white;
+    @apply min-h-0 min-w-0 overflow-hidden bg-white;
   }
 
   .schema-card {
-    @apply bg-white;
+    @apply w-full bg-white;
   }
 
   .schema-stage {
-    @apply h-full min-h-0 overflow-auto border-0 p-4;
+    @apply h-full min-h-0 w-full overflow-auto border-0 p-4;
   }
 
   .schema-stage--columns {
@@ -176,11 +176,11 @@
   }
 
   .schema-form-field {
-    @apply space-y-1;
+    @apply flex flex-col gap-1;
   }
 
   .schema-form-label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+    @apply block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
   }
 
   .schema-form-control {
