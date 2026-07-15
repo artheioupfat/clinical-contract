@@ -131,12 +131,24 @@
                         </div>
                         <div class="schema-business-stack">
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Contract ID <span class="schema-required" x-show="showRequiredFor('id')" x-cloak>* required</span></span>
-                            <input type="text" x-model="schemaDraft.id" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('id')" class="schema-input schema-form-control" />
-                          </label>
-                          <label class="schema-form-field">
                             <span class="schema-form-label">Contract Name <span class="schema-required" x-show="showRequiredFor('name')" x-cloak>* required</span></span>
                             <input type="text" x-model="schemaDraft.name" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('name')" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label">Contract Version <span class="schema-required" x-show="showRequiredFor('version')" x-cloak>* required</span></span>
+                            <input type="text" x-model="schemaDraft.version" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('version')" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field schema-status-field">
+                            <span class="schema-form-label">Status</span>
+                            <span class="schema-status-toggle">
+                              <input
+                                type="checkbox"
+                                class="column-required-checkbox"
+                                :checked="isContractActive()"
+                                @change="setContractActive($event.target.checked)"
+                              />
+                              <span>Active contract</span>
+                            </span>
                           </label>
                           <label class="schema-form-field schema-wide-field">
                             <span class="schema-form-label">Purpose <span class="schema-required" x-show="showRequiredFor('descriptionPurpose')" x-cloak>* required</span></span>
@@ -189,27 +201,6 @@
                             <span class="schema-form-label">Health Domain</span>
                             <input type="text" x-model="schemaDraft.healthDomain" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" placeholder="Example: oncology, cardiology, emergency care" />
                           </label>
-                          <details class="schema-advanced schema-wide-field" :open="hasAdvancedRequiredHints()">
-                            <summary>Advanced contract metadata</summary>
-                            <div class="schema-advanced-grid">
-                              <label class="schema-form-field">
-                                <span class="schema-form-label">API Version <span class="schema-required" x-show="showRequiredFor('apiVersion')" x-cloak>* required</span></span>
-                                <input type="text" x-model="schemaDraft.apiVersion" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('apiVersion')" class="schema-input schema-form-control" />
-                              </label>
-                              <label class="schema-form-field">
-                                <span class="schema-form-label">Kind <span class="schema-required" x-show="showRequiredFor('kind')" x-cloak>* required</span></span>
-                                <input type="text" x-model="schemaDraft.kind" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('kind')" class="schema-input schema-form-control" />
-                              </label>
-                              <label class="schema-form-field">
-                                <span class="schema-form-label">Version <span class="schema-required" x-show="showRequiredFor('version')" x-cloak>* required</span></span>
-                                <input type="text" x-model="schemaDraft.version" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('version')" class="schema-input schema-form-control" />
-                              </label>
-                              <label class="schema-form-field">
-                                <span class="schema-form-label">Status <span class="schema-required" x-show="showRequiredFor('status')" x-cloak>* required</span></span>
-                                <input type="text" x-model="schemaDraft.status" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('status')" class="schema-input schema-form-control" />
-                              </label>
-                            </div>
-                          </details>
                         </div>
                       </div>
 

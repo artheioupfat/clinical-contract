@@ -55,9 +55,13 @@
     color: var(--cc-night-muted);
   }
 
+  .theme-dark .schema-status-toggle {
+    color: var(--cc-night-text);
+  }
+
   .theme-dark :is(.footer-context strong, .footer-right strong) { color: var(--cc-night-text); }
 
-  .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .dropzone, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .schema-advanced, .schema-stage-pill, .team-list-shell, .view-switch) {
+  .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .dropzone, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .schema-stage-pill, .team-list-shell, .view-switch) {
     background: var(--cc-night-raised);
     border-color: var(--cc-night-border);
     color: var(--cc-night-text);

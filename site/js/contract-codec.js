@@ -155,6 +155,15 @@
     return extras;
   }
 
+  function slugifyContractId(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
   function contractObjectToDraft(contract, options = {}) {
     const parsed = contract && typeof contract === 'object' && !Array.isArray(contract) ? contract : {};
     const nextRowId = createIdFactory(options);
@@ -301,13 +310,14 @@
 
   function draftToContractObject(draft = {}, rootExtras = {}, otherSchemas = []) {
     const top = deepClone(rootExtras || {});
+    const contractId = String(draft.id || '').trim() || slugifyContractId(draft.name);
 
-    if (draft.apiVersion) top.apiVersion = draft.apiVersion;
-    if (draft.kind) top.kind = draft.kind;
-    if (draft.id) top.id = draft.id;
+    top.apiVersion = draft.apiVersion || 'v3.1.0';
+    top.kind = draft.kind || 'DataContract';
+    if (contractId) top.id = contractId;
     if (draft.name) top.name = draft.name;
     if (draft.version) top.version = draft.version;
-    if (draft.status) top.status = draft.status;
+    top.status = draft.status || 'active';
     top.description = {
       purpose: draft.descriptionPurpose || '',
       usage: draft.descriptionUsage || '',
