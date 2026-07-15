@@ -16,6 +16,12 @@ test('landing page embeds the editor without recursively loading other pages', (
   assert.match(indexHtml, /Cadrez les données avant qu'elles ne circulent/);
   assert.match(indexHtml, /GitHub Pages/);
   assert.match(indexHtml, /localement dans votre navigateur/);
+  assert.match(indexHtml, /Définissez le fichier attendu\. Vérifiez le fichier reçu\./);
+  assert.match(indexHtml, /Rédiger le contrat/);
+  assert.match(indexHtml, /Charger les données/);
+  assert.match(indexHtml, /Lancer les contrôles/);
+  assert.match(indexHtml, /Private by design/);
+  assert.match(indexHtml, /sans envoyer les données vers un backend/);
   assert.match(indexHtml, /standard/);
   assert.match(indexHtml, /https:\/\/datacontract\.com\//);
   assert.match(indexHtml, /Python library \+ CLI/);
