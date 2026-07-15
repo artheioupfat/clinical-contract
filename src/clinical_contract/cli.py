@@ -12,7 +12,7 @@ from pathlib import Path
 
 from .loader import load_raw, load_contract
 from .contract import DataContract
-from .models import CheckStatus
+from .models import CheckStatus, ColumnCheckStatus, ValidateReport
 
 
 # ------------------------------------------------------------------ #
@@ -47,6 +47,20 @@ def _print_table(headers: list[str], rows: list[list[str]]) -> None:
     print(_hline(widths, "└", "┴", "┘"))
 
 
+def _field_issue_summary(report: ValidateReport) -> str:
+    failed = report.missing()
+    missing = [f.field for f in failed if f.value is None]
+    invalid = [f.field for f in failed if f.value is not None]
+    parts = []
+
+    if missing:
+        parts.append(f"{len(missing)} missing field(s): {', '.join(missing)}")
+    if invalid:
+        parts.append(f"{len(invalid)} invalid field(s): {', '.join(invalid)}")
+
+    return "; ".join(parts)
+
+
 # ------------------------------------------------------------------ #
 # Command: validate                                                    #
 # ------------------------------------------------------------------ #
@@ -74,12 +88,10 @@ def cmd_validate(yaml_path: str) -> None:
     ]
     _print_table(headers, rows)
 
-    missing = report.missing()
     if report.success:
         print("\n✅  Valid structure — all required fields are present.\n")
     else:
-        names = ", ".join(f.field for f in missing)
-        print(f"\n❌  {len(missing)} missing field(s): {names}\n")
+        print(f"\n❌  Invalid structure — {_field_issue_summary(report)}\n")
         sys.exit(1)
 
 
@@ -111,8 +123,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     raw = load_raw(yaml_file)
     val_report = DataContract.validate_structure(raw)
     if not val_report.success:
-        missing = ", ".join(f.field for f in val_report.missing())
-        print(f"\n❌  Invalid YAML — missing fields: {missing}")
+        print(f"\n❌  Invalid YAML — {_field_issue_summary(val_report)}")
         print(f"    Run 'clinical-contract validate {yaml_path}' for details.\n")
         sys.exit(1)
 
@@ -136,7 +147,12 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
         print(f"  Schema: {sr.schema_name}")
         headers = ["Column", "Expected", "Detected", "Status"]
         rows = [
-            [c.column, c.yaml_type, c.parquet_type, c.status_icon]
+            [
+                c.column,
+                c.yaml_type,
+                "missing" if c.status in {ColumnCheckStatus.missing, ColumnCheckStatus.optional_missing} else c.parquet_type,
+                c.status_icon,
+            ]
             for c in sr.columns
         ]
         _print_table(headers, rows)
@@ -146,9 +162,9 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
             failures = sr.failures()
             print(f"\n  ❌ {len(failures)} issue(s) detected:")
             for f in failures:
-                if f.parquet_type == "—":
-                    print(f"     • '{f.column}' is missing in parquet")
-                else:
+                if f.status == ColumnCheckStatus.missing:
+                    print(f"     • required column '{f.column}' is missing in data file")
+                elif f.status == ColumnCheckStatus.type_mismatch:
                     print(
                         f"     • '{f.column}': expected type '{f.yaml_type}' "
                         f"is incompatible with detected type '{f.parquet_type}'"
@@ -209,7 +225,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     print()
 
     if not report.success:
-        sys.exit(1)
+        sys.exit(report.code)
 
 
 # ------------------------------------------------------------------ #
