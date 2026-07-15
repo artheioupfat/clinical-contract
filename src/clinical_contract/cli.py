@@ -212,7 +212,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     if rows:
         _print_table(headers, rows)
     else:
-        print("  (no quality checks defined in this contract)")
+        print("  (no executable SQL quality checks defined in this contract)")
 
     # Summary
     n_errors = len(report.errors())

@@ -328,6 +328,11 @@
                                 <span class="entity-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
                                 <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Example: Patient identifier used to link healthcare records across hospital stays."></textarea>
                               </label>
+
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label">Examples</span>
+                                <textarea x-model="row.examplesText" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" placeholder="One example per line"></textarea>
+                              </label>
                             </div>
 
                             <div class="entity-modal__footer">

@@ -29,8 +29,10 @@ test('site version is generated from pyproject version', () => {
 
 test('site pages load version before Alpine page modules', () => {
   const indexHtml = read('site/index.html');
+  const editorHtml = read('site/editor.html');
   const docsHtml = read('site/docs.html');
 
-  assert.ok(indexHtml.indexOf('./js/site-version.js') < indexHtml.indexOf('./app.js'));
+  assert.ok(indexHtml.indexOf('./js/site-version.js') < indexHtml.indexOf('./js/landing.js'));
+  assert.ok(editorHtml.indexOf('./js/site-version.js') < editorHtml.indexOf('./app.js'));
   assert.ok(docsHtml.indexOf('./js/site-version.js') < docsHtml.indexOf('./js/docs.js'));
 });

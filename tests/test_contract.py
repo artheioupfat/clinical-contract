@@ -327,7 +327,44 @@ def test_check_sans_quality_rules():
     assert report.success is True
     assert report.code == 0
     assert report.results == []
-    assert "No quality checks" in report.summary
+    assert "No executable SQL quality checks" in report.summary
+
+
+def test_check_ignores_non_sql_quality_rules_without_query():
+    yaml_standard_quality = """
+apiVersion: v1.0.0
+kind: DataContract
+id: standard-quality
+name: Standard Quality
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: TEXT
+        description: ok
+        required: true
+        quality:
+          - type: library
+            metric: invalidValues
+            mustBe: 0
+            description: Standard metric not executed by the SQL engine.
+"""
+    contract, _ = load_contract(yaml_standard_quality)
+    report = contract.check("unused.parquet", backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+    assert report.results == []
+    assert "No executable SQL quality checks" in report.summary
 
 
 def test_check_execution_error_returns_code_2(tmp_path):
@@ -1035,8 +1072,7 @@ schema:
     physicalType: TABLE
     description: table
     properties:
-      - name: id
-        # logicalType manquant
+      - # name manquant
         physicalType: TEXT
         description: ok
 """
@@ -1044,6 +1080,8 @@ schema:
     report = DataContract.validate_structure(raw)
 
     assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "schema[0].properties[0] missing name" in schema_field.display_value
 
 
 def test_validate_structure_description_missing_subfields():
@@ -1153,6 +1191,38 @@ schema:
         physicalType: TEXT
         description: ok
         required: true
+"""
+    raw = load_raw(yaml_valid)
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+def test_validate_structure_accepts_standard_optional_column_metadata():
+    yaml_valid = """
+apiVersion: v3.1.0
+kind: DataContract
+id: orders
+name: Orders
+version: 1.0.0
+status: active
+description:
+  purpose: ok
+  usage: ok
+  limitations: ok
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: table
+    properties:
+      - name: order_id
+        logicalType: string
+        physicalType: UUID
+        examples:
+          - 99e8bb10-3785-4634-9664-8dc79eb69d43
+      - name: order_timestamp
+        logicalType: timestamp
+        physicalType: TIMESTAMPTZ
 """
     raw = load_raw(yaml_valid)
     report = DataContract.validate_structure(raw)

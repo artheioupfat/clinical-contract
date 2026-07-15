@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>clinical-contract</title>
+    <title>clinical-contract | Data contracts for clinical data exchanges</title>
+    <meta name="description" content="Rédigez, partagez et vérifiez des contrats de données cliniques avant l'échange de fichiers CSV ou Parquet." />
     <link rel="icon" href="./logo/phare.png" type="image/png" />
     <link rel="apple-touch-icon" href="./logo/phare.png" />
     <style>
@@ -11,46 +12,107 @@
         display: none !important;
       }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css" />
-    <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
     <link rel="stylesheet" href="./css/tailwind.css" />
+    <script defer src="https://unpkg.com/alpinejs@3.14.9/dist/cdn.min.js"></script>
   </head>
   <body>
-    <div x-data="clinicalApp()" x-init="init()" class="app-root">
-      <div class="app-frame" :class="switchOn ? 'theme-dark' : ''">
-        <div data-include="./partials/header.html"></div>
-
-        <main class="app-main">
-          <div
-            x-ref="appGrid"
-            :class="appGridClass()"
-            :style="splitGridStyle()"
-          >
-            <div data-include="./partials/editor-panel.html"></div>
-            <div data-include="./partials/split-resizer.html"></div>
-            <div data-include="./partials/data-panel.html"></div>
+    <div x-data="landingPage()" x-init="init()" class="landing-root" :class="switchOn ? 'theme-dark' : ''">
+      <header class="pine-header landing-header">
+        <a class="pine-brand docs-brand-link" href="./index.html" aria-label="Ouvrir l'accueil clinical-contract">
+          <div class="pine-logo-box">
+            <img src="./logo/phare.png" alt="Logo clinical-contract" class="pine-logo-image" />
           </div>
-        </main>
+          <div class="pine-brand-row">
+            <h1 class="pine-brand-title">clinical-contract</h1>
+            <span class="pine-badge" x-text="siteVersionLabel">v0.1.7</span>
+          </div>
+        </a>
 
-        <div data-include="./partials/runtime-footer.html"></div>
-      </div>
+        <nav class="docs-nav" aria-label="Navigation principale">
+          <a href="./index.html" class="docs-nav-link docs-nav-link--active" aria-current="page">Accueil</a>
+          <a href="./editor.html" class="docs-nav-link">Éditeur</a>
+          <a href="./docs.html" class="docs-nav-link">Documentation</a>
+          <a href="https://github.com/artheioupfat/clinical-contract" target="_blank" rel="noopener noreferrer" class="github-link" aria-label="Ouvrir clinical-contract sur GitHub">
+            <svg class="github-link__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.59 2 12.253c0 4.528 2.865 8.371 6.839 9.728.5.094.683-.222.683-.494 0-.244-.009-.89-.014-1.747-2.782.62-3.369-1.375-3.369-1.375-.455-1.184-1.11-1.5-1.11-1.5-.908-.636.069-.623.069-.623 1.004.073 1.532 1.057 1.532 1.057.892 1.567 2.341 1.115 2.91.853.091-.662.35-1.115.636-1.371-2.221-.259-4.555-1.139-4.555-5.067 0-1.119.39-2.034 1.03-2.751-.103-.26-.446-1.303.098-2.715 0 0 .84-.276 2.75 1.051A9.377 9.377 0 0 1 12 6.958a9.38 9.38 0 0 1 2.504.345c1.909-1.327 2.747-1.051 2.747-1.051.546 1.412.203 2.455.1 2.715.64.717 1.028 1.632 1.028 2.751 0 3.938-2.337 4.805-4.566 5.059.359.317.679.943.679 1.9 0 1.371-.013 2.477-.013 2.814 0 .274.18.593.688.493C19.138 20.62 22 16.78 22 12.253 22 6.59 17.523 2 12 2Z" />
+            </svg>
+          </a>
+          <button type="button" @click="toggleThemeSwitch()" class="pine-theme-button" :aria-label="switchOn ? 'Passer au thème clair' : 'Passer au thème sombre'" x-cloak>
+            <svg x-show="!switchOn" class="pine-theme-button__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+              <circle cx="12" cy="12" r="4.25" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 2.75v2.1M12 19.15v2.1M4.15 4.15l1.5 1.5M18.35 18.35l1.5 1.5M2.75 12h2.1M19.15 12h2.1M4.15 19.85l1.5-1.5M18.35 5.65l1.5-1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+            <svg x-show="switchOn" class="pine-theme-button__icon pine-theme-button__icon--moon" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+              <path d="M20.05 14.7A7.45 7.45 0 0 1 9.3 3.95a8.2 8.2 0 1 0 10.75 10.75Z" stroke="#ffffff" stroke-width="1.9" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="landing-hero">
+          <div class="landing-hero__copy">
+            <h2>clinical-contract</h2>
+            <p class="landing-kicker landing-kicker--under-title">
+              Cadrez les données avant qu'elles ne circulent.
+            </p>
+            <div class="landing-actions">
+              <a class="pine-btn pine-btn--action" href="./editor.html">Éditeur</a>
+              <a class="pine-btn" href="./docs.html">Lire la documentation</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="landing-demo-section" aria-label="Aperçu de l'éditeur clinical-contract">
+          <aside class="landing-live-card landing-demo-card">
+            <div class="landing-editor-shell">
+              <iframe
+                class="landing-editor-frame"
+                src="./editor.html?embed=1"
+                title="Éditeur clinical-contract intégré"
+                loading="eager"
+              ></iframe>
+            </div>
+          </aside>
+          <p class="landing-demo-caption">
+            L'éditeur est une page statique déployable sur GitHub Pages. Les contrats et fichiers sont traités localement dans votre navigateur, sans serveur applicatif ni collecte de données.
+          </p>
+        </section>
+
+        <section class="landing-standard" aria-label="Fondation du projet">
+          <div class="landing-standard__intro">
+            <p class="landing-kicker">Fondation</p>
+            <h3>Un contrat lisible avant l'échange, un contrôle reproductible après réception.</h3>
+            <p>
+              clinical-contract s'appuie sur les concepts du standard
+              <a href="https://datacontract.com/" target="_blank" rel="noopener noreferrer">Data Contract</a>
+              pour formaliser ce qui est attendu dans un fichier de données cliniques.
+            </p>
+          </div>
+          <div class="landing-standard__rows">
+            <article>
+              <span>Standard</span>
+              <p>Structurer le besoin dans un format YAML compréhensible et versionnable.</p>
+            </article>
+            <article>
+              <span>Contrat</span>
+              <p>Décrire les colonnes, les types, les descriptions et les règles de qualité attendues.</p>
+            </article>
+            <article>
+              <span>Vérification</span>
+              <p>Comparer le contrat au fichier reçu et produire un résultat lisible par les équipes.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="landing-closing" aria-label="Accès documentation">
+          <p>Besoin de comprendre le modèle YAML, les types ou les contrôles qualité ?</p>
+          <a href="./docs.html">Consulter la documentation</a>
+        </section>
+      </main>
     </div>
 
-    <!-- Runtime and application scripts. Keep order aligned with site/README.md. -->
-    <script type="py" src="./python/bridge.py?v=20260708-temporal-types" config="./pyscript.toml?v=20260708-temporal-types"></script>
-    <script src="./js/constants.js"></script>
-    <script src="./js/ui.js"></script>
-    <script src="./js/runtime.js"></script>
-    <script src="./js/editor.js"></script>
-    <script src="./js/contract-codec.js"></script>
-    <script src="./js/type-catalog.js"></script>
     <script src="./js/site-version.js"></script>
-    <script src="./js/schema.js"></script>
-    <script src="./js/data-storage.js"></script>
-    <script src="./js/data.js"></script>
-    <script src="./js/results.js"></script>
-    <script src="./app.js"></script>
-    <script src="./js/include-html.js"></script>
+    <script src="./js/landing.js"></script>
   </body>
 </html>

@@ -1,8 +1,8 @@
 # clinical-contract site
 
-Static browser playground for `clinical-contract`, designed for GitHub Pages.
+Static product site and browser playground for `clinical-contract`, designed for GitHub Pages.
 
-The site lets users build or edit a data contract, validate the YAML, load a CSV or Parquet file, preview the dataset, and run contract checks directly in the browser through PyScript/Pyodide.
+The landing page explains the product and links to the browser editor. The editor lets users build or edit a data contract, validate the YAML, load a CSV or Parquet file, preview the dataset, and run contract checks directly in the browser through PyScript/Pyodide.
 
 ## Local workflow
 
@@ -17,7 +17,9 @@ Then open `http://localhost:8000`.
 
 ## File map
 
-- `index.html`: small application shell. It loads HTML partials before Alpine starts.
+- `index.html`: lightweight landing page. It must not load PyScript.
+- `editor.html`: interactive editor shell. It loads HTML partials before Alpine starts.
+- `docs.html`: documentation page rendered from Markdown.
 - `partials/header.html`: brand header and theme switch.
 - `partials/editor-panel.html`: YAML editor and visual contract builder.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
@@ -28,7 +30,9 @@ Then open `http://localhost:8000`.
 - `css/src/components/`: organized component styles grouped by feature.
 - `css/build-input.mjs`: expands the manifest into a temporary Tailwind input.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
-- `js/app.js`: Alpine root state and application composition.
+- `js/landing.js`: Alpine state for the landing page theme and version badge.
+- `js/docs.js`: Markdown documentation loader.
+- `js/app.js`: editor Alpine root state and application composition.
 - `js/include-html.js`: loads static partials, then starts Alpine.
 - `js/constants.js`: shared UI/type constants.
 - `js/ui.js`: theme switch, split pane, and logo status helpers.
@@ -43,7 +47,7 @@ Then open `http://localhost:8000`.
 
 ## Script loading order
 
-`index.html` intentionally loads scripts in this order:
+`editor.html` intentionally loads scripts in this order:
 
 1. `constants.js`
 2. `ui.js`
@@ -63,7 +67,8 @@ Keep `include-html.js` last: it injects the partials and only then loads Alpine,
 
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
-- Edit page markup in `partials/`; keep `index.html` as the lightweight shell.
+- Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
+- Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.
 - Do not edit `css/tailwind.css` directly; it is the compiled production bundle.
 - Add or update `site/tests/contract-codec.test.js` when changing YAML/draft behavior.

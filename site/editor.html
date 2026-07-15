@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editor | clinical-contract</title>
+    <link rel="icon" href="./logo/phare.png" type="image/png" />
+    <link rel="apple-touch-icon" href="./logo/phare.png" />
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.10.2/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.10.2/core.js"></script>
+    <link rel="stylesheet" href="./css/tailwind.css" />
+    <script>
+      if (new URLSearchParams(window.location.search).get('embed') === '1') {
+        document.documentElement.classList.add('is-embedded-editor');
+      }
+    </script>
+  </head>
+  <body>
+    <div x-data="clinicalApp()" x-init="init()" class="app-root">
+      <div class="app-frame" :class="switchOn ? 'theme-dark' : ''">
+        <div data-include="./partials/header.html"></div>
+
+        <main class="app-main">
+          <div
+            x-ref="appGrid"
+            :class="appGridClass()"
+            :style="splitGridStyle()"
+          >
+            <div data-include="./partials/editor-panel.html"></div>
+            <div data-include="./partials/split-resizer.html"></div>
+            <div data-include="./partials/data-panel.html"></div>
+          </div>
+        </main>
+
+        <div data-include="./partials/runtime-footer.html"></div>
+      </div>
+    </div>
+
+    <!-- Runtime and application scripts. Keep order aligned with site/README.md. -->
+    <script type="py" src="./python/bridge.py?v=20260715-standard-contract-compat" config="./pyscript.toml?v=20260715-standard-contract-compat"></script>
+    <script src="./js/constants.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/runtime.js"></script>
+    <script src="./js/editor.js"></script>
+    <script src="./js/contract-codec.js"></script>
+    <script src="./js/type-catalog.js"></script>
+    <script src="./js/site-version.js"></script>
+    <script src="./js/schema.js"></script>
+    <script src="./js/data-storage.js"></script>
+    <script src="./js/data.js"></script>
+    <script src="./js/results.js"></script>
+    <script src="./app.js"></script>
+    <script src="./js/include-html.js"></script>
+  </body>
+</html>

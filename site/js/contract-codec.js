@@ -67,6 +67,23 @@
     return fallback;
   }
 
+  function examplesToText(examples) {
+    if (Array.isArray(examples)) {
+      return examples
+        .map((example) => (typeof example === 'string' ? example : JSON.stringify(example)))
+        .join('\n');
+    }
+    if (examples === null || examples === undefined) return '';
+    return String(examples);
+  }
+
+  function textToExamples(value) {
+    return String(value || '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }
+
   function createIdFactory(options = {}) {
     if (typeof options.nextRowId === 'function') return options.nextRowId;
     let counter = Number(options.startRowId) || 0;
@@ -88,6 +105,7 @@
       _lastLogicalType: logicalType,
       required: Boolean(seed.required),
       description: seed.description || '',
+      examplesText: seed.examplesText || '',
       extras: deepClone(seed.extras || {}),
     };
   }
@@ -214,6 +232,7 @@
         'physical-type',
         'required',
         'description',
+        'examples',
         'quality',
       ]);
       const propExtras = collectExtras(source, handledProp);
@@ -250,6 +269,7 @@
           physicalType,
           required: Boolean(source.required),
           description: source.description || '',
+          examplesText: examplesToText(source.examples),
           extras: propExtras,
         },
         { nextRowId }
@@ -347,6 +367,8 @@
         if (prop.logicalType && prop.logicalType.trim()) row.logicalType = prop.logicalType.trim();
         if (prop.physicalType && prop.physicalType.trim()) row.physicalType = prop.physicalType.trim();
         if (prop.description && prop.description.trim()) row.description = prop.description.trim();
+        const examples = textToExamples(prop.examplesText);
+        if (examples.length) row.examples = examples;
         row.required = Boolean(prop.required);
 
         const quality = (draft.qualityRules || [])

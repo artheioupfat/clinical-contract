@@ -25,7 +25,7 @@ from .models import (
 # Type matching                                                       #
 # ------------------------------------------------------------------ #
 
-STRING_TYPES = {"string", "large_string", "utf8", "large_utf8", "text", "varchar"}
+STRING_TYPES = {"string", "large_string", "utf8", "large_utf8", "text", "varchar", "uuid"}
 INTEGER_TYPES = {
     "int8",
     "int16",
@@ -98,6 +98,7 @@ DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "large_string": "string",
     "utf8": "string",
     "large_utf8": "string",
+    "uuid": "uuid",
     "text": "text",
     "varchar": "varchar",
     "tinyint": "int8",
@@ -131,6 +132,7 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
     "char": "varchar",
     "string": "varchar",
     "text": "varchar",
+    "uuid": "uuid",
     "varchar": "varchar",
     "datetime": "timestamp",
     "timestamp": "timestamp",
@@ -389,17 +391,17 @@ class Description(BaseModel):
 
 class Quality(BaseModel):
     type: str
-    description: str
-    query: str
-    mustBe: int
+    description: str = ""
+    query: str = ""
+    mustBe: int = 0
 
 
 class Property(BaseModel):
     name: str
     logicalType: str = ""
     physicalType: str = ""
-    description: str
-    required: bool 
+    description: str = ""
+    required: bool = False
     quality: Optional[list[Quality]] = None
 
 
@@ -477,7 +479,7 @@ class DataContract(BaseModel):
                         if not isinstance(properties, list) or len(properties) == 0:
                             errors.append(f"schema[{i}].properties empty or invalid")
                         else:
-                            required_prop_fields = ["name", "description", "required"]
+                            required_prop_fields = ["name"]
                             for j, prop in enumerate(properties):
                                 if not isinstance(prop, dict):
                                     errors.append(f"schema[{i}].properties[{j}] invalid (not an object)")
@@ -489,7 +491,7 @@ class DataContract(BaseModel):
                                     continue
 
                                 required_value = prop.get("required")
-                                if type(required_value) is not bool:
+                                if required_value is not None and type(required_value) is not bool:
                                     errors.append(
                                         f"schema[{i}].properties[{j}].required must be true or false"
                                     )
@@ -665,6 +667,9 @@ class DataContract(BaseModel):
                     continue
 
                 for q in prop.quality:
+                    if not q.query.strip():
+                        continue
+
                     try:
                         obtained = _run_duckdb_query(
                             sql=q.query,
@@ -703,7 +708,7 @@ class DataContract(BaseModel):
         all_ok     = not has_error and not has_failed
 
         if not results:
-            code, summary = 0, "No quality checks defined."
+            code, summary = 0, "No executable SQL quality checks defined."
         elif all_ok:
             code, summary = 0, "All checks passed."
         elif has_error:
