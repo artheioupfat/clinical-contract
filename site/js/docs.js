@@ -1,10 +1,16 @@
 document.addEventListener('alpine:init', () => {
+  const siteVersion = window.ClinicalContractVersion || '';
+
   Alpine.data('docsPage', () => ({
     switchOn: false,
     loading: true,
     error: '',
     content: '',
     toc: [],
+
+    get siteVersionLabel() {
+      return siteVersion ? `v${siteVersion}` : '';
+    },
 
     async init() {
       this.initTheme();
