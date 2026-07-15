@@ -62,12 +62,8 @@ window.ClinicalModules.schema = {
 
     const draft = this.schemaDraft || {};
     const fieldMap = {
-      apiVersion: draft.apiVersion,
-      kind: draft.kind,
-      id: draft.id,
       name: draft.name,
       version: draft.version,
-      status: draft.status,
       descriptionPurpose: draft.descriptionPurpose,
       descriptionUsage: draft.descriptionUsage,
       descriptionLimitations: draft.descriptionLimitations,
@@ -101,8 +97,13 @@ window.ClinicalModules.schema = {
     return this.showRequiredFor(fieldKey, row) ? 'schema-input--required' : '';
   },
 
-  hasAdvancedRequiredHints() {
-    return ['apiVersion', 'kind', 'version', 'status'].some((field) => this.showRequiredFor(field));
+  isContractActive() {
+    return String(this.schemaDraft?.status || 'active').trim().toLowerCase() === 'active';
+  },
+
+  setContractActive(isActive) {
+    this.schemaDraft.status = isActive ? 'active' : 'inactive';
+    this.pushSchemaToYaml();
   },
 
   createSchemaProperty(seed = {}) {
@@ -244,6 +245,12 @@ window.ClinicalModules.schema = {
     return (this.schemaDraft.qualityRules || []).find(
       (rule) => rule._rowId === this.qualityEditorRuleId
     ) || null;
+  },
+
+  setQualityRuleProperty(rule, propertyName) {
+    if (!rule) return;
+    rule.propertyName = propertyName || '';
+    this.pushSchemaToYaml();
   },
 
   addTeamMember() {

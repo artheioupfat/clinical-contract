@@ -1,7 +1,7 @@
 @layer components {
   /* Columns */
   .column-list-shell {
-    @apply overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white;
+    @apply w-full overflow-x-auto overflow-y-hidden rounded-lg border border-slate-200 bg-white;
   }
 
   .column-empty {
@@ -9,7 +9,7 @@
   }
 
   .column-table {
-    @apply min-w-[760px] divide-y divide-slate-200;
+    @apply w-full min-w-[760px] divide-y divide-slate-200;
   }
 
   .column-table thead {

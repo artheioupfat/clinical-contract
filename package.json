@@ -5,6 +5,7 @@
   "scripts": {
     "build:site:css": "node ./site/css/build-input.mjs && tailwindcss -c tailwind.config.js -i ./site/css/.tailwind.generated.css -o ./site/css/tailwind.css --minify",
     "generate:site-types": "python3 scripts/generate_site_type_catalog.py",
+    "generate:site-version": "python3 scripts/generate_site_version.py",
     "watch:site:css": "node ./site/css/build-input.mjs --watch",
     "test:site": "node --test site/tests/*.test.js"
   },

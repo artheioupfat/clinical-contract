@@ -1,6 +1,7 @@
 document.addEventListener('alpine:init', () => {
   const constants = window.ClinicalConstants || {};
   const typeCatalog = window.ClinicalTypeCatalog || {};
+  const siteVersion = window.ClinicalContractVersion || '';
   const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
@@ -102,6 +103,10 @@ document.addEventListener('alpine:init', () => {
     splitEndHandler: null,
     logoVariant: 'neutral',
     logoErrored: false,
+
+    get siteVersionLabel() {
+      return siteVersion ? `v${siteVersion}` : '';
+    },
 
     get logoSrc() {
       if (this.logoErrored) return '';

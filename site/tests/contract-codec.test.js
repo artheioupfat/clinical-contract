@@ -171,6 +171,25 @@ test('draftToContractObject always writes schema physicalType as TABLE without d
   assert.equal(contract.schema[0].physicalType, 'TABLE');
 });
 
+test('draftToContractObject keeps hidden technical metadata and derives id from name', () => {
+  const draft = codec.createEmptyDraft();
+  draft.apiVersion = '';
+  draft.kind = '';
+  draft.id = '';
+  draft.name = 'Emergency Care Export';
+  draft.version = '2.0.0';
+  draft.status = 'inactive';
+
+  const contract = codec.draftToContractObject(draft);
+
+  assert.equal(contract.apiVersion, 'v3.1.0');
+  assert.equal(contract.kind, 'DataContract');
+  assert.equal(contract.id, 'emergency-care-export');
+  assert.equal(contract.name, 'Emergency Care Export');
+  assert.equal(contract.version, '2.0.0');
+  assert.equal(contract.status, 'inactive');
+});
+
 test('yaml helpers delegate parsing and dumping to the injected YAML library', () => {
   const yamlLib = {
     load(text) {

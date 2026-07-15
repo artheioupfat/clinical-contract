@@ -503,7 +503,7 @@ def test_check_schema_date_with_timestamp_physical_rejects_timestamp_with_timezo
     assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
-def test_check_schema_physical_text_does_not_fallback_to_logical_string(tmp_path):
+def test_check_schema_physical_text_matches_detected_varchar_alias(tmp_path):
     parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
     yaml_physical_text = """
 apiVersion: v1.0.0
@@ -530,10 +530,10 @@ schema:
     contract, _ = load_contract(yaml_physical_text)
     reports = contract.check_schema(str(parquet_file))
 
-    assert reports[0].success is False
+    assert reports[0].success is True
     assert reports[0].columns[0].yaml_type == "TEXT"
     assert reports[0].columns[0].parquet_type == "varchar"
-    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
 def test_check_schema_csv_type_mismatch():

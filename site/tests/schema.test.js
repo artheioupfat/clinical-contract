@@ -104,6 +104,45 @@ test('schema module keeps the current builder section when returning from YAML',
   assert.equal(persisted, 1);
 });
 
+test('schema module maps active checkbox to contract status', () => {
+  const schema = loadSchemaModule();
+  let pushed = 0;
+  const context = {
+    schemaDraft: { status: 'active' },
+    pushSchemaToYaml() {
+      pushed += 1;
+    },
+  };
+
+  assert.equal(schema.isContractActive.call(context), true);
+
+  schema.setContractActive.call(context, false);
+  assert.equal(context.schemaDraft.status, 'inactive');
+  assert.equal(schema.isContractActive.call(context), false);
+
+  schema.setContractActive.call(context, true);
+  assert.equal(context.schemaDraft.status, 'active');
+  assert.equal(pushed, 2);
+});
+
+test('schema module updates the selected quality rule column explicitly', () => {
+  const schema = loadSchemaModule();
+  let pushed = 0;
+  const context = {
+    pushSchemaToYaml() {
+      pushed += 1;
+    },
+  };
+  const rule = {
+    propertyName: 'first_column',
+  };
+
+  schema.setQualityRuleProperty.call(context, rule, 'second_column');
+
+  assert.equal(rule.propertyName, 'second_column');
+  assert.equal(pushed, 1);
+});
+
 test('resetting a contract also deletes the loaded data file', () => {
   const schema = loadSchemaModule();
   let dataDeleted = 0;

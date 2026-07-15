@@ -128,9 +128,9 @@ DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
 }
 
 PHYSICAL_TYPE_ALIASES: dict[str, str] = {
-    "char": "char",
-    "string": "string",
-    "text": "text",
+    "char": "varchar",
+    "string": "varchar",
+    "text": "varchar",
     "varchar": "varchar",
     "datetime": "timestamp",
     "timestamp": "timestamp",

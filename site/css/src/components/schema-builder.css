@@ -65,7 +65,7 @@
 
   /* Builder navigation */
   .schema-workflow {
-    @apply grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_1fr];
+    @apply grid min-h-0 min-w-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_minmax(0,1fr)];
   }
 
   .schema-nav {
@@ -125,15 +125,15 @@
 
   /* Builder stages and forms */
   .schema-workspace {
-    @apply min-h-0 overflow-hidden bg-white;
+    @apply min-h-0 min-w-0 overflow-hidden bg-white;
   }
 
   .schema-card {
-    @apply bg-white;
+    @apply w-full bg-white;
   }
 
   .schema-stage {
-    @apply h-full min-h-0 overflow-auto border-0 p-4;
+    @apply h-full min-h-0 w-full overflow-auto border-0 p-4;
   }
 
   .schema-stage--columns {
@@ -176,11 +176,11 @@
   }
 
   .schema-form-field {
-    @apply space-y-1;
+    @apply flex flex-col gap-1;
   }
 
   .schema-form-label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+    @apply block text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
   }
 
   .schema-form-control {
@@ -188,27 +188,27 @@
   }
 
   .schema-business-stack {
-    @apply grid gap-4 md:grid-cols-2;
+    @apply grid gap-4 md:grid-cols-3;
   }
 
   .schema-wide-field {
-    @apply md:col-span-2;
+    @apply md:col-span-3;
   }
 
   .schema-inline-grid {
     @apply grid gap-3 md:grid-cols-2;
   }
 
-  .schema-advanced {
-    @apply rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2;
+  .schema-status-field {
+    @apply justify-start;
   }
 
-  .schema-advanced summary {
-    @apply cursor-pointer select-none text-xs font-semibold text-slate-600;
+  .schema-status-toggle {
+    @apply inline-flex min-h-[34px] items-center gap-2 text-[13px] font-medium text-slate-700;
   }
 
-  .schema-advanced-grid {
-    @apply mt-3 grid gap-3 md:grid-cols-4;
+  .schema-status-toggle .column-required-checkbox {
+    @apply mt-0;
   }
 
   .schema-required {

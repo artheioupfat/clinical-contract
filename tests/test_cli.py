@@ -49,6 +49,52 @@ schema:
     properties: []
 """
 
+YAML_INVALID_SCHEMA = """
+apiVersion: v1.0.0
+kind: DataContract
+id: invalid-schema-contract
+name: Invalid Schema Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties: []
+"""
+
+YAML_MISSING_REQUIRED_COLUMN = """
+apiVersion: v1.0.0
+kind: DataContract
+id: missing-column-contract
+name: Missing Column Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+  usage: "Unit tests"
+  limitations: "None"
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: VARCHAR
+        description: Patient id
+        required: true
+      - name: score
+        logicalType: float
+        physicalType: float64
+        description: Required score
+        required: true
+"""
+
 YAML_SQL_ERROR = """
 apiVersion: v1.0.0
 kind: DataContract
@@ -166,6 +212,18 @@ def test_validate_failure_exits(
     assert "missing field(s)" in out
 
 
+def test_validate_invalid_schema_reports_invalid_field(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    contract_path = _write_yaml(tmp_path, YAML_INVALID_SCHEMA)
+    with pytest.raises(SystemExit, match="1"):
+        _run_main(monkeypatch, ["validate", str(contract_path)])
+    out = capsys.readouterr().out
+    assert "invalid field(s): schema" in out
+
+
 def test_check_success_output(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -210,6 +268,21 @@ def test_check_quality_failure_exits(
     assert "0/1 checks passed." in out
 
 
+def test_check_missing_required_column_reports_missing_column(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    contract_path = _write_yaml(tmp_path, YAML_MISSING_REQUIRED_COLUMN)
+    parquet_path = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+
+    with pytest.raises(SystemExit, match="1"):
+        _run_main(monkeypatch, ["check", str(contract_path), str(parquet_path)])
+    out = capsys.readouterr().out
+    assert "required column 'score' is missing in data file" in out
+    assert "column not found" not in out
+
+
 def test_check_execution_error_exits(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -218,7 +291,7 @@ def test_check_execution_error_exits(
     contract_path = _write_yaml(tmp_path, YAML_SQL_ERROR)
     parquet_path = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
 
-    with pytest.raises(SystemExit, match="1"):
+    with pytest.raises(SystemExit, match="2"):
         _run_main(monkeypatch, ["check", str(contract_path), str(parquet_path)])
     out = capsys.readouterr().out
     assert "Execution errors were encountered." in out

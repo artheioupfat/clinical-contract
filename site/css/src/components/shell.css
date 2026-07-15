@@ -39,7 +39,7 @@
   }
 
   .pine-badge {
-    @apply rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em];
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-bold uppercase leading-none tracking-[0.12em];
     background: var(--cc-primary-soft);
     color: var(--cc-primary-strong);
   }
