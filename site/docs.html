@@ -70,7 +70,13 @@
               <div class="docs-toc-title">Sommaire</div>
               <nav aria-label="Sommaire de la documentation">
                 <template x-for="item in toc" :key="item.id">
-                  <a class="docs-toc-link" :href="`#${item.id}`" x-text="item.text"></a>
+                  <a
+                    class="docs-toc-link"
+                    :class="{ 'docs-toc-link--active': activeTocId === item.id }"
+                    :href="`#${item.id}`"
+                    @click="activeTocId = item.id"
+                    x-text="item.text"
+                  ></a>
                 </template>
               </nav>
             </aside>

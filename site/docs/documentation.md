@@ -77,16 +77,58 @@ L’éditeur web permet de :
 
 La page fonctionne sans backend. Le traitement est exécuté dans le navigateur avec PyScript, Pyodide et DuckDB.
 
-## Utilisation en Python
+## Utilisation en Python et en CLI
 
-Clinical Contract existe aussi comme bibliothèque Python et comme CLI.
+Clinical Contract existe aussi comme bibliothèque Python et comme commande CLI. L’éditeur web est utile pour rédiger et tester visuellement un contrat, mais la CLI permet d’intégrer les mêmes contrôles dans un terminal, un script ou un pipeline.
 
 ```bash
-clinical-contract validate contract.yaml
-clinical-contract check contract.yaml data.parquet
+uv tool install --python python3.11 clinical-contract
 ```
 
-Cette utilisation est adaptée aux scripts, aux pipelines et aux contrôles automatisés.
+Deux commandes couvrent le flux principal :
+
+```bash
+clinical-contract validate site/examples/contract.yaml
+clinical-contract check site/examples/contract.yaml site/examples/template.parquet
+```
+
+`validate` contrôle la structure du contrat : métadonnées, description, schéma, colonnes, types et règles déclarées. Cette étape permet de vérifier que le YAML est correctement composé avant de l’envoyer à une autre équipe.
+
+`check` applique ensuite le contrat à un fichier réel CSV ou Parquet. La commande vérifie les colonnes attendues, compare les types détectés, puis exécute les règles qualité SQL avec DuckDB.
+
+Exemple de résultat attendu :
+
+```text
+Schema validation
+Column       Expected   Detected   Status
+PATIENT_ID   varchar    varchar    passed
+STAY         uint32     uint32     passed
+VALUE        float64    float64    passed
+LIFE_STATUS  boolean    boolean    passed
+EVENT_TIME   timestamp  timestamp  passed
+
+Quality checks
+PATIENT_ID  PATIENT_ID must not be null          passed
+STAY        STAY must not be null                passed
+EVENT_TIME  EVENT_TIME must be after 1925-01-01  passed
+
+All checks passed.
+```
+
+En Python, le même contrat peut être chargé depuis un script :
+
+```python
+from clinical_contract import load_contract
+
+contract, raw = load_contract("site/examples/contract.yaml")
+report = contract.check("site/examples/template.parquet")
+
+if not report.success:
+    for result in report.failed():
+        print(result.description, result.obtained, "!=", result.expected)
+```
+
+Cette utilisation est adaptée aux contrôles automatisés, aux pipelines de réception de fichiers et aux intégrations internes.
 
 ## Limites actuelles
 

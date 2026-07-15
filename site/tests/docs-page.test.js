@@ -17,9 +17,18 @@ test('documentation page loads markdown content through the docs script', () => 
   assert.match(docsHtml, /js\/docs\.js/);
   assert.match(docsHtml, /marked@12\.0\.2/);
   assert.match(docsHtml, /docs-toc/);
+  assert.match(docsHtml, /docs-toc-link--active/);
   assert.match(docsJs, /\.\/docs\/documentation\.md/);
   assert.match(docsJs, /buildToc/);
+  assert.match(docsJs, /activeTocId/);
+  assert.match(docsJs, /updateActiveTocFromScroll/);
+  assert.match(docsJs, /isNearBottom/);
+  assert.match(docsJs, /activeLine/);
   assert.match(markdown, /# Documentation/);
   assert.match(markdown, /échanges de données/i);
   assert.match(markdown, /contrat comme référence commune/i);
+  assert.match(markdown, /uv tool install --python python3\.11 clinical-contract/);
+  assert.match(markdown, /clinical-contract validate site\/examples\/contract\.yaml/);
+  assert.match(markdown, /clinical-contract check site\/examples\/contract\.yaml site\/examples\/template\.parquet/);
+  assert.match(markdown, /from clinical_contract import load_contract/);
 });
