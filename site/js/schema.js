@@ -247,6 +247,12 @@ window.ClinicalModules.schema = {
     ) || null;
   },
 
+  setQualityRuleProperty(rule, propertyName) {
+    if (!rule) return;
+    rule.propertyName = propertyName || '';
+    this.pushSchemaToYaml();
+  },
+
   addTeamMember() {
     const member = this.createTeamMember();
     this.schemaDraft.teamMembers.push(member);

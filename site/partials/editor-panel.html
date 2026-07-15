@@ -393,9 +393,22 @@
                             <div class="entity-modal__body">
                               <label class="entity-modal__field">
                                 <span class="entity-modal__label">Column</span>
-                                <select x-model="rule.propertyName" @change="pushSchemaToYaml()" class="schema-input">
+                                <select
+                                  x-ref="qualityColumnSelect"
+                                  :value="rule.propertyName || ''"
+                                  x-init="$nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' })"
+                                  @change="
+                                    setQualityRuleProperty(rule, $event.target.value);
+                                    $nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' });
+                                  "
+                                  class="schema-input"
+                                >
                                   <template x-for="property in schemaDraft.properties" :key="`entity-modal-property-${rule._rowId}-${property._rowId}`">
-                                    <option :value="property.name" x-text="property.name || 'Unnamed column'"></option>
+                                    <option
+                                      :value="property.name"
+                                      :selected="property.name === rule.propertyName"
+                                      x-text="property.name || 'Unnamed column'"
+                                    ></option>
                                   </template>
                                 </select>
                               </label>
