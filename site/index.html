@@ -105,6 +105,77 @@
           </div>
         </section>
 
+        <section class="landing-cli" aria-label="Bibliothèque Python et CLI clinical-contract">
+          <div class="landing-cli__copy">
+            <p class="landing-kicker">Python library + CLI</p>
+            <h3>Le même contrat dans l'éditeur, dans Python et dans votre terminal.</h3>
+            <p>
+              clinical-contract existe aussi comme bibliothèque Python et comme commande CLI.
+              L'objectif est simple : rédiger un contrat une fois, puis l'utiliser partout pour
+              valider sa structure et vérifier un fichier CSV ou Parquet.
+            </p>
+          </div>
+          <div class="landing-cli__terminals" aria-label="Exemples d'utilisation CLI clinical-contract">
+            <div class="landing-cli__terminal">
+              <div class="landing-cli__terminal-bar">
+                <span></span>
+                <span></span>
+                <span></span>
+                <strong>validate</strong>
+              </div>
+              <pre><code>uv tool install --python python3.11 clinical-contract
+
+clinical-contract validate site/examples/contract.yaml
+
+📋  Structure validation: contract.yaml
+
+Field        Status  Value
+apiVersion   ✅      v3.1.0
+kind         ✅      DataContract
+id           ✅      clinical-template
+name         ✅      Clinical Template Contract
+version      ✅      1.0.0
+status       ✅      active
+description  ✅      structure valid
+schema       ✅      5 columns detected
+
+✅  Valid structure — all required fields are present.</code></pre>
+            </div>
+
+            <div class="landing-cli__terminal">
+              <div class="landing-cli__terminal-bar">
+                <span></span>
+                <span></span>
+                <span></span>
+                <strong>check</strong>
+              </div>
+              <pre><code>clinical-contract check site/examples/contract.yaml site/examples/template.parquet
+
+🔍  Contract check
+    Contract: contract.yaml
+    Data file: template.parquet
+
+Schema validation
+Column       Expected   Detected   Status
+PATIENT_ID   varchar    varchar    ✅
+STAY         uint32     uint32     ✅
+VALUE        float64    float64    ✅
+LIFE_STATUS  boolean    boolean    ✅
+EVENT_TIME   timestamp  timestamp  ✅
+
+✅  5/5 columns valid
+
+Quality checks
+Property    Description                          Result  Obtained  Expected
+PATIENT_ID  PATIENT_ID must not be null          ✅      0         0
+STAY        STAY must not be null                ✅      0         0
+EVENT_TIME  EVENT_TIME must be after 1925-01-01  ✅      0         0
+
+All checks passed.</code></pre>
+            </div>
+          </div>
+        </section>
+
         <section class="landing-closing" aria-label="Accès documentation">
           <p>Besoin de comprendre le modèle YAML, les types ou les contrôles qualité ?</p>
           <a href="./docs.html">Consulter la documentation</a>

@@ -18,6 +18,12 @@ test('landing page embeds the editor without recursively loading other pages', (
   assert.match(indexHtml, /localement dans votre navigateur/);
   assert.match(indexHtml, /standard/);
   assert.match(indexHtml, /https:\/\/datacontract\.com\//);
+  assert.match(indexHtml, /Python library \+ CLI/);
+  assert.match(indexHtml, /uv tool install --python python3\.11 clinical-contract/);
+  assert.match(indexHtml, /clinical-contract validate site\/examples\/contract\.yaml/);
+  assert.match(indexHtml, /clinical-contract check site\/examples\/contract\.yaml site\/examples\/template\.parquet/);
+  assert.match(indexHtml, /Clinical Template Contract/);
+  assert.match(indexHtml, /5\/5 columns valid/);
   assert.match(indexHtml, /Consulter la documentation/);
   assert.match(indexHtml, /\.\/editor\.html/);
   assert.match(indexHtml, /\.\/editor\.html\?embed=1/);

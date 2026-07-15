@@ -91,7 +91,7 @@
   }
 
   .landing-standard {
-    @apply mx-auto grid w-full max-w-7xl gap-8 px-5 pb-12 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start;
+    @apply mx-auto mt-12 grid w-full max-w-7xl gap-8 px-5 pb-16 sm:px-8 lg:mt-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start;
   }
 
   .landing-standard__intro {
@@ -137,6 +137,71 @@
     color: var(--cc-muted);
   }
 
+  .landing-cli {
+    @apply mx-auto mt-12 grid w-full max-w-7xl gap-10 px-5 pb-14 sm:px-8 lg:mt-16 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:gap-12;
+  }
+
+  .landing-cli__copy {
+    @apply max-w-xl;
+  }
+
+  .landing-cli__copy h3 {
+    @apply text-3xl font-semibold tracking-[-0.045em] sm:text-4xl;
+    color: var(--cc-text);
+  }
+
+  .landing-cli__copy p:not(.landing-kicker) {
+    @apply mt-5 text-sm leading-7 sm:text-base;
+    color: var(--cc-muted);
+  }
+
+  .landing-cli__terminals {
+    @apply grid gap-5;
+  }
+
+  .landing-cli__terminal {
+    @apply overflow-hidden rounded-lg border shadow-sm;
+    background: #07111f;
+    border-color: #1e3a5f;
+  }
+
+  .landing-cli__terminal-bar {
+    @apply flex items-center gap-2 border-b px-4 py-3;
+    background: #0f1c2e;
+    border-color: #1e3a5f;
+  }
+
+  .landing-cli__terminal-bar span {
+    @apply h-2.5 w-2.5 rounded-full;
+    background: #4f6684;
+  }
+
+  .landing-cli__terminal-bar span:first-child {
+    background: #ef5f59;
+  }
+
+  .landing-cli__terminal-bar span:nth-child(2) {
+    background: #f6bd4f;
+  }
+
+  .landing-cli__terminal-bar span:nth-child(3) {
+    background: #5cc66a;
+  }
+
+  .landing-cli__terminal-bar strong {
+    @apply ml-2 text-xs font-semibold uppercase tracking-[0.18em];
+    color: #b9c8dc;
+  }
+
+  .landing-cli__terminal pre {
+    @apply overflow-x-auto p-5 text-xs leading-6 sm:text-sm;
+    color: #d7e3f4;
+  }
+
+  .landing-cli__terminal code {
+    @apply font-mono;
+  }
+
   .theme-dark.landing-root {
     background:
       radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.1) 1px, transparent 0),
@@ -152,10 +217,12 @@
   }
 
   .theme-dark .landing-hero h2,
+  .theme-dark .landing-cli__copy h3,
   .theme-dark .landing-standard__intro h3 {
     color: var(--cc-night-text);
   }
 
+  .theme-dark .landing-cli__copy p:not(.landing-kicker),
   .theme-dark .landing-demo-caption,
   .theme-dark .landing-standard__intro p:not(.landing-kicker),
   .theme-dark .landing-standard__rows p,
