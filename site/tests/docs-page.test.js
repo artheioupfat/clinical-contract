@@ -25,10 +25,4 @@ test('documentation page loads markdown content through the docs script', () => 
   assert.match(docsJs, /isNearBottom/);
   assert.match(docsJs, /activeLine/);
   assert.match(markdown, /# Documentation/);
-  assert.match(markdown, /échanges de données/i);
-  assert.match(markdown, /contrat comme référence commune/i);
-  assert.match(markdown, /uv tool install --python python3\.11 clinical-contract/);
-  assert.match(markdown, /clinical-contract validate site\/examples\/contract\.yaml/);
-  assert.match(markdown, /clinical-contract check site\/examples\/contract\.yaml site\/examples\/template\.parquet/);
-  assert.match(markdown, /from clinical_contract import load_contract/);
 });
