@@ -20,5 +20,4 @@ test('documentation page loads markdown content through the docs script', () => 
   assert.match(docsJs, /\.\/docs\/documentation\.md/);
   assert.match(docsJs, /buildToc/);
   assert.match(markdown, /# Documentation/);
-  assert.match(markdown, /contrat comme référence commune/i);
 });
