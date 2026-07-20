@@ -1,4 +1,4 @@
-# Documentation
+# Guide d'utilisation
 
 Clinical-Contract est un outil permettant de définir, partager et vérifier des contrats de données.
 
@@ -101,11 +101,9 @@ FROM export
 WHERE STAY IS NULL;
 ```
 
-**Expected Result**
-
-```text
-0
-```
+**Expected Result :** `0`
+<br>
+<br>
 
 ---
 
@@ -116,11 +114,9 @@ SELECT COUNT(*)
 FROM export;
 ```
 
-**Expected Result**
-
-```text
-1000
-```
+**Expected Result :** `1000`
+<br>
+<br>
 
 ---
 
@@ -131,11 +127,8 @@ SELECT COUNT(*) - COUNT(DISTINCT PATIENT_ID)
 FROM export;
 ```
 
-**Expected Result**
-
-```text
-0
-```
+**Expected Result :** `0`
+<br>
 
 
 ## Valider un contrat de données
