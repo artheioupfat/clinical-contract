@@ -227,6 +227,8 @@ def _physical_types_compatible(contract_type: str, detected_type: str) -> bool:
 
 
 def _property_types_compatible(logical_type: str, physical_type: str, detected_type: str) -> bool:
+    if not logical_type and not physical_type:
+        return True
     if physical_type:
         normalized_logical = _normalize_logical_type(logical_type)
         normalized_physical = _normalize_physical_type(physical_type)
@@ -384,9 +386,9 @@ REQUIRED_FIELDS = [
 # ------------------------------------------------------------------ #
 
 class Description(BaseModel):
-    purpose: str
-    usage: str
-    limitations: str
+    purpose: str = ""
+    usage: str = ""
+    limitations: str = ""
 
 
 class Quality(BaseModel):
@@ -502,12 +504,6 @@ class DataContract(BaseModel):
                                 has_logical_type = isinstance(logical_type, str) and bool(logical_type.strip())
                                 has_physical_type = isinstance(physical_type, str) and bool(physical_type.strip())
 
-                                if not has_logical_type and not has_physical_type:
-                                    errors.append(
-                                        f"schema[{i}].properties[{j}] missing logicalType or physicalType"
-                                    )
-                                    continue
-
                                 if has_logical_type and not _is_supported_logical_type(logical_type):
                                     errors.append(
                                         f"schema[{i}].properties[{j}].logicalType unsupported: {logical_type!r}"
@@ -532,23 +528,13 @@ class DataContract(BaseModel):
 
 
 
-            #La description doit être composé de 3 sous-champs : purpose, usage, limitations
             elif field == "description":
-                subfields = ["purpose", "usage", "limitations"]
-
                 if not isinstance(value, dict):
                     display = "invalid (not an object)"
                     present = False
                 else:
-                    missing_sub = [s for s in subfields if s not in value]
-
-                    if missing_sub:
-                        display = f"missing {', '.join(missing_sub)}"
-                        present = False
-                    else:
-                        # ✔ les champs existent, même vides → OK
-                        display = "structure valid"
-                        present = True
+                    display = "structure valid"
+                    present = True
 
             # Pour les autres champs, on affiche simplement leur valeur
             else:

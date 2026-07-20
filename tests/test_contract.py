@@ -793,6 +793,40 @@ schema:
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
+def test_check_schema_column_without_type_specification_checks_presence_only(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_without_type = """
+apiVersion: v1.0.0
+kind: DataContract
+id: no-type-contract
+name: No Type Contract
+version: 1.0.0
+status: active
+description:
+  purpose: "Test"
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        description: Status
+        required: true
+"""
+    contract, _ = load_contract(yaml_without_type)
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "not specified"
+    assert reports[0].columns[0].parquet_type == "uint32"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
 def test_check_schema_boolean_physical_type_matches_detected_boolean(tmp_path):
     parquet_file = _write_parquet_single_typed_column(
         tmp_path=tmp_path,
@@ -1084,8 +1118,8 @@ schema:
     assert "schema[0].properties[0] missing name" in schema_field.display_value
 
 
-def test_validate_structure_description_missing_subfields():
-    yaml_invalid = """
+def test_validate_structure_description_subfields_are_optional():
+    yaml_valid = """
 apiVersion: v1.0.0
 kind: DataContract
 id: test
@@ -1104,12 +1138,12 @@ schema:
         physicalType: TEXT
         description: ok
 """
-    raw = load_raw(yaml_invalid)
+    raw = load_raw(yaml_valid)
     report = DataContract.validate_structure(raw)
 
-    assert report.success is False
+    assert report.success is True
     desc_field = next(f for f in report.fields if f.field == "description")
-    assert "missing usage, limitations" == desc_field.display_value
+    assert desc_field.display_value == "structure valid"
 
 
 def test_validate_structure_description_not_object():
@@ -1230,8 +1264,8 @@ schema:
     assert report.success is True
 
 
-def test_validate_structure_fails_without_any_column_type():
-    yaml_invalid = """
+def test_validate_structure_accepts_column_without_type_specification():
+    yaml_valid = """
 apiVersion: v1.0.0
 kind: DataContract
 id: test
@@ -1251,12 +1285,12 @@ schema:
         description: ok
         required: true
 """
-    raw = load_raw(yaml_invalid)
+    raw = load_raw(yaml_valid)
     report = DataContract.validate_structure(raw)
 
-    assert report.success is False
+    assert report.success is True
     schema_field = next(f for f in report.fields if f.field == "schema")
-    assert "missing logicalType or physicalType" in schema_field.display_value
+    assert schema_field.display_value == "1 column detected"
 
 
 def test_site_type_catalog_matches_python_type_support():

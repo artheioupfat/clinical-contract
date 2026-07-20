@@ -9,19 +9,13 @@ function readSiteFile(relativePath) {
   return fs.readFileSync(path.join(repoRoot, 'site', relativePath), 'utf8');
 }
 
-test('landing page embeds the editor without recursively loading other pages', () => {
+test('landing page presents a static product overview without loading the editor runtime', () => {
   const indexHtml = readSiteFile('index.html');
 
   assert.match(indexHtml, /clinical-contract/);
-  assert.match(indexHtml, /Cadrez les données avant qu'elles ne circulent/);
-  assert.match(indexHtml, /GitHub Pages/);
-  assert.match(indexHtml, /localement dans votre navigateur/);
-  assert.match(indexHtml, /Définissez le fichier attendu\. Vérifiez le fichier reçu\./);
-  assert.match(indexHtml, /Rédiger le contrat/);
-  assert.match(indexHtml, /Charger les données/);
-  assert.match(indexHtml, /Lancer les contrôles/);
-  assert.match(indexHtml, /Private by design/);
-  assert.match(indexHtml, /sans envoyer les données vers un backend/);
+  assert.match(indexHtml, /Write\. Share\. Trust\./);
+  assert.match(indexHtml, /localement dans le navigateur/);
+  assert.match(indexHtml, /\.\/logo\/landing_page\.png/);
   assert.match(indexHtml, /standard/);
   assert.match(indexHtml, /https:\/\/datacontract\.com\//);
   assert.match(indexHtml, /Python library \+ CLI/);
@@ -32,13 +26,13 @@ test('landing page embeds the editor without recursively loading other pages', (
   assert.match(indexHtml, /5\/5 columns valid/);
   assert.match(indexHtml, /Consulter la documentation/);
   assert.match(indexHtml, /\.\/editor\.html/);
-  assert.match(indexHtml, /\.\/editor\.html\?embed=1/);
   assert.match(indexHtml, /\.\/docs\.html/);
   assert.match(indexHtml, /\.\/js\/landing\.js/);
+  assert.doesNotMatch(indexHtml, /<iframe/);
+  assert.doesNotMatch(indexHtml, /\.\/editor\.html\?embed=1/);
   assert.doesNotMatch(indexHtml, /\.\/assets\/site-demo\.gif/);
   assert.doesNotMatch(indexHtml, /src="\.\/index\.html/);
   assert.doesNotMatch(indexHtml, /src="\.\/docs\.html/);
-  assert.doesNotMatch(indexHtml, /Mini éditeur live/);
   assert.doesNotMatch(indexHtml, /pyscript\.net/);
   assert.doesNotMatch(indexHtml, /type="py"/);
 });

@@ -24,5 +24,8 @@ test('documentation page loads markdown content through the docs script', () => 
   assert.match(docsJs, /updateActiveTocFromScroll/);
   assert.match(docsJs, /isNearBottom/);
   assert.match(docsJs, /activeLine/);
-  assert.match(markdown, /# Documentation/);
+  assert.match(markdown, /# Guide d'utilisation/);
+  assert.match(markdown, /Purpose.*Usage.*Limitations/s);
+  assert.match(markdown, /Bien qu'elles soient facultatives/);
+  assert.match(markdown, /sans contrainte de type/);
 });

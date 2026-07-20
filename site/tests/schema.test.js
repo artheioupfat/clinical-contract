@@ -77,6 +77,50 @@ test('schema module clears physical type when logical type is not specified', ()
   assert.equal(pushed, 1);
 });
 
+test('schema module required hints ignore optional descriptions and column types', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    showRequiredHints: true,
+    isBlankRequiredValue: schema.isBlankRequiredValue,
+    schemaDraft: {
+      name: '',
+      version: '',
+      descriptionPurpose: '',
+      descriptionUsage: '',
+      descriptionLimitations: '',
+      tableName: '',
+      tableDescription: '',
+    },
+  };
+  const row = {
+    name: '',
+    logicalType: '',
+    physicalType: '',
+    description: '',
+  };
+
+  assert.equal(schema.showRequiredFor.call(context, 'name'), true);
+  assert.equal(schema.showRequiredFor.call(context, 'version'), true);
+  assert.equal(schema.showRequiredFor.call(context, 'tableName'), true);
+  assert.equal(schema.showRequiredFor.call(context, 'tableDescription'), true);
+  assert.equal(schema.showRequiredFor.call(context, 'propertyName', row), true);
+  assert.equal(schema.showRequiredFor.call(context, 'descriptionPurpose'), false);
+  assert.equal(schema.showRequiredFor.call(context, 'descriptionUsage'), false);
+  assert.equal(schema.showRequiredFor.call(context, 'descriptionLimitations'), false);
+  assert.equal(schema.showRequiredFor.call(context, 'propertyLogicalType', row), false);
+  assert.equal(schema.showRequiredFor.call(context, 'propertyPhysicalType', row), false);
+  assert.equal(schema.showRequiredFor.call(context, 'propertyDescription', row), false);
+});
+
+test('schema module labels columns without types as unconstrained', () => {
+  const schema = loadSchemaModule();
+
+  assert.equal(
+    schema.columnTypeSummary({ logicalType: '', physicalType: '' }),
+    'No type constraint'
+  );
+});
+
 test('schema module keeps the current builder section when returning from YAML', () => {
   const schema = loadSchemaModule();
   let synced = 0;

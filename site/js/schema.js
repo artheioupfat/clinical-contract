@@ -64,9 +64,6 @@ window.ClinicalModules.schema = {
     const fieldMap = {
       name: draft.name,
       version: draft.version,
-      descriptionPurpose: draft.descriptionPurpose,
-      descriptionUsage: draft.descriptionUsage,
-      descriptionLimitations: draft.descriptionLimitations,
       tableName: draft.tableName,
       tableDescription: draft.tableDescription,
     };
@@ -79,12 +76,7 @@ window.ClinicalModules.schema = {
 
     const rowFieldMap = {
       propertyName: row.name,
-      propertyDescription: row.description,
     };
-
-    if (fieldKey === 'propertyLogicalType' || fieldKey === 'propertyPhysicalType') {
-      return this.isBlankRequiredValue(row.logicalType) && this.isBlankRequiredValue(row.physicalType);
-    }
 
     if (Object.prototype.hasOwnProperty.call(rowFieldMap, fieldKey)) {
       return this.isBlankRequiredValue(rowFieldMap[fieldKey]);
@@ -213,7 +205,7 @@ window.ClinicalModules.schema = {
     }
     if (row?.logicalType) return row.logicalType;
     if (row?.physicalType) return row.physicalType;
-    return 'Not specified';
+    return 'No type constraint';
   },
 
   addQualityRule() {

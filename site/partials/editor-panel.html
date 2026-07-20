@@ -151,16 +151,16 @@
                             </span>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Purpose <span class="schema-required" x-show="showRequiredFor('descriptionPurpose')" x-cloak>* required</span></span>
-                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionPurpose')" class="schema-input schema-form-control" placeholder="Why this dataset exists"></textarea>
+                            <span class="schema-form-label">Purpose</span>
+                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="Why this dataset exists"></textarea>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Usage <span class="schema-required" x-show="showRequiredFor('descriptionUsage')" x-cloak>* required</span></span>
-                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionUsage')" class="schema-input schema-form-control" placeholder="How consumers should use it"></textarea>
+                            <span class="schema-form-label">Usage</span>
+                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="How consumers should use it"></textarea>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Limitations <span class="schema-required" x-show="showRequiredFor('descriptionLimitations')" x-cloak>* required</span></span>
-                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" :class="requiredInputClass('descriptionLimitations')" class="schema-input schema-form-control" placeholder="Known caveats, scope, or historical issues"></textarea>
+                            <span class="schema-form-label">Limitations</span>
+                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="Known caveats, scope, or historical issues"></textarea>
                           </label>
                           <div class="schema-inline-grid schema-wide-field">
                             <label class="schema-form-field">
@@ -251,7 +251,6 @@
                                   </td>
                                   <td class="column-table__type">
                                     <span x-text="columnTypeSummary(row)"></span>
-                                    <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span>
                                   </td>
                                   <td class="column-table__required" x-text="row.required ? 'Yes' : 'No'"></td>
                                   <td class="column-table__description" x-text="row.description || 'No description yet'"></td>
@@ -293,15 +292,14 @@
                               </label>
 
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Logical type <span class="schema-required" x-show="showRequiredFor('propertyLogicalType', row)" x-cloak>* required</span></span>
+                                <span class="entity-modal__label">Logical type</span>
                                 <select
                                   :value="row.logicalType || ''"
                                   @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
                                   x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
-                                  :class="requiredInputClass('propertyLogicalType', row)"
                                   class="schema-input"
                                 >
-                                  <option value="">Not specified</option>
+                                  <option value="">No type constraint</option>
                                   <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-modal-${row._rowId}-${logicalType}`">
                                     <option :value="logicalType" x-text="logicalType"></option>
                                   </template>
@@ -309,12 +307,11 @@
                               </label>
 
                               <label class="entity-modal__field" x-show="shouldShowPhysicalType(row)" x-cloak>
-                                <span class="entity-modal__label">Physical type <span class="schema-required" x-show="showRequiredFor('propertyPhysicalType', row)" x-cloak>* required</span></span>
+                                <span class="entity-modal__label">Physical type</span>
                                 <select
                                   :value="row.physicalType || ''"
                                   @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
                                   x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
-                                  :class="requiredInputClass('propertyPhysicalType', row)"
                                   class="schema-input"
                                 >
                                   <option value="">Not specified</option>
@@ -325,8 +322,8 @@
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide column-description-field">
-                                <span class="entity-modal__label">Description <span class="schema-required" x-show="showRequiredFor('propertyDescription', row)" x-cloak>* required</span></span>
-                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyDescription', row)" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Example: Patient identifier used to link healthcare records across hospital stays."></textarea>
+                                <span class="entity-modal__label">Description</span>
+                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Example: Patient identifier used to link healthcare records across hospital stays."></textarea>
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide">
