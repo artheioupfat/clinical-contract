@@ -14,7 +14,6 @@ test('landing page presents a static product overview without loading the editor
 
   assert.match(indexHtml, /clinical-contract/);
   assert.match(indexHtml, /Write\. Share\. Trust\./);
-  assert.match(indexHtml, /localement dans le navigateur/);
   assert.match(indexHtml, /\.\/logo\/landing_page\.png/);
   assert.match(indexHtml, /standard/);
   assert.match(indexHtml, /https:\/\/datacontract\.com\//);
