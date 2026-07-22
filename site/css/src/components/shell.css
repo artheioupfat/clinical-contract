@@ -9,6 +9,19 @@
     background: white;
   }
 
+  .is-embedded-editor .app-root,
+  .is-embedded-editor .app-frame {
+    height: 100vh;
+  }
+
+  .is-embedded-editor [data-include="./partials/header.html"] {
+    display: none;
+  }
+
+  .is-embedded-editor .pine-header {
+    display: none;
+  }
+
   /* Header and brand */
   .pine-header {
     @apply flex flex-nowrap items-center justify-between gap-4 border-b px-4 py-2;

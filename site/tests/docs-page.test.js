@@ -17,7 +17,15 @@ test('documentation page loads markdown content through the docs script', () => 
   assert.match(docsHtml, /js\/docs\.js/);
   assert.match(docsHtml, /marked@12\.0\.2/);
   assert.match(docsHtml, /docs-toc/);
+  assert.match(docsHtml, /docs-toc-link--active/);
   assert.match(docsJs, /\.\/docs\/documentation\.md/);
   assert.match(docsJs, /buildToc/);
-  assert.match(markdown, /# Documentation/);
+  assert.match(docsJs, /activeTocId/);
+  assert.match(docsJs, /updateActiveTocFromScroll/);
+  assert.match(docsJs, /isNearBottom/);
+  assert.match(docsJs, /activeLine/);
+  assert.match(markdown, /# Guide d'utilisation/);
+  assert.match(markdown, /Purpose.*Usage.*Limitations/s);
+  assert.match(markdown, /Bien qu'elles soient facultatives/);
+  assert.match(markdown, /sans contrainte de type/);
 });

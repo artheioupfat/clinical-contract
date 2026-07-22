@@ -16,12 +16,12 @@ test('pyscript config ships every browser-required clinical_contract module', ()
   }
 });
 
-test('pyscript cache-buster is aligned between index and config', () => {
+test('pyscript cache-buster is aligned between editor and config', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
-  const indexHtml = fs.readFileSync(path.join(repoRoot, 'site', 'index.html'), 'utf8');
+  const editorHtml = fs.readFileSync(path.join(repoRoot, 'site', 'editor.html'), 'utf8');
   const pyscriptConfig = fs.readFileSync(path.join(repoRoot, 'site', 'pyscript.toml'), 'utf8');
   const versions = new Set(
-    [...`${indexHtml}\n${pyscriptConfig}`.matchAll(/\?v=([A-Za-z0-9-]+)/g)].map(
+    [...`${editorHtml}\n${pyscriptConfig}`.matchAll(/\?v=([A-Za-z0-9-]+)/g)].map(
       (match) => match[1]
     )
   );

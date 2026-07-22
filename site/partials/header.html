@@ -1,6 +1,6 @@
         <!-- Header: brand, runtime-independent controls, and theme switch. -->
         <header class="pine-header">
-          <div class="pine-brand">
+          <a class="pine-brand" href="./index.html" aria-label="Retour à l'accueil Clinical-Contract">
             <div class="pine-logo-box">
               <img :src="logoSrc" :alt="logoAlt" class="pine-logo-image" @error="handleLogoError" />
             </div>
@@ -8,10 +8,11 @@
               <h1 class="pine-brand-title">clinical-contract</h1>
               <span class="pine-badge" x-text="siteVersionLabel">v0.1.7</span>
             </div>
-          </div>
+          </a>
 
           <div class="header-actions">
-            <a class="docs-nav-link docs-nav-link--active" href="./index.html" aria-current="page">Éditeur</a>
+            <a class="docs-nav-link" href="./index.html">Accueil</a>
+            <a class="docs-nav-link docs-nav-link--active" href="./editor.html" aria-current="page">Éditeur</a>
             <a class="docs-nav-link" href="./docs.html">Documentation</a>
             <a
               class="github-link"

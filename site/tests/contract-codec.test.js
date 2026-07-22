@@ -46,6 +46,7 @@ function sampleContract() {
             physical_type: 'uint32',
             required: true,
             description: 'Stable order identifier.',
+            examples: ['1001', '1002'],
             xColumn: 'kept',
             quality: [
               {
@@ -112,7 +113,9 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
   assert.equal(draft.properties[0].logicalType, 'integer');
   assert.equal(draft.properties[0].physicalType, 'uint32');
   assert.equal(draft.properties[0].required, true);
+  assert.equal(draft.properties[0].examplesText, '1001\n1002');
   assert.equal(draft.properties[0].extras.xColumn, 'kept');
+  assert.equal(Object.prototype.hasOwnProperty.call(draft.properties[0].extras, 'examples'), false);
 
   assert.equal(draft.qualityRules.length, 1);
   assert.equal(draft.qualityRules[0].propertyName, 'order_id');
@@ -143,6 +146,7 @@ test('draftToContractObject writes quality under its column and preserves extras
   assert.equal(contract.schema[1].name, 'secondary_schema');
   assert.equal(property.logicalType, 'integer');
   assert.equal(property.physicalType, 'uint32');
+  assert.deepEqual(property.examples, ['1001', '1002']);
   assert.equal(property.xColumn, 'kept');
   assert.equal(property.quality.length, 1);
   assert.equal(property.quality[0].severity, 'high');

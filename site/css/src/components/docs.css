@@ -74,7 +74,7 @@
   }
 
   .docs-toc-link {
-    @apply border-l-2 border-transparent py-1.5 pl-3 pr-2 text-sm leading-5 no-underline transition;
+    @apply border-l-2 border-transparent py-1.5 pl-3 pr-2 text-sm font-semibold leading-5 no-underline transition;
     color: var(--cc-muted);
   }
 
@@ -82,6 +82,12 @@
   .docs-toc-link:focus-visible {
     border-color: var(--cc-primary);
     background: transparent;
+    color: var(--cc-primary-strong);
+  }
+
+  .docs-toc-link--active {
+    @apply text-base font-bold;
+    border-color: var(--cc-primary);
     color: var(--cc-primary-strong);
   }
 
@@ -188,7 +194,10 @@
   }
 
   .theme-dark .docs-hero p,
-  .theme-dark .docs-nav-link,
+  .theme-dark .docs-nav-link {
+    color: var(--cc-night-muted);
+  }
+
   .theme-dark .docs-toc-link {
     color: var(--cc-night-muted);
   }
@@ -202,6 +211,11 @@
     border-color: var(--cc-primary);
     background: transparent;
     color: white;
+  }
+
+  .theme-dark .docs-toc-link--active {
+    border-color: var(--cc-primary);
+    color: var(--cc-primary-strong);
   }
 
   .theme-dark .docs-prose code {

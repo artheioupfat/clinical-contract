@@ -1,4 +1,4 @@
-# Documentation
+# Guide d'utilisation
 
 Clinical-Contract est un outil permettant de définir, partager et vérifier des contrats de données.
 
@@ -79,7 +79,7 @@ Chaque type logique propose un ensemble de types physiques compatibles :
 
 Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** le plus adapté au système produisant les données.
 
-Le **Logical Type** et le **Physical Type** peuvent également être définis sur **Not specified**. Cette option permet de ne pas imposer de type logique à une colonne ou de ne pas préciser sa représentation technique lorsqu'elle n'est pas nécessaire.
+Une colonne peut également rester sans contrainte de type. Dans ce cas, Clinical-Contract vérifie seulement sa présence dans le fichier et n'impose ni type logique ni représentation technique.
 
 ## Ajouter des règles de qualité
 
@@ -101,11 +101,9 @@ FROM export
 WHERE STAY IS NULL;
 ```
 
-**Expected Result**
-
-```text
-0
-```
+**Expected Result :** `0`
+<br>
+<br>
 
 ---
 
@@ -116,11 +114,9 @@ SELECT COUNT(*)
 FROM export;
 ```
 
-**Expected Result**
-
-```text
-1000
-```
+**Expected Result :** `1000`
+<br>
+<br>
 
 ---
 
@@ -131,11 +127,8 @@ SELECT COUNT(*) - COUNT(DISTINCT PATIENT_ID)
 FROM export;
 ```
 
-**Expected Result**
-
-```text
-0
-```
+**Expected Result :** `0`
+<br>
 
 
 ## Valider un contrat de données

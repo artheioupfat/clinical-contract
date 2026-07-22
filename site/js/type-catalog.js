@@ -14,7 +14,8 @@ const catalog = {
       "varchar",
       "text",
       "string",
-      "char"
+      "char",
+      "uuid"
     ],
     "date": [
       "datetime",

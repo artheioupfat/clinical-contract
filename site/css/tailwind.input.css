@@ -9,6 +9,7 @@
 */
 @import "./src/base.css";
 @import "./src/components/shell.css";
+@import "./src/components/landing.css";
 @import "./src/components/buttons.css";
 @import "./src/components/editor-data.css";
 @import "./src/components/results.css";

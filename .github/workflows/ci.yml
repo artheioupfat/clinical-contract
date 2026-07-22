@@ -32,8 +32,39 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short
 
+  site-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install site dependencies
+        run: npm ci
+
+      - name: Verify generated site assets
+        run: |
+          npm run generate:site-types
+          npm run generate:site-version
+          git diff --exit-code -- site/js/type-catalog.js site/js/site-version.js
+
+      - name: Run site tests
+        run: npm run test:site
+
+      - name: Build site CSS
+        run: |
+          npm run build:site:css
+          git diff --exit-code -- site/css/tailwind.css
+
   package-check:
-    needs: test
+    needs: [test, site-test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

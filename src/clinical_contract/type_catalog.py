@@ -18,7 +18,7 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
         "boolean",
     ],
     "physicalTypeByLogical": {
-        "string": ["varchar", "text", "string", "char"],
+        "string": ["varchar", "text", "string", "char", "uuid"],
         "date": ["datetime", "timestamp", "timestamp with timezone"],
         "integer": [
             "int8",
