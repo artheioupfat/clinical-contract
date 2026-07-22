@@ -61,8 +61,7 @@
                   <template x-if="!schemaStarted">
                     <div class="schema-empty">
                       <div class="schema-empty-card">
-                        <div class="schema-empty-kicker">New data contract</div>
-                        <h2 class="schema-empty-title">Start with a blank schema</h2>
+                        <h2 class="schema-empty-title">Start a New Contract</h2>
                         <p class="schema-empty-copy">
                           Build your contract step by step, or load an existing YAML contract.
                         </p>
@@ -74,7 +73,7 @@
                             :disabled="!pythonReady"
                             :title="pythonReady ? 'Start a blank contract' : 'Python runtime is still loading'"
                             @click="startBlankContract()"
-                          >Add schema</button>
+                          >New Contract</button>
                           <button
                             type="button"
                             class="pine-btn"
