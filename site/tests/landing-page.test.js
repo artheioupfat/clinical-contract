@@ -43,6 +43,7 @@ test('landing page presents a static product overview without loading the editor
 
 test('interactive editor page owns the PyScript runtime', () => {
   const editorHtml = readSiteFile('editor.html');
+  const headerHtml = readSiteFile('partials/header.html');
   const shellCss = readSiteFile('css/src/components/shell.css');
 
   assert.match(editorHtml, /x-data="clinicalApp\(\)"/);
@@ -50,5 +51,6 @@ test('interactive editor page owns the PyScript runtime', () => {
   assert.match(editorHtml, /pyscript\.net/);
   assert.match(editorHtml, /type="py"/);
   assert.match(editorHtml, /partials\/editor-panel\.html/);
+  assert.match(headerHtml, /<a class="pine-brand" href="\.\/index\.html"/);
   assert.match(shellCss, /\.is-embedded-editor \.pine-header/);
 });
