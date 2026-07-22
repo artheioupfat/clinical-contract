@@ -22,11 +22,6 @@
     border-color: var(--cc-border);
   }
 
-  .schema-empty-kicker {
-    @apply text-[11px] font-bold uppercase tracking-[0.18em];
-    color: var(--cc-primary);
-  }
-
   .schema-empty-title {
     @apply mt-3 text-2xl font-semibold tracking-tight;
     color: var(--cc-text);
