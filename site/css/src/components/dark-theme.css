@@ -74,7 +74,7 @@
   }
 
   .theme-dark :is(.entity-modal__close, .pine-tab, .view-switch-btn) { color: var(--cc-night-muted); }
-  .theme-dark :is(.panel-eyebrow, .schema-empty-kicker) { color: var(--cc-primary-strong); }
+  .theme-dark .panel-eyebrow { color: var(--cc-primary-strong); }
   .theme-dark .pine-theme-button {
     background: transparent;
     border-color: transparent;
