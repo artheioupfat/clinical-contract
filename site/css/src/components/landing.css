@@ -91,7 +91,7 @@
     color: var(--cc-muted);
   }
 
-  .landing-standard__intro a {
+  .landing-standard__rows a {
     @apply font-semibold;
     color: var(--cc-primary-strong);
   }
@@ -102,7 +102,7 @@
   }
 
   .landing-standard__rows article {
-    @apply grid gap-3 border-b py-5 sm:grid-cols-[9rem_1fr] sm:items-start;
+    @apply grid gap-3 border-b py-5 sm:grid-cols-[9rem_1fr] sm:items-center;
     border-color: var(--cc-border);
   }
 
@@ -136,10 +136,6 @@
   .landing-cli__copy p:not(.landing-kicker) {
     @apply mt-5 text-sm leading-7 sm:text-base;
     color: var(--cc-muted);
-  }
-
-  .landing-cli__terminals {
-    @apply grid gap-5;
   }
 
   .landing-cli__terminal {

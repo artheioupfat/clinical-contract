@@ -73,99 +73,55 @@
           </figure>
         </section>
 
-        <section class="landing-standard" aria-label="Fondation du projet">
+        <section class="landing-standard" aria-label="Présentation de Clinical-Contract">
           <div class="landing-standard__intro">
-            <p class="landing-kicker">Fondation</p>
-            <h3>Un contrat lisible avant l'échange, un contrôle reproductible après réception.</h3>
+            <p class="landing-kicker">Clinical-Contract</p>
+            <h3>Cadrer les données avant de les échanger.</h3>
             <p>
-              clinical-contract s'appuie sur les concepts du standard
-              <a href="https://datacontract.com/" target="_blank" rel="noopener noreferrer">Data Contract</a>
-              pour formaliser ce qui est attendu dans un fichier de données cliniques.
+              Clinical-Contract vous accompagne dans la rédaction de contrats de données.
+              Définissez dès le début d'un projet le schéma et les exigences attendues, validez la
+              structure du contrat, puis vérifiez la conformité d'un fichier CSV ou Parquet.
             </p>
           </div>
           <div class="landing-standard__rows">
             <article>
-              <span>Standard</span>
-              <p>Structurer le besoin dans un format YAML compréhensible et versionnable.</p>
+              <span>Data contract</span>
+              <p>Une référence commune entre les équipes qui produisent les données et celles qui les utilisent.</p>
             </article>
             <article>
-              <span>Contrat</span>
-              <p>Décrire les colonnes, les types, les descriptions et les règles de qualité attendues.</p>
+              <span>ODCS 3.1.0</span>
+              <p>
+                Un format YAML lisible et versionnable, fondé sur l'
+                <a href="https://datacontract.com/" target="_blank" rel="noopener noreferrer">Open Data Contract Standard</a>.
+              </p>
             </article>
             <article>
-              <span>Vérification</span>
-              <p>Comparer le contrat au fichier reçu et produire un résultat lisible par les équipes.</p>
+              <span>Traitement local</span>
+              <p>Clinical-Contract est une page statique : aucun contrat ni fichier de données n'est récupéré. Tout reste dans votre navigateur.</p>
             </article>
           </div>
         </section>
 
-        <section class="landing-cli" aria-label="Bibliothèque Python et CLI clinical-contract">
+        <section class="landing-cli" aria-label="Bibliothèque Python et commandes Clinical-Contract">
           <div class="landing-cli__copy">
-            <p class="landing-kicker">Python library + CLI</p>
-            <h3>Utilisez le même contrat partout.</h3>
+            <p class="landing-kicker">Python library</p>
+            <h3>Clinical-Contract existe aussi comme bibliothèque Python.</h3>
             <p>
-              La bibliothèque Python et le CLI valident vos contrats et contrôlent vos fichiers
-              CSV ou Parquet.
+              Installez-la depuis PyPI pour valider les contrats et contrôler les fichiers CSV ou
+              Parquet depuis un terminal ou vos propres pipelines.
             </p>
           </div>
-          <div class="landing-cli__terminals" aria-label="Exemples d'utilisation CLI clinical-contract">
-            <div class="landing-cli__terminal">
-              <div class="landing-cli__terminal-bar">
-                <span></span>
-                <span></span>
-                <span></span>
-                <strong>validate</strong>
-              </div>
-              <pre><code>uv tool install --python python3.11 clinical-contract
+          <div class="landing-cli__terminal">
+            <div class="landing-cli__terminal-bar">
+              <span></span>
+              <span></span>
+              <span></span>
+              <strong>Python + CLI</strong>
+            </div>
+            <pre><code>uv tool install --python python3.11 clinical-contract
 
 clinical-contract validate site/examples/contract.yaml
-
-📋  Structure validation: contract.yaml
-
-Field        Status  Value
-apiVersion   ✅      v3.1.0
-kind         ✅      DataContract
-id           ✅      clinical-template
-name         ✅      Clinical Template Contract
-version      ✅      1.0.0
-status       ✅      active
-description  ✅      structure valid
-schema       ✅      5 columns detected
-
-✅  Valid structure — all required fields are present.</code></pre>
-            </div>
-
-            <div class="landing-cli__terminal">
-              <div class="landing-cli__terminal-bar">
-                <span></span>
-                <span></span>
-                <span></span>
-                <strong>check</strong>
-              </div>
-              <pre><code>clinical-contract check site/examples/contract.yaml site/examples/template.parquet
-
-🔍  Contract check
-    Contract: contract.yaml
-    Data file: template.parquet
-
-Schema validation
-Column       Expected   Detected   Status
-PATIENT_ID   varchar    varchar    ✅
-STAY         uint32     uint32     ✅
-VALUE        float64    float64    ✅
-LIFE_STATUS  boolean    boolean    ✅
-EVENT_TIME   timestamp  timestamp  ✅
-
-✅  5/5 columns valid
-
-Quality checks
-Property    Description                          Result  Obtained  Expected
-PATIENT_ID  PATIENT_ID must not be null          ✅      0         0
-STAY        STAY must not be null                ✅      0         0
-EVENT_TIME  EVENT_TIME must be after 1925-01-01  ✅      0         0
-
-All checks passed.</code></pre>
-            </div>
+clinical-contract check site/examples/contract.yaml site/examples/template.parquet</code></pre>
           </div>
         </section>
 
