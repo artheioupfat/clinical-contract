@@ -49,7 +49,7 @@
   }
 
   .landing-visual-card {
-    @apply mx-auto max-w-6xl overflow-hidden;
+    @apply mx-auto max-w-4xl overflow-hidden;
   }
 
   .landing-visual-image {
