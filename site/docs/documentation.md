@@ -1,10 +1,3 @@
-# Guide d'utilisation
-
-Clinical-Contract est un outil permettant de définir, partager et vérifier des contrats de données.
-
-Un contrat de données décrit de manière explicite la structure attendue d'un fichier, les informations qu'il doit contenir ainsi que les règles de qualité qu'il doit respecter. Il constitue une référence commune entre les personnes qui produisent les données et celles qui les exploitent.
-
-Clinical-Contract accompagne l'ensemble de ce processus : de la rédaction du contrat jusqu'à la validation des données, dans le navigateur, en ligne de commande ou depuis Python.
 
 ## Qu'est-ce qu'un contrat de données ?
 
@@ -51,35 +44,24 @@ Enfin, ajoutez une **description** afin de documenter la signification de la col
 
 ## Comprendre les types
 
-Chaque colonne est décrite par deux types complémentaires : un **Logical Type** et un **Physical Type**.
+Chaque colonne est décrite par deux types complémentaires :
 
-Le **Logical Type** décrit la nature de l'information. Il répond à la question : *"Quel type de donnée représente cette colonne ?"*
+- **Logical Type** : décrit la nature de l'information (*Que représente cette donnée ?*).
+- **Physical Type** : décrit la manière dont cette donnée est stockée ou représentée dans le système source.
 
-Les types logiques disponibles sont :
+Les types disponibles sont les suivants :
 
-| Logical Type | Description |
-| :----------- | :---------- |
-| `string` | Texte ou chaîne de caractères |
-| `integer` | Nombre entier |
-| `float` | Nombre décimal |
-| `boolean` | Valeur booléenne (`true` ou `false`) |
-| `date` | Date ou date et heure |
+| Logical&nbsp;Type | Description | Physical Types compatibles |
+| :-----------: | :----------: | :-------------------------: |
+| `string` | Texte ou chaîne de caractères | `varchar`, `text`, `string`, `char`, `uuid` |
+| `integer` | Nombre entier | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` |
+| `float` | Nombre décimal | `float32`, `float64` |
+| `boolean` | Valeur booléenne (`true` ou `false`) | `boolean`, `binary` |
+| `date` | Date ou date et heure | `datetime`, `timestamp`, `timestamp with timezone` |
 
-Le **Physical Type** décrit quant à lui la manière dont cette donnée est stockée ou représentée dans le système source.
+Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** correspondant au système produisant les données.
 
-Chaque type logique propose un ensemble de types physiques compatibles :
-
-| Logical Type | Physical Types disponibles |
-| :----------- | :------------------------- |
-| `string` | `varchar`, `text`, `string`, `char`, `uuid` |
-| `integer` | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` |
-| `float` | `float32`, `float64` |
-| `boolean` | `boolean`, `binary` |
-| `date` | `datetime`, `timestamp`, `timestamp with timezone` |
-
-Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** le plus adapté au système produisant les données.
-
-Une colonne peut également rester sans contrainte de type. Dans ce cas, Clinical-Contract vérifie seulement sa présence dans le fichier et n'impose ni type logique ni représentation technique.
+Le **Physical Type** est optionnel. Si aucun type n'est renseigné, Clinical-Contract vérifie uniquement la présence de la colonne dans le fichier, sans imposer de type logique ni de représentation technique.
 
 ## Ajouter des règles de qualité
 
@@ -143,7 +125,7 @@ Les champs concernés sont également mis en évidence dans l'éditeur grâce à
 
 Lorsque un contract est chargé et validé, il peut être utilisé pour vérifier la conformité d'un jeu de données produit.
 
-Ouvrez le panneau **Checker**, puis déposez votre fichier dans la zone de **glisser-déposer** (*drag and drop*) ou sélectionnez-le depuis votre ordinateur.
+Ouvrez le panneau **Checker**, puis déposez votre fichier dans la zone de **drag and drop** ou sélectionnez-le depuis votre ordinateur.
 
 Clinical-Contract accepte actuellement les fichiers aux formats **CSV** et **Parquet** uniquement. 
 
