@@ -72,6 +72,9 @@ team:
     - name: Sacha SCHUTZ
       role: Doctor
       email: sacha.schutz@chu-brest.fr
+    - name: Bertrand BOREL
+      role: Data Scientist
+      email: bertrand.borel@chu-brest.fr
     - name: Alexis GOURANTON
       role: Data Scientist
       email: alexis.gouranton@chu-brest.fr
