@@ -81,6 +81,9 @@ team:
     - name: Lucas BOURNEUF
       role: Dev OPS
       email: lucas.bourneuf@chu-brest.fr
+    - name: Nathan FOULQUIER
+      role: Researcher
+      email: nathan.foulquier@chu-brest.fr
     - name: Arthur PRIGENT
       role: Data Scientist
       email: arthur.prigent@chu-brest.fr
