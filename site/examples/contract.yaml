@@ -1,7 +1,7 @@
-apiVersion: v3.1.0
+apiVersion: v3.1.0222
 kind: DataContract
 id: clinical-template
-name: Clinical Template Contract
+name: Clinical Template Contract56
 version: 1.0.0
 status: active
 description:
@@ -69,11 +69,18 @@ team:
   name: CDC Brest
   description: Clinical data center CHU Brest
   members:
-    - name: arthur.prigent@chu-brest.fr
-      role: Data Scientist
-    - name: sacha.schutz@chu-brest.fr
+    - name: Sacha SCHUTZ
       role: Doctor
-    - name: alexis.gouranton@chu-brest.fr
+      email: sacha.schutz@chu-brest.fr
+    - name: Alexis GOURANTON
       role: Data Scientist
-    - name: artur.lamard@chu-brest.fr
+      email: alexis.gouranton@chu-brest.fr
+    - name: Arthur LAMARD
       role: Data Engineer
+      email: arthur.lamard@chu-brest.fr
+    - name: Lucas BOURNEUF
+      role: Dev OPS
+      email: lucas.bourneuf@chu-brest.fr
+    - name: Arthur PRIGENT
+      role: Data Scientist
+      email: arthur.prigent@chu-brest.fr

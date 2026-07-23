@@ -176,12 +176,14 @@ Clinical-Contract est en développement actif. La version actuelle présente les
 - Les règles de qualité doivent être exprimées sous forme de requêtes **SQL**.
 - Les types logiques et physiques disponibles sont limités à ceux proposés par l'application.
 
+
 ## À propos
 
-Clinical-Contract est un projet open source développé pour faciliter la rédaction, la validation et le partage de contrats de données dans le domaine de la santé.
+Clinical-Contract est un projet open source développé par le **Centre de Données Cliniques (CDC) du CHU de Brest** pour faciliter la rédaction, la validation et le partage de contrats de données dans le domaine de la santé, tout en favorisant la standardisation et l'interopérabilité des échanges de données.
 
 L'application s'appuie sur le **Open Data Contract Standard (ODCS) 3.1.0** afin de garantir des contrats interopérables et facilement réutilisables.
 
 Le code source, la documentation et les exemples d'utilisation sont disponibles sur le dépôt GitHub du projet.
 
-Les suggestions d'amélioration, les recommandations et les signalements de problèmes sont les bienvenus. N'hésitez pas à ouvrir une *issue* sur le dépôt GitHub du projet : [https://github.com/artheioupfat/clinical-contract/issues/new](https://github.com/artheioupfat/clinical-contract/issues/new?utm_source=chatgpt.com).
+Les suggestions d'amélioration, les recommandations et les signalements de problèmes sont les bienvenus. N'hésitez pas à ouvrir une *issue* sur le dépôt GitHub du projet :
+https://github.com/artheioupfat/clinical-contract/issues/new
