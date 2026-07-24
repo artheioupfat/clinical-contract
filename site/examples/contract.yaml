@@ -1,7 +1,7 @@
-apiVersion: v3.1.0222
+apiVersion: v3.1.0
 kind: DataContract
 id: clinical-template
-name: Clinical Template Contract56
+name: Clinical Template Contract
 version: 1.0.0
 status: active
 description:
