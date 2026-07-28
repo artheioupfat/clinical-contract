@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clinical-contract"
-version = "0.1.7"
+version = "0.1.8"
 description = "Validate clinical YAML data contracts against Parquet and CSV files"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -47,6 +47,11 @@ dev = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/clinical_contract"]
 include = ["src/clinical_contract/py.typed"]
+
+[tool.hatch.build.targets.sdist]
+
+[tool.hatch.build.targets.sdist.force-include]
+"src/clinical_contract" = "src/clinical_contract"
 
 [tool.ruff]
 line-length = 88
