@@ -77,7 +77,19 @@ jobs:
         run: pip install build twine
 
       - name: Build package
-        run: python -m build
+        run: |
+          rm -rf dist
+          python -m build
+
+      - name: Verify package contents
+        run: python scripts/verify_package_artifacts.py dist
+
+      - name: Smoke test built wheel
+        run: |
+          python -m venv package-smoke
+          package-smoke/bin/python -m pip install --no-cache-dir dist/*.whl
+          package-smoke/bin/python -c "import clinical_contract; print(clinical_contract.__version__)"
+          package-smoke/bin/clinical-contract --help
 
       - name: Verify package metadata
         run: twine check dist/*
@@ -129,7 +141,12 @@ jobs:
         run: pip install build
 
       - name: Build package
-        run: python -m build
+        run: |
+          rm -rf dist
+          python -m build
+
+      - name: Verify package contents
+        run: python scripts/verify_package_artifacts.py dist
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

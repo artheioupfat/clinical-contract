@@ -66,13 +66,13 @@ pip install clinical-contract
 Validate a contract:
 
 ```bash
-clinical-contract validate examples/example_contract.yaml
+clinical-contract validate site/examples/contract.yaml
 ```
 
 Check a data file:
 
 ```bash
-clinical-contract check examples/example_contract.yaml data.parquet
+clinical-contract check site/examples/contract.yaml site/examples/template.parquet
 ```
 
 Use it from Python:
@@ -80,8 +80,8 @@ Use it from Python:
 ```python
 from clinical_contract import load_contract
 
-contract, raw = load_contract("examples/example_contract.yaml")
-report = contract.check("data.parquet")
+contract, raw = load_contract("site/examples/contract.yaml")
+report = contract.check("site/examples/template.parquet")
 
 print(report.success)
 ```
@@ -138,7 +138,7 @@ Then open `http://127.0.0.1:8000`.
 ```text
 src/clinical_contract/   Python package and validation engine
 site/                    Static web app for GitHub Pages
-examples/                Example contracts
+site/examples/           Browser template contract and sample dataset
 tests/                   Python test suite
 site/tests/              JavaScript site tests
 ```
