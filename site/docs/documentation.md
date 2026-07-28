@@ -167,6 +167,36 @@ La commande `check` compare un fichier de données avec un contrat de données. 
 clinical-contract check site/examples/contract.yaml site/examples/template.parquet
 ```
 
+## Python API
+
+La bibliothèque Python permet d'intégrer les mêmes contrôles dans un pipeline ou une application.
+
+```bash
+pip install clinical-contract
+```
+
+### Valider la structure d'un contrat
+
+```python
+from clinical_contract import DataContract, load_raw
+
+raw_contract = load_raw("contract.yaml")
+report = DataContract.validate_structure(raw_contract)
+
+print(report.success)
+```
+
+### Vérifier un fichier de données
+
+```python
+from clinical_contract import load_contract
+
+contract, _ = load_contract("contract.yaml")
+report = contract.check("data.parquet")
+
+print(report.success)
+```
+
 ## Limites actuelles
 
 Clinical-Contract est en développement actif. La version actuelle présente les limitations suivantes :

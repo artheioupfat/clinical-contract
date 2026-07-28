@@ -75,13 +75,24 @@ Check a data file:
 clinical-contract check site/examples/contract.yaml site/examples/template.parquet
 ```
 
-Use it from Python:
+Use it from Python to validate a contract structure:
+
+```python
+from clinical_contract import DataContract, load_raw
+
+raw_contract = load_raw("contract.yaml")
+report = DataContract.validate_structure(raw_contract)
+
+print(report.success)
+```
+
+Or check a data file against a contract:
 
 ```python
 from clinical_contract import load_contract
 
-contract, raw = load_contract("site/examples/contract.yaml")
-report = contract.check("site/examples/template.parquet")
+contract, _ = load_contract("contract.yaml")
+report = contract.check("data.parquet")
 
 print(report.success)
 ```
