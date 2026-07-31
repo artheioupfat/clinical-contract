@@ -14,6 +14,7 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
         "string",
         "date",
         "time",
+        "array",
         "integer",
         "float",
         "boolean",
@@ -22,6 +23,7 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
         "string": ["varchar", "text", "string", "char", "uuid"],
         "date": ["datetime", "timestamp", "timestamp with timezone"],
         "time": ["time"],
+        "array": ["array"],
         "integer": [
             "int8",
             "int16",

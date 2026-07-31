@@ -169,7 +169,7 @@ def _write_parquet_from_select(tmp_path, filename, table_name, select_sql):
     return parquet_file
 
 
-def _yaml_single_event_timestamp(logical_type, physical_type=None):
+def _yaml_single_typed_column(column_name, logical_type, physical_type=None):
     physical_type_line = (
         f"        physicalType: {physical_type}\n"
         if physical_type
@@ -191,11 +191,15 @@ schema:
     physicalType: TABLE
     description: Table patients
     properties:
-      - name: event_ts
+      - name: {column_name}
         logicalType: {logical_type}
-{physical_type_line}        description: Event timestamp
+{physical_type_line}        description: Typed test column
         required: true
 """
+
+
+def _yaml_single_event_timestamp(logical_type, physical_type=None):
+    return _yaml_single_typed_column("event_ts", logical_type, physical_type)
 
 
 # ------------------------------------------------------------------ #
@@ -519,6 +523,42 @@ def test_check_schema_time_rejects_timestamp(tmp_path):
     assert reports[0].success is False
     assert reports[0].columns[0].yaml_type == "time"
     assert reports[0].columns[0].parquet_type == "timestamp"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_array_matches_duckdb_list(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_array.parquet",
+        "patients",
+        "SELECT [1, 2, 3] AS measurements",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurements", "array", "array")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "array"
+    assert reports[0].columns[0].parquet_type == "array"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_array_rejects_scalar_column(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_scalar.parquet",
+        "patients",
+        "SELECT 1 AS measurements",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurements", "array")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "array"
+    assert reports[0].columns[0].parquet_type == "int32"
     assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
@@ -1327,6 +1367,15 @@ schema:
 
 def test_validate_structure_accepts_time_logical_and_physical_types():
     raw = load_raw(_yaml_single_event_timestamp("time", "time"))
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+def test_validate_structure_accepts_array_logical_and_physical_types():
+    raw = load_raw(
+        _yaml_single_typed_column("measurements", "array", "array")
+    )
     report = DataContract.validate_structure(raw)
 
     assert report.success is True

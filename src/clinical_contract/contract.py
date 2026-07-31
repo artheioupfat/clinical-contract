@@ -4,6 +4,7 @@ Core DataContract model.
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 from typing import Optional
 from pydantic import BaseModel, Field
@@ -47,6 +48,7 @@ INTEGER_TYPES = {
 FLOAT_TYPES = {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"}
 DATE_TYPES = {"date", "date32", "date64"}
 TIME_TYPES = {"time"}
+ARRAY_TYPES = {"array"}
 DATETIME_TYPES = {
     "datetime",
     "timestamp",
@@ -67,6 +69,7 @@ TYPE_MAP: dict[str, set[str]] = {
     "float": FLOAT_TYPES,
     "date": DATE_TYPES | DATETIME_TYPES,
     "time": TIME_TYPES,
+    "array": ARRAY_TYPES,
     "boolean": BOOLEAN_TYPES,
     "binary": BINARY_TYPES,
 
@@ -124,6 +127,7 @@ DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "date64": "date",
     "date": "date",
     "time": "time",
+    "array": "array",
     "bool": "boolean",
     "boolean": "boolean",
     "binary": "binary",
@@ -148,6 +152,7 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
     "timestamp_ns": "timestamp_ns",
     "date": "date",
     "time": "time",
+    "array": "array",
     "date32": "date32",
     "date64": "date64",
     "int8": "tinyint",
@@ -181,6 +186,8 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
 
 def _normalize_type_name(type_name: str) -> str:
     type_lower = type_name.lower().strip()
+    if re.search(r"\[\d*\]$", type_lower):
+        return "array"
     if type_lower.startswith("timestamp["):
         return "timestamp"
     if type_lower.startswith("decimal("):

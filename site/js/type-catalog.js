@@ -6,6 +6,7 @@ const catalog = {
     "string",
     "date",
     "time",
+    "array",
     "integer",
     "float",
     "boolean"
@@ -25,6 +26,9 @@ const catalog = {
     ],
     "time": [
       "time"
+    ],
+    "array": [
+      "array"
     ],
     "integer": [
       "int8",

@@ -59,8 +59,11 @@ Les types disponibles sont les suivants :
 | `boolean` | Valeur booléenne (`true` ou `false`) | `boolean`, `binary` |
 | `date` | Date ou date et heure | `datetime`, `timestamp`, `timestamp with timezone` |
 | `time` | Heure sans information de date | `time` |
+| `array` | Collection de valeurs | `array` |
 
 Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** correspondant au système produisant les données.
+
+Le type `array` accepte les collections DuckDB de taille variable ou fixe. Le type des éléments contenus dans la collection n'est pas contraint pour le moment.
 
 Le **Physical Type** est optionnel. Si aucun type n'est renseigné, Clinical-Contract vérifie uniquement la présence de la colonne dans le fichier, sans imposer de type logique ni de représentation technique.
 
