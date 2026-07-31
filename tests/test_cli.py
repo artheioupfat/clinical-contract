@@ -239,6 +239,24 @@ def test_check_success_output(
     assert "All checks passed." in out
 
 
+def test_check_displays_quality_comparison_operator(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    comparison_yaml = YAML_VALID.replace(
+        "mustBe: 0",
+        "expected:\n              greaterThanOrEqual: 0",
+    )
+    contract_path = _write_yaml(tmp_path, comparison_yaml)
+    parquet_path = _write_parquet_ids(tmp_path, ["A001", "A002"])
+
+    _run_main(monkeypatch, ["check", str(contract_path), str(parquet_path)])
+
+    out = capsys.readouterr().out
+    assert ">= 0" in out
+
+
 def test_check_success_output_csv(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

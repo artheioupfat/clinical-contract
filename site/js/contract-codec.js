@@ -110,15 +110,64 @@
     };
   }
 
+  const QUALITY_COMPARISON_OPERATORS = [
+    'equal',
+    'notEqual',
+    'greaterThan',
+    'greaterThanOrEqual',
+    'lessThan',
+    'lessThanOrEqual',
+    'between',
+  ];
+
+  function decodeQualityExpectation(quality = {}) {
+    const expected = quality.expected;
+    if (expected && typeof expected === 'object' && !Array.isArray(expected)) {
+      const operator = QUALITY_COMPARISON_OPERATORS.find(
+        (candidate) => Object.prototype.hasOwnProperty.call(expected, candidate)
+      );
+      if (operator === 'between') {
+        const bounds = expected.between;
+        return {
+          comparisonOperator: 'between',
+          expectedValue: 0,
+          expectedMin: bounds && typeof bounds === 'object' ? bounds.min ?? 0 : 0,
+          expectedMax: bounds && typeof bounds === 'object' ? bounds.max ?? 0 : 0,
+        };
+      }
+      if (operator) {
+        return {
+          comparisonOperator: operator,
+          expectedValue: expected[operator] ?? 0,
+          expectedMin: 0,
+          expectedMax: 0,
+        };
+      }
+    }
+
+    return {
+      comparisonOperator: 'equal',
+      expectedValue: quality.mustBe ?? 0,
+      expectedMin: 0,
+      expectedMax: 0,
+    };
+  }
+
   function createQualityRule(seed = {}, options = {}) {
     const nextRowId = createIdFactory(options);
+    const operator = QUALITY_COMPARISON_OPERATORS.includes(seed.comparisonOperator)
+      ? seed.comparisonOperator
+      : 'equal';
     return {
       _rowId: nextRowId(),
       propertyName: seed.propertyName || '',
       type: seed.type || 'sql',
       description: seed.description || '',
       query: seed.query || '',
-      mustBe: seed.mustBe ?? 0,
+      comparisonOperator: operator,
+      expectedValue: seed.expectedValue ?? seed.mustBe ?? 0,
+      expectedMin: seed.expectedMin ?? 0,
+      expectedMax: seed.expectedMax ?? 0,
       extras: deepClone(seed.extras || {}),
     };
   }
@@ -246,7 +295,8 @@
 
       for (const rule of rules) {
         const quality = rule && typeof rule === 'object' ? rule : {};
-        const handledRule = new Set(['type', 'description', 'query', 'mustBe']);
+        const handledRule = new Set(['type', 'description', 'query', 'mustBe', 'expected']);
+        const expectation = decodeQualityExpectation(quality);
         qualityRules.push(
           createQualityRule(
             {
@@ -254,7 +304,7 @@
               type: quality.type || 'sql',
               description: quality.description || '',
               query: quality.query || '',
-              mustBe: quality.mustBe ?? 0,
+              ...expectation,
               extras: collectExtras(quality, handledRule),
             },
             { nextRowId }
@@ -379,7 +429,21 @@
             if (rule.description && rule.description.trim()) qualityRow.description = rule.description.trim();
             else delete qualityRow.description;
             qualityRow.query = rule.query || '';
-            qualityRow.mustBe = Number(rule.mustBe ?? 0);
+            const operator = QUALITY_COMPARISON_OPERATORS.includes(rule.comparisonOperator)
+              ? rule.comparisonOperator
+              : 'equal';
+            if (operator === 'between') {
+              qualityRow.expected = {
+                between: {
+                  min: Number(rule.expectedMin ?? 0),
+                  max: Number(rule.expectedMax ?? 0),
+                },
+              };
+            } else {
+              qualityRow.expected = {
+                [operator]: Number(rule.expectedValue ?? 0),
+              };
+            }
             return qualityRow;
           })
           .filter((rule) => rule.query || rule.description);
@@ -444,6 +508,8 @@
     normalizeTypeToken,
     normalizeContractDescription,
     readFirstDefined,
+    QUALITY_COMPARISON_OPERATORS,
+    decodeQualityExpectation,
     createEmptyDraft,
     createSchemaProperty,
     createQualityRule,

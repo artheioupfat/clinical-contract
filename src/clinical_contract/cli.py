@@ -206,7 +206,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
             r.description,
             icon,
             obtained,
-            str(r.expected),
+            r.expected_display,
         ])
 
     if rows:

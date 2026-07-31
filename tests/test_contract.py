@@ -11,7 +11,11 @@ from clinical_contract.contract import (
     _is_supported_physical_type,
 )
 from clinical_contract.type_catalog import EDITOR_TYPE_CATALOG
-from clinical_contract.models import CheckStatus, ColumnCheckStatus
+from clinical_contract.models import (
+    CheckStatus,
+    ColumnCheckStatus,
+    ComparisonOperator,
+)
 from pathlib import Path
 
 # ------------------------------------------------------------------ #
@@ -140,6 +144,38 @@ def _write_csv_ids(tmp_path, ids, filename="patients.csv"):
         )
 
     return csv_file
+
+
+def _yaml_with_quality_expectation(expectation_yaml, query="SELECT COUNT(*) FROM patients"):
+    expectation = "\n".join(
+        f"            {line}" for line in expectation_yaml.splitlines()
+    )
+    return f"""
+apiVersion: v1.0.0
+kind: DataContract
+id: comparison-contract
+name: Comparison Contract
+version: 1.0.0
+status: active
+description:
+  purpose: Test
+  usage: Unit tests
+  limitations: None
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: VARCHAR
+        required: true
+        quality:
+          - type: sql
+            description: Scalar comparison
+            query: "{query}"
+{expectation}
+"""
 
 
 def _write_parquet_single_typed_column(tmp_path, table_name, column_name, duckdb_type):
@@ -282,6 +318,129 @@ def test_check_echec_si_null(tmp_path):
     assert failures[0].status == CheckStatus.failed
     assert failures[0].obtained == 1
     assert failures[0].expected == 0
+
+
+@pytest.mark.parametrize(
+    ("expectation_yaml", "operator", "expected_display"),
+    [
+        ("expected:\n  equal: 3", ComparisonOperator.equal, "= 3"),
+        ("expected:\n  notEqual: 4", ComparisonOperator.not_equal, "!= 4"),
+        ("expected:\n  greaterThan: 2", ComparisonOperator.greater_than, "> 2"),
+        (
+            "expected:\n  greaterThanOrEqual: 3",
+            ComparisonOperator.greater_than_or_equal,
+            ">= 3",
+        ),
+        ("expected:\n  lessThan: 4", ComparisonOperator.less_than, "< 4"),
+        (
+            "expected:\n  lessThanOrEqual: 3",
+            ComparisonOperator.less_than_or_equal,
+            "<= 3",
+        ),
+        (
+            "expected:\n  between:\n    min: 3\n    max: 3",
+            ComparisonOperator.between,
+            "3 <= value <= 3",
+        ),
+    ],
+)
+def test_check_supports_quality_comparison_operators(
+    tmp_path,
+    expectation_yaml,
+    operator,
+    expected_display,
+):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(_yaml_with_quality_expectation(expectation_yaml))
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.results[0].operator == operator
+    assert report.results[0].expected_display == expected_display
+
+
+def test_check_comparison_failure_returns_code_1(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation("expected:\n  greaterThan: 3")
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is False
+    assert report.code == 1
+    assert report.results[0].obtained == 3
+    assert report.results[0].expected_display == "> 3"
+
+
+def test_check_preserves_fractional_query_results(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation(
+            "expected:\n  greaterThan: 1.4",
+            query="SELECT AVG(value) FROM (VALUES (1), (2)) AS sample(value)",
+        )
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.results[0].obtained == 1.5
+
+
+@pytest.mark.parametrize(
+    ("query", "error_message"),
+    [
+        ("SELECT 1, 2", "exactly one column"),
+        ("SELECT * FROM (VALUES (1), (2))", "exactly one row"),
+        ("SELECT NULL", "returned NULL"),
+    ],
+)
+def test_check_rejects_non_scalar_quality_results(tmp_path, query, error_message):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation("expected:\n  equal: 1", query=query)
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.code == 2
+    assert error_message in report.errors()[0].error_message
+
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        {},
+        {"equal": 0, "lessThan": 2},
+        {"between": {"min": 10, "max": 1}},
+        {"greaterThan": True},
+    ],
+)
+def test_validate_structure_rejects_invalid_quality_expectations(expected):
+    raw = load_raw(YAML_COMPLET)
+    quality = raw["schema"][0]["properties"][0]["quality"][0]
+    quality.pop("mustBe")
+    quality["expected"] = expected
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(field for field in report.fields if field.field == "schema")
+    assert "quality[0] invalid" in schema_field.display_value
+
+
+def test_validate_structure_rejects_must_be_with_expected():
+    raw = load_raw(YAML_COMPLET)
+    quality = raw["schema"][0]["properties"][0]["quality"][0]
+    quality["expected"] = {"equal": 0}
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(field for field in report.fields if field.field == "schema")
+    assert "mustBe and expected cannot be used together" in schema_field.display_value
 
 
 def test_check_tous_passes_depuis_bytes(tmp_path):

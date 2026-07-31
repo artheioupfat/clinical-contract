@@ -22,9 +22,12 @@ from .loader import load_contract, load_raw
 from .contract import DataContract, SchemaItem, Property, Quality, Description
 from .type_catalog import EDITOR_TYPE_CATALOG
 from .models import (
+    BetweenExpectation,
+    ComparisonOperator,
     ContractReport,
     ValidateReport,
     QualityResult,
+    QualityExpectation,
     FieldValidation,
     CheckStatus,
     ColumnCheckResult,
@@ -40,10 +43,13 @@ __all__ = [
     "Property",
     "Quality",
     "Description",
+    "BetweenExpectation",
+    "ComparisonOperator",
     "EDITOR_TYPE_CATALOG",
     "ContractReport",
     "ValidateReport",
     "QualityResult",
+    "QualityExpectation",
     "FieldValidation",
     "CheckStatus",
     "ColumnCheckResult",

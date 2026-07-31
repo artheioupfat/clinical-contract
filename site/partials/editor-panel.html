@@ -422,10 +422,36 @@
                                 </select>
                               </label>
 
-                              <label class="entity-modal__field">
-                                <span class="entity-modal__label">Expected result</span>
-                                <input type="number" x-model.number="rule.mustBe" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
-                              </label>
+                              <div class="quality-comparison">
+                                <label class="entity-modal__field">
+                                  <span class="entity-modal__label">Comparison</span>
+                                  <select x-model="rule.comparisonOperator" @change="pushSchemaToYaml()" class="schema-input">
+                                    <option value="equal">Equal</option>
+                                    <option value="notEqual">Not equal</option>
+                                    <option value="greaterThan">Greater than</option>
+                                    <option value="greaterThanOrEqual">Greater than or equal</option>
+                                    <option value="lessThan">Less than</option>
+                                    <option value="lessThanOrEqual">Less than or equal</option>
+                                    <option value="between">Between</option>
+                                  </select>
+                                </label>
+
+                                <label class="entity-modal__field" x-show="rule.comparisonOperator !== 'between'">
+                                  <span class="entity-modal__label">Expected value</span>
+                                  <input type="number" step="any" x-model.number="rule.expectedValue" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                </label>
+
+                                <div class="quality-comparison__range" x-show="rule.comparisonOperator === 'between'" x-cloak>
+                                  <label class="entity-modal__field">
+                                    <span class="entity-modal__label">Minimum</span>
+                                    <input type="number" step="any" x-model.number="rule.expectedMin" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                  </label>
+                                  <label class="entity-modal__field">
+                                    <span class="entity-modal__label">Maximum</span>
+                                    <input type="number" step="any" x-model.number="rule.expectedMax" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                  </label>
+                                </div>
+                              </div>
 
                               <label class="entity-modal__field entity-modal__field--wide">
                                 <span class="entity-modal__label">Description</span>

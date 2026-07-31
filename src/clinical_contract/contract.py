@@ -3,21 +3,34 @@ Core DataContract model.
 """
 from __future__ import annotations
 
+import math
 import os
 import re
 import tempfile
-from typing import Optional
-from pydantic import BaseModel, Field
+from decimal import Decimal
 from pathlib import Path
+from typing import Optional
+
 import duckdb
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .models import (
     CheckStatus,
+    BetweenExpectation,
+    ComparisonOperator,
     ColumnCheckResult,
     ColumnCheckStatus,
     ContractReport,
     FieldValidation,
     QualityResult,
+    QualityExpectation,
+    NumericValue,
     SchemaCheckReport,
     ValidateReport,
 )
@@ -346,7 +359,11 @@ def _cleanup_temp_path(temp_path: str | None) -> None:
         pass
 
 
-def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> int:
+def _run_duckdb_query(
+    sql: str,
+    parquet_path: str | bytes,
+    table_name: str,
+) -> NumericValue:
     try:
         import duckdb
     except ImportError as exc:
@@ -388,10 +405,77 @@ def _run_duckdb_query(sql: str, parquet_path: str | bytes, table_name: str) -> i
                             "Use a .parquet/.csv file, or valid parquet/csv bytes."
                         ) from csv_exc
 
-            result = conn.execute(sql).fetchone()
-            return int(result[0] or 0)
+            cursor = conn.execute(sql)
+            if not cursor.description or len(cursor.description) != 1:
+                raise ValueError(
+                    "Quality SQL query must return exactly one column."
+                )
+
+            rows = cursor.fetchmany(2)
+            if len(rows) != 1:
+                raise ValueError(
+                    "Quality SQL query must return exactly one row."
+                )
+
+            value = rows[0][0]
+            if value is None:
+                raise ValueError("Quality SQL query returned NULL.")
+            if isinstance(value, bool) or not isinstance(
+                value,
+                (int, float, Decimal),
+            ):
+                raise ValueError(
+                    "Quality SQL query must return a numeric value."
+                )
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValueError(
+                    "Quality SQL query returned a non-finite number."
+                )
+            if isinstance(value, Decimal) and not value.is_finite():
+                raise ValueError(
+                    "Quality SQL query returned a non-finite number."
+                )
+            return value
     finally:
         _cleanup_temp_path(temp_path)
+
+
+def _numeric_as_decimal(value: NumericValue) -> Decimal:
+    if isinstance(value, bool):
+        raise ValueError("Quality comparison values must be numeric.")
+    converted = value if isinstance(value, Decimal) else Decimal(str(value))
+    if not converted.is_finite():
+        raise ValueError("Quality comparison values must be finite.")
+    return converted
+
+
+def _quality_comparison_passes(
+    obtained: NumericValue,
+    operator: ComparisonOperator,
+    expected: NumericValue | BetweenExpectation,
+) -> bool:
+    actual = _numeric_as_decimal(obtained)
+    if operator == ComparisonOperator.between:
+        if not isinstance(expected, BetweenExpectation):
+            raise ValueError("between requires min and max values.")
+        return (
+            _numeric_as_decimal(expected.min)
+            <= actual
+            <= _numeric_as_decimal(expected.max)
+        )
+
+    if isinstance(expected, BetweenExpectation):
+        raise ValueError(f"{operator.value} requires one numeric value.")
+    target = _numeric_as_decimal(expected)
+    comparisons = {
+        ComparisonOperator.equal: actual == target,
+        ComparisonOperator.not_equal: actual != target,
+        ComparisonOperator.greater_than: actual > target,
+        ComparisonOperator.greater_than_or_equal: actual >= target,
+        ComparisonOperator.less_than: actual < target,
+        ComparisonOperator.less_than_or_equal: actual <= target,
+    }
+    return comparisons[operator]
 
 # Champs obligatoires au niveau racine du YAML
 REQUIRED_FIELDS = [
@@ -420,7 +504,29 @@ class Quality(BaseModel):
     type: str
     description: str = ""
     query: str = ""
-    mustBe: int = 0
+    mustBe: Optional[NumericValue] = None
+    expected: Optional[QualityExpectation] = None
+
+    @field_validator("mustBe", mode="before")
+    @classmethod
+    def reject_boolean_must_be(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("mustBe must be numeric, not boolean")
+        return value
+
+    @model_validator(mode="after")
+    def validate_expectation(self):
+        if self.mustBe is not None and self.expected is not None:
+            raise ValueError("mustBe and expected cannot be used together")
+        return self
+
+    def resolved_expectation(
+        self,
+    ) -> tuple[ComparisonOperator, NumericValue | BetweenExpectation]:
+        if self.expected is not None:
+            return self.expected.resolve()
+        fallback = self.mustBe if self.mustBe is not None else 0
+        return ComparisonOperator.equal, fallback
 
 
 class Property(BaseModel):
@@ -540,6 +646,33 @@ class DataContract(BaseModel):
                                         f"schema[{i}].properties[{j}].physicalType unsupported: {physical_type!r}"
                                     )
                                     continue
+
+                                quality_rules = prop.get("quality")
+                                if quality_rules is not None:
+                                    if not isinstance(quality_rules, list):
+                                        errors.append(
+                                            f"schema[{i}].properties[{j}].quality must be a list"
+                                        )
+                                    else:
+                                        for k, quality_rule in enumerate(quality_rules):
+                                            quality_path = (
+                                                f"schema[{i}].properties[{j}]"
+                                                f".quality[{k}]"
+                                            )
+                                            if not isinstance(quality_rule, dict):
+                                                errors.append(
+                                                    f"{quality_path} invalid (not an object)"
+                                                )
+                                                continue
+                                            try:
+                                                Quality.model_validate(
+                                                    {"type": "sql", **quality_rule}
+                                                )
+                                            except ValidationError as exc:
+                                                message = exc.errors()[0]["msg"]
+                                                errors.append(
+                                                    f"{quality_path} invalid: {message}"
+                                                )
 
                                 total_columns += 1
 
@@ -681,6 +814,7 @@ class DataContract(BaseModel):
                     if not q.query.strip():
                         continue
 
+                    operator, expected = q.resolved_expectation()
                     try:
                         obtained = _run_duckdb_query(
                             sql=q.query,
@@ -689,7 +823,11 @@ class DataContract(BaseModel):
                         )
                         status = (
                             CheckStatus.passed
-                            if obtained == q.mustBe
+                            if _quality_comparison_passes(
+                                obtained,
+                                operator,
+                                expected,
+                            )
                             else CheckStatus.failed
                         )
                         results.append(QualityResult(
@@ -698,7 +836,8 @@ class DataContract(BaseModel):
                             description=q.description,
                             query=q.query,
                             status=status,
-                            expected=q.mustBe,
+                            operator=operator,
+                            expected=expected,
                             obtained=obtained,
                         ))
 
@@ -709,7 +848,8 @@ class DataContract(BaseModel):
                             description=q.description,
                             query=q.query,
                             status=CheckStatus.error,
-                            expected=q.mustBe,
+                            operator=operator,
+                            expected=expected,
                             error_message=str(exc),
                         ))
 

@@ -119,7 +119,8 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
 
   assert.equal(draft.qualityRules.length, 1);
   assert.equal(draft.qualityRules[0].propertyName, 'order_id');
-  assert.equal(draft.qualityRules[0].mustBe, 0);
+  assert.equal(draft.qualityRules[0].comparisonOperator, 'equal');
+  assert.equal(draft.qualityRules[0].expectedValue, 0);
   assert.equal(draft.qualityRules[0].extras.severity, 'high');
 
   assert.equal(draft.teamMembers.length, 1);
@@ -151,7 +152,40 @@ test('draftToContractObject writes quality under its column and preserves extras
   assert.equal(property.quality.length, 1);
   assert.equal(property.quality[0].severity, 'high');
   assert.equal(property.quality[0].query, 'select count(*) from data where order_id is null');
+  assert.deepEqual(property.quality[0].expected, { equal: 0 });
+  assert.equal(Object.prototype.hasOwnProperty.call(property.quality[0], 'mustBe'), false);
   assert.equal(contract.team.members[0].xMember, 'kept');
+});
+
+test('quality comparisons round-trip between expected YAML and editor state', () => {
+  const contract = sampleContract();
+  const quality = contract.schema[0].properties[0].quality[0];
+  delete quality.mustBe;
+  quality.expected = {
+    between: {
+      min: 90000,
+      max: 110000,
+    },
+  };
+
+  const decoded = codec.contractObjectToDraft(contract, { nextRowId: nextIdFactory() });
+  const rule = decoded.draft.qualityRules[0];
+
+  assert.equal(rule.comparisonOperator, 'between');
+  assert.equal(rule.expectedMin, 90000);
+  assert.equal(rule.expectedMax, 110000);
+
+  const encoded = codec.draftToContractObject(
+    decoded.draft,
+    decoded.rootExtras,
+    decoded.otherSchemas
+  );
+  assert.deepEqual(encoded.schema[0].properties[0].quality[0].expected, {
+    between: {
+      min: 90000,
+      max: 110000,
+    },
+  });
 });
 
 test('draftToContractObject always writes schema physicalType as TABLE without draft state', () => {
