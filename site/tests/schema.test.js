@@ -270,3 +270,33 @@ test('schema module starts blank contracts with the checker visible', () => {
   assert.equal(context.checkerCollapsed, false);
   assert.equal(context.schemaSection, 'fundamentals');
 });
+
+test('manual YAML edits immediately invalidate previous results', () => {
+  const schema = loadSchemaModule();
+  let resultsCleared = 0;
+  const context = {
+    editorView: 'yaml',
+    clearResults() {
+      resultsCleared += 1;
+    },
+  };
+
+  schema.invalidateResultsFromYamlEditor.call(context);
+
+  assert.equal(resultsCleared, 1);
+});
+
+test('manual result invalidation is ignored outside the YAML editor', () => {
+  const schema = loadSchemaModule();
+  let resultsCleared = 0;
+  const context = {
+    editorView: 'schema',
+    clearResults() {
+      resultsCleared += 1;
+    },
+  };
+
+  schema.invalidateResultsFromYamlEditor.call(context);
+
+  assert.equal(resultsCleared, 0);
+});

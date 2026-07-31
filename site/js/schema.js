@@ -362,6 +362,11 @@ window.ClinicalModules.schema = {
     this.syncSchemaFromYaml({ preserveCurrentOnError: true });
   },
 
+  invalidateResultsFromYamlEditor() {
+    if (this.editorView !== 'yaml') return;
+    this.clearResults();
+  },
+
   pushSchemaToYaml() {
     try {
       this.schemaStarted = true;

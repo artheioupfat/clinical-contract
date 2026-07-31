@@ -153,6 +153,49 @@ test('validate opens the contract validation view without changing the checker p
   assert.equal(context.logoVariant, 'green');
 });
 
+test('failed validation replaces stale rows with the current YAML error', async () => {
+  const results = loadResultsModule();
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  global.window.pyValidateContract = () => {
+    throw new Error('Invalid YAML');
+  };
+  const context = {
+    pythonReady: true,
+    busy: false,
+    editorView: 'yaml',
+    showRequiredHints: false,
+    yamlText: 'apiVersion: [',
+    schemaParseWarning: 'YAML parse warning: unexpected end of input.',
+    validateRows: [{ field: 'id', present: true, status: 'passed', value: 'old-contract' }],
+    validateRunState: 'passed',
+    validateDurationMs: 30,
+    normalizeValidateRows: results.normalizeValidateRows,
+    setLogoSuccess() {
+      this.logoVariant = 'green';
+    },
+    setLogoFailure() {
+      this.logoVariant = 'red';
+    },
+  };
+
+  try {
+    await results.validateContract.call(context);
+  } finally {
+    console.error = originalConsoleError;
+  }
+
+  assert.deepEqual(context.validateRows, [{
+    field: 'YAML',
+    present: false,
+    status: 'failed',
+    value: 'YAML parse warning: unexpected end of input.',
+  }]);
+  assert.equal(context.validateRunState, 'failed');
+  assert.equal(context.logoVariant, 'red');
+  assert.equal(Number.isFinite(context.validateDurationMs), true);
+});
+
 test('successful checks finish on quality after evaluating schema first', async () => {
   const results = loadResultsModule();
   global.window.pyRunContractCheck = () => JSON.stringify({

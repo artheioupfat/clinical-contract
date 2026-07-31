@@ -58,6 +58,15 @@
     @apply text-center text-slate-400;
   }
 
+  .quality-result-log {
+    @apply min-w-64 max-w-md whitespace-pre-wrap break-words font-mono text-xs;
+    color: var(--cc-muted);
+  }
+
+  .quality-result-log--error {
+    color: var(--cc-danger);
+  }
+
   .status-chip {
     @apply inline-flex items-center gap-2 font-semibold capitalize;
   }

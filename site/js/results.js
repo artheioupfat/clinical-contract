@@ -94,6 +94,12 @@ window.ClinicalModules.results = {
       }
     } catch (error) {
       console.error(error);
+      this.validateRows = [{
+        field: 'YAML',
+        present: false,
+        status: 'failed',
+        value: this.schemaParseWarning || 'Contract validation could not be completed. Check the YAML syntax and try again.',
+      }];
       this.validateRunState = 'failed';
       this.showRequiredHints = true;
       this.setLogoFailure();
