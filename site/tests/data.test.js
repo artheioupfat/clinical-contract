@@ -29,7 +29,8 @@ test('data module deletes the current file and clears dataset-dependent state', 
     qualityRows: [{ status: 'passed' }],
     schemaRunState: 'passed',
     qualityRunState: 'passed',
-    activeTab: 'preview',
+    dataTab: 'schema',
+    validateRunState: 'passed',
     logoVariant: 'green',
     $refs: { dataInput: input },
     resetDataCheckState: results.resetDataCheckState,
@@ -58,8 +59,8 @@ test('data module deletes the current file and clears dataset-dependent state', 
   assert.deepEqual(context.qualityRows, []);
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
-  assert.equal(context.activeTab, 'validate');
-  assert.equal(context.logoVariant, 'neutral');
+  assert.equal(context.dataTab, 'data');
+  assert.equal(context.logoVariant, 'green');
   assert.equal(input.value, '');
 });
 
@@ -69,6 +70,7 @@ test('data module persists each loaded file before refreshing insights', async (
   let persisted = null;
   let refreshed = 0;
   const context = {
+    pythonReady: true,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
     schemaRunState: 'passed',
@@ -97,6 +99,7 @@ test('data module exposes browser storage failures to the UI state', async () =>
   const originalWarn = console.warn;
   console.warn = () => {};
   const context = {
+    pythonReady: true,
     schemaRows: [],
     qualityRows: [],
     dataStorageWarning: '',
@@ -115,6 +118,35 @@ test('data module exposes browser storage failures to the UI state', async () =>
   } finally {
     console.warn = originalWarn;
   }
+});
+
+test('data module rejects new files until the Python runtime is ready', async () => {
+  const { data } = loadResultsAndDataModules();
+  const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
+  let persisted = 0;
+  const context = {
+    pythonReady: false,
+    dataStorageWarning: '',
+    async persistDataFileSession() {
+      persisted += 1;
+    },
+  };
+
+  const loaded = await data.loadDataFile.call(context, file);
+
+  assert.equal(loaded, false);
+  assert.equal(persisted, 0);
+  assert.equal(context.dataFile, undefined);
+  assert.match(context.dataStorageWarning, /Python runtime is still loading/);
+});
+
+test('data module always clears a stale local preview handle', () => {
+  const { data } = loadResultsAndDataModules();
+  const context = { previewHandle: 'preview-1' };
+
+  data.releasePreviewSession.call(context);
+
+  assert.equal(context.previewHandle, null);
 });
 
 test('data module derives status bar stats from preview preparation', async () => {
@@ -155,6 +187,36 @@ test('data module derives status bar stats from preview preparation', async () =
   assert.equal(context.dataRows, 5000);
   assert.deepEqual(context.previewColumns, ['patient_id', 'event_date', 'age']);
   assert.equal(context.previewTotalRows, 5000);
+});
+
+test('data module loads the selected sample without modifying the contract', async () => {
+  const { data } = loadResultsAndDataModules();
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    ok: true,
+    async arrayBuffer() { return new TextEncoder().encode('sample').buffer; },
+  });
+  let loadedFile = null;
+  const context = {
+    pythonReady: true,
+    yamlText: 'name: Existing contract',
+    dataTemplateModalOpen: true,
+    async loadDataFile(file) { loadedFile = file; },
+  };
+
+  try {
+    await data.loadDataTemplate.call(context, {
+      path: './examples/template.parquet',
+      fileName: 'template.parquet',
+      mimeType: 'application/octet-stream',
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.equal(loadedFile.name, 'template.parquet');
+  assert.equal(context.yamlText, 'name: Existing contract');
+  assert.equal(context.dataTemplateModalOpen, false);
 });
 
 test('data module reconstructs the persisted browser file after reload', async () => {

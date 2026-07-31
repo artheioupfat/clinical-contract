@@ -30,10 +30,17 @@ jobs:
           node-version: "20"
           cache: npm
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Test and build site
         run: |
           set -euo pipefail
           npm ci
+          npm run generate:site-examples
+          git diff --exit-code site/js/example-catalog.js
           npm run generate:site-types
           git diff --exit-code site/js/type-catalog.js
           npm run generate:site-version

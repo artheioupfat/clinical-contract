@@ -33,13 +33,15 @@ window.ClinicalModules.editor = {
 
       this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
       this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
-      this.editorView = session.editorView === 'yaml' ? 'yaml' : 'schema';
+      this.editorView = ['schema', 'yaml'].includes(session.editorView)
+        ? session.editorView
+        : 'schema';
       this.schemaSection = typeof session.schemaSection === 'string'
         ? session.schemaSection
         : 'fundamentals';
       this.schemaStarted = Boolean(this.yamlText.trim());
 
-      if (this.schemaStarted && typeof this.syncSchemaFromYaml === 'function') {
+      if (this.schemaStarted) {
         this.syncSchemaFromYaml({ preserveCurrentOnError: false });
       }
       this.editorStorageWarning = '';
@@ -161,49 +163,32 @@ window.ClinicalModules.editor = {
     event.target.value = '';
   },
 
-  async loadExampleContract() {
+  openContractTemplateModal() {
     if (!this.pythonReady) {
       this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading the template.';
       return;
     }
+    this.contractTemplateModalOpen = true;
+  },
+
+  closeContractTemplateModal() {
+    this.contractTemplateModalOpen = false;
+  },
+
+  async loadContractTemplate(template) {
+    if (!this.pythonReady || !template?.path) return;
 
     try {
-      const [contractResponse, dataResponse] = await Promise.all([
-        fetch('./examples/contract.yaml'),
-        fetch('./examples/template.parquet'),
-      ]);
+      const contractResponse = await fetch(template.path);
       if (!contractResponse.ok) {
         throw new Error(`Template contract request failed with status ${contractResponse.status}`);
       }
-      if (!dataResponse.ok) {
-        throw new Error(`Template data request failed with status ${dataResponse.status}`);
-      }
 
-      const [contractText, dataBuffer] = await Promise.all([
-        contractResponse.text(),
-        dataResponse.arrayBuffer(),
-      ]);
-      const dataFile = new File([dataBuffer], 'template.parquet', {
-        type: 'application/octet-stream',
-      });
-
-      this.yamlText = contractText;
-      this.yamlName = 'template.yaml';
-      this.schemaStarted = true;
-      this.checkerCollapsed = true;
-      this.clearResults();
-      if (typeof this.loadDataFile === 'function') {
-        await this.loadDataFile(dataFile);
-      }
-      if (typeof this.syncSchemaFromYaml === 'function') {
-        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
-      }
-      if (typeof this.setSchemaSection === 'function') {
-        this.setSchemaSection('fundamentals');
-      } else {
-        this.schemaSection = 'fundamentals';
-      }
-      this.persistEditorSession();
+      this.contractTemplateModalOpen = false;
+      this.applyLoadedContract(
+        await contractResponse.text(),
+        template.fileName || 'template.yaml'
+      );
     } catch (error) {
       this.schemaParseWarning = `Unable to load template: ${error.message}`;
     }
@@ -233,19 +218,17 @@ window.ClinicalModules.editor = {
   },
 
   async handleYamlFile(file) {
-    this.yamlText = await file.text();
-    this.yamlName = file.name;
+    this.applyLoadedContract(await file.text(), file.name);
+  },
+
+  applyLoadedContract(yamlText, fileName) {
+    this.yamlText = yamlText;
+    this.yamlName = fileName;
     this.schemaStarted = Boolean(this.yamlText.trim());
-    this.checkerCollapsed = this.schemaStarted;
+    this.editorView = 'schema';
     this.clearResults();
-    if (typeof this.syncSchemaFromYaml === 'function') {
-      this.syncSchemaFromYaml({ preserveCurrentOnError: false });
-    }
-    if (typeof this.setSchemaSection === 'function') {
-      this.setSchemaSection('fundamentals');
-    } else {
-      this.schemaSection = 'fundamentals';
-    }
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    this.setSchemaSection('fundamentals');
     this.persistEditorSession();
   },
 };

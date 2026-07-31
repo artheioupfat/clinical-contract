@@ -8,6 +8,7 @@ The landing page explains the product and links to the browser editor. The edito
 
 ```bash
 npm install
+npm run generate:site-examples
 npm run test:site
 npm run build:site:css
 python -m http.server 8000 -d site
@@ -21,9 +22,9 @@ Then open `http://localhost:8000`.
 - `editor.html`: interactive editor shell. It loads HTML partials before Alpine starts.
 - `docs.html`: documentation page rendered from Markdown.
 - `partials/header.html`: brand header and theme switch.
-- `partials/editor-panel.html`: YAML editor and visual contract builder.
+- `partials/editor-panel.html`: contract input, YAML/schema editor, and validation results.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
-- `partials/data-panel.html`: data upload, results tabs, and dataset preview.
+- `partials/data-panel.html`: independent data input, preview, schema, and quality results.
 - `partials/runtime-footer.html`: runtime progress bar and compact footer.
 - `css/tailwind.input.css`: small Tailwind manifest listing CSS partials.
 - `css/src/base.css`: design tokens and base document rules.
@@ -34,13 +35,16 @@ Then open `http://localhost:8000`.
 - `js/docs.js`: Markdown documentation loader.
 - `js/app.js`: editor Alpine root state and application composition.
 - `js/include-html.js`: loads static partials, then starts Alpine.
-- `js/constants.js`: shared UI/type constants.
+- `js/constants.js`: shared UI constants and runtime messages.
+- `js/page-shell.js`: shared version label and persistent light/dark theme behavior.
+- `js/example-catalog.js`: generated contract/data example catalog.
 - `js/ui.js`: theme switch, split pane, and logo status helpers.
 - `js/runtime.js`: PyScript readiness, progress, and runtime errors.
 - `js/editor.js`: YAML text editor, import, export, and keyboard behavior.
 - `js/contract-codec.js`: pure YAML/draft conversion helpers.
 - `js/schema.js`: visual contract builder actions.
-- `js/data.js`: CSV/Parquet loading and dataset preview actions.
+- `js/data-storage.js`: IndexedDB persistence for the current browser data session.
+- `js/data.js`: CSV/Parquet loading, sample datasets, and paginated preview actions.
 - `js/results.js`: validate/check result presentation.
 - `python/bridge.py`: Python bridge executed by PyScript.
 - `tests/`: lightweight Node tests for browser-safe logic.
@@ -50,15 +54,20 @@ Then open `http://localhost:8000`.
 `editor.html` intentionally loads scripts in this order:
 
 1. `constants.js`
-2. `ui.js`
-3. `runtime.js`
-4. `editor.js`
-5. `contract-codec.js`
-6. `schema.js`
-7. `data.js`
-8. `results.js`
-9. `app.js`
-10. `include-html.js`
+2. `page-shell.js`
+3. `example-catalog.js`
+4. `ui.js`
+5. `runtime.js`
+6. `editor.js`
+7. `contract-codec.js`
+8. `type-catalog.js`
+9. `site-version.js`
+10. `schema.js`
+11. `data-storage.js`
+12. `data.js`
+13. `results.js`
+14. `app.js`
+15. `include-html.js`
 
 Keep `contract-codec.js` before `schema.js`, because the schema builder uses the codec to convert between YAML and the visual draft.
 Keep `include-html.js` last: it injects the partials and only then loads Alpine, so Alpine can initialize the final DOM once.
@@ -70,6 +79,7 @@ Keep `include-html.js` last: it injects the partials and only then loads Alpine,
 - Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
 - Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.
+- Add YAML, CSV, or Parquet examples under `examples/`, then run `npm run generate:site-examples` and commit the generated catalog.
 - Do not edit `css/tailwind.css` directly; it is the compiled production bundle.
 - Add or update `site/tests/contract-codec.test.js` when changing YAML/draft behavior.
 - Keep the site static: no backend, no hardcoded local paths, and relative assets only.
@@ -79,16 +89,17 @@ Keep `include-html.js` last: it injects the partials and only then loads Alpine,
 
 Before deploying, verify:
 
-- Start from the empty contract screen.
+- Confirm the editor opens with independent empty contract and dataset panels.
 - Add a schema, column, quality rule, and team member.
 - Switch between Schema and YAML without losing data.
-- Load the template contract and bundled Parquet file.
-- Validate the contract.
+- Load the contract template and sample dataset independently.
+- Validate the contract and confirm the left Validation view opens.
 - Load a CSV or Parquet file.
-- Open Preview and paginate rows.
-- Run checks.
+- Open Data and paginate rows before loading a contract.
+- Run checks and confirm Schema or Quality opens according to the result.
 - Toggle dark mode.
-- Reset the contract and cancel once before confirming.
+- Reset the contract and confirm the loaded data file remains available.
+- Delete the data file and confirm the contract remains available.
 
 ## Deployment
 

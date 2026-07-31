@@ -40,14 +40,14 @@ window.ClinicalModules.schema = {
 
   resetContractDraft() {
     this.resetContractModalOpen = false;
-    this.deleteDataFile();
     this.yamlText = '';
     this.yamlName = '';
+    this.editorView = 'schema';
     this.schemaStarted = false;
-    this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.schemaSection = 'fundamentals';
+    this.dataTab = 'data';
     this.seedSchemaDraft();
     this.clearResults();
     this.clearEditorSession();
@@ -121,10 +121,6 @@ window.ClinicalModules.schema = {
     return this.schemaRowCounter;
   },
 
-  normalizeTypeToken(value) {
-    return this.ensureContractCodec().normalizeTypeToken(value);
-  },
-
   getLogicalTypeOptions(row) {
     const defaults = Array.isArray(this.logicalTypeOptions) ? this.logicalTypeOptions : [];
     const current = String(row?.logicalType || '').trim();
@@ -149,8 +145,9 @@ window.ClinicalModules.schema = {
   },
 
   onLogicalTypeChanged(row) {
-    const nextLogical = this.normalizeTypeToken(row.logicalType);
-    const previousLogical = this.normalizeTypeToken(row._lastLogicalType);
+    const codec = this.ensureContractCodec();
+    const nextLogical = codec.normalizeTypeToken(row.logicalType);
+    const previousLogical = codec.normalizeTypeToken(row._lastLogicalType);
     row.logicalType = nextLogical;
 
     if (!nextLogical || nextLogical !== previousLogical) {
@@ -275,6 +272,7 @@ window.ClinicalModules.schema = {
   },
 
   setEditorView(mode) {
+    if (!['schema', 'yaml', 'validation'].includes(mode)) return;
     if (mode === this.editorView) return;
     if (mode === 'schema') {
       this.syncSchemaFromYaml({ preserveCurrentOnError: true });
@@ -290,10 +288,11 @@ window.ClinicalModules.schema = {
     }
 
     this.schemaStarted = true;
-    this.checkerCollapsed = true;
+    this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
     this.yamlName = 'datacontract.yaml';
+    this.editorView = 'schema';
     this.clearResults();
     this.seedSchemaDraft();
     this.pushSchemaToYaml();

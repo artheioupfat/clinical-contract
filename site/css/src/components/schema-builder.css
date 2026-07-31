@@ -8,56 +8,6 @@
     @apply mx-3 mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800;
   }
 
-  /* Empty contract state */
-  .schema-empty {
-    @apply flex min-h-0 flex-1 items-center justify-center p-6;
-    background:
-      radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.16) 1px, transparent 0);
-      /*radial-gradient(circle at 50% 0%, rgba(232, 242, 251, 0.95) 0%, rgba(255, 255, 255, 0.9) 46%, rgba(244, 248, 252, 0.92) 100%);*/
-    background-size: 22px 22px, 100% 100%;
-  }
-
-  .schema-empty-card {
-    @apply max-w-xl rounded-lg border bg-white p-6 text-center;
-    border-color: var(--cc-border);
-  }
-
-  .schema-empty-title {
-    @apply mt-3 text-2xl font-semibold tracking-tight;
-    color: var(--cc-text);
-  }
-
-  .schema-empty-copy {
-    @apply mx-auto mt-3 max-w-md text-sm leading-6;
-    color: var(--cc-muted);
-  }
-
-  .schema-empty-actions {
-    @apply mt-6 flex flex-wrap items-center justify-center gap-3;
-  }
-
-  .schema-empty-template {
-    @apply mt-3 text-xs;
-    color: var(--cc-muted);
-  }
-
-  .schema-empty-template-link {
-    @apply cursor-pointer border-0 bg-transparent p-0 font-semibold underline decoration-slate-300 underline-offset-2 transition;
-    color: var(--cc-primary);
-  }
-
-  .schema-empty-template-link:hover,
-  .schema-empty-template-link:focus-visible {
-    color: var(--cc-primary-strong);
-  }
-
-  .schema-empty-template-link:disabled,
-  .schema-empty-template-link--locked {
-    @apply cursor-not-allowed no-underline;
-    color: var(--cc-muted);
-    opacity: 0.65;
-  }
-
   /* Builder navigation */
   .schema-workflow {
     @apply grid min-h-0 min-w-0 flex-1 overflow-hidden bg-white lg:grid-cols-[190px_minmax(0,1fr)];
@@ -110,14 +60,6 @@
     color: var(--cc-text);
   }
 
-  .schema-nav-footer {
-    @apply relative z-10 shrink-0 border-t border-slate-200 px-3 py-2 text-xs font-medium text-slate-500;
-  }
-
-  .schema-reset-button {
-    @apply pointer-events-auto inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-rose-200 bg-white px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500;
-  }
-
   /* Builder stages and forms */
   .schema-workspace {
     @apply min-h-0 min-w-0 overflow-hidden bg-white;
@@ -129,10 +71,6 @@
 
   .schema-stage {
     @apply h-full min-h-0 w-full overflow-auto border-0 p-4;
-  }
-
-  .schema-stage--columns {
-    @apply p-0;
   }
 
   .schema-stage-bar {
@@ -148,14 +86,6 @@
   .schema-stage-title {
     @apply text-[15px] font-semibold;
     color: var(--cc-text);
-  }
-
-  .schema-stage-desc {
-    @apply mt-1 text-xs text-slate-500;
-  }
-
-  .schema-stage-pill {
-    @apply shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-500;
   }
 
   .schema-form-grid {
@@ -245,30 +175,6 @@
 
   .schema-editor .schema-input::placeholder {
     @apply text-slate-400;
-  }
-
-  .schema-editor .schema-table thead tr {
-    @apply bg-slate-50 text-slate-500;
-  }
-
-  .schema-table--compact thead th {
-    @apply px-2 py-2;
-  }
-
-  .schema-table--compact tbody td {
-    @apply px-2 py-1.5;
-  }
-
-  .schema-table--compact .schema-input {
-    @apply rounded-md px-2 py-1.5 text-[13px];
-  }
-
-  .schema-editor .schema-table tbody tr {
-    @apply border-slate-100;
-  }
-
-  .schema-editor .schema-table tbody tr:hover {
-    @apply bg-slate-50;
   }
 
 }

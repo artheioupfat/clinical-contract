@@ -5,10 +5,6 @@
       grid-template-columns: minmax(28rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
     }
 
-    .app-grid--onboarding {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
     .app-grid--schema {
       grid-template-columns: minmax(32rem, var(--editor-pane, 58%)) 10px minmax(24rem, 1fr);
     }
@@ -52,11 +48,11 @@
 
   @media (max-width: 900px) {
     .panel-head {
-      @apply flex-wrap;
+      @apply flex-col items-stretch gap-2;
     }
 
-    .dropzone {
-      @apply flex-col items-start;
+    .pine-toolbar {
+      @apply flex-nowrap justify-start overflow-x-auto pb-0.5;
     }
 
     .preview-pagination {
@@ -65,6 +61,80 @@
 
     .schema-workflow {
       @apply grid-cols-1;
+    }
+
+    .workspace-empty {
+      @apply p-3;
+    }
+
+    .workspace-empty-card {
+      @apply px-4 py-4;
+    }
+
+    .workspace-empty-icon {
+      @apply h-9 w-9;
+    }
+
+    .workspace-empty-icon svg {
+      @apply h-5 w-5;
+    }
+
+    .workspace-empty-title {
+      @apply mt-2 text-base;
+    }
+
+    .workspace-empty-copy {
+      @apply mt-1 text-xs leading-5;
+    }
+
+    .workspace-empty-actions {
+      @apply mt-3;
+    }
+
+    .workspace-template-link {
+      @apply mt-2;
+    }
+
+  }
+
+  @media (max-width: 1023px) {
+    .app-grid {
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .checker-collapse-btn {
+      @apply hidden;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pine-header {
+      @apply gap-1 px-2;
+    }
+
+    .pine-logo-box {
+      @apply h-10 w-10 rounded-md;
+    }
+
+    .pine-logo-image {
+      @apply h-8 w-8;
+    }
+
+    .pine-brand-row {
+      @apply hidden;
+    }
+
+    .header-actions {
+      @apply gap-0.5;
+    }
+
+    .header-actions .docs-nav-link {
+      @apply px-1.5 py-1 text-[11px];
+    }
+
+    .github-link,
+    .pine-theme-button {
+      @apply h-8 w-8;
     }
   }
 

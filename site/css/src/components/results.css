@@ -5,27 +5,11 @@
     border-color: var(--cc-border);
   }
 
-  .pine-tabs {
-    @apply flex gap-1.5 border-b p-2;
-    background: var(--cc-surface);
-    border-color: var(--cc-border);
+  .results-shell--standalone {
+    @apply m-4;
   }
 
-  .pine-tab {
-    @apply cursor-pointer rounded-md bg-transparent px-2.5 py-1.5 text-xs font-semibold;
-    color: var(--cc-muted);
-  }
-
-  .pine-tab--active {
-    @apply bg-white shadow-[inset_0_0_0_1px_rgb(201_219_232)];
-    color: var(--cc-primary-strong);
-  }
-
-  .pine-tab--preview {
-    @apply ml-auto;
-  }
-
-  .pine-tab-label {
+  .view-switch-label {
     @apply inline-flex items-center gap-2;
   }
 

@@ -12,6 +12,7 @@
 @import "./src/components/landing.css";
 @import "./src/components/buttons.css";
 @import "./src/components/editor-data.css";
+@import "./src/components/workspace-empty.css";
 @import "./src/components/results.css";
 @import "./src/components/schema-builder.css";
 @import "./src/components/schema-columns.css";

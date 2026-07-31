@@ -1,7 +1,10 @@
 document.addEventListener('alpine:init', () => {
   const constants = window.ClinicalConstants || {};
+  const pageShell = window.ClinicalPageShell || {};
+  const exampleCatalog = window.ClinicalExampleCatalog || {};
   const typeCatalog = window.ClinicalTypeCatalog || {};
   const siteVersion = window.ClinicalContractVersion || '';
+  const contractCodec = window.ClinicalContractCodec;
   const previewPageSize = Number(constants.previewPageSize) || 50;
   const modules = window.ClinicalModules || {};
   const ui = modules.ui || {};
@@ -11,6 +14,10 @@ document.addEventListener('alpine:init', () => {
   const dataStorage = modules.dataStorage || {};
   const results = modules.results || {};
   const schema = modules.schema || {};
+
+  if (!contractCodec?.createEmptyDraft || !pageShell.versionLabel) {
+    throw new Error('Required editor modules were not loaded before app.js.');
+  }
 
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
@@ -34,34 +41,13 @@ document.addEventListener('alpine:init', () => {
     qualityEditorRuleId: null,
     teamEditorMemberId: null,
     resetContractModalOpen: false,
+    contractTemplateModalOpen: false,
+    dataTemplateModalOpen: false,
+    contractTemplates: exampleCatalog.contractTemplates || [],
+    dataTemplates: exampleCatalog.dataTemplates || [],
     logicalTypeOptions: typeCatalog.logicalTypeOptions || [],
     physicalTypeByLogical: typeCatalog.physicalTypeByLogical || {},
-    schemaDraft: {
-      apiVersion: 'v3.1.0',
-      kind: 'DataContract',
-      id: '',
-      name: '',
-      version: '1.0.0',
-      status: 'active',
-      descriptionPurpose: '',
-      descriptionUsage: '',
-      descriptionLimitations: '',
-      studyStartDate: '',
-      studyEndDate: '',
-      studyType: '',
-      studyObjective: '',
-      healthDomain: '',
-      tableName: '',
-      tableDescription: '',
-      properties: [],
-      qualityRules: [],
-      teamName: '',
-      teamDescription: '',
-      teamMembers: [],
-      teamExtras: {},
-      tableExtras: {},
-      studyExtras: {},
-    },
+    schemaDraft: contractCodec.createEmptyDraft(),
     dataFile: null,
     dataFileName: '',
     dataFileSize: 0,
@@ -71,7 +57,7 @@ document.addEventListener('alpine:init', () => {
     draggingData: false,
     busy: false,
     pythonReady: false,
-    activeTab: 'validate',
+    dataTab: 'data',
     validateRows: [],
     schemaRows: [],
     qualityRows: [],
@@ -104,9 +90,7 @@ document.addEventListener('alpine:init', () => {
     logoVariant: 'neutral',
     logoErrored: false,
 
-    get siteVersionLabel() {
-      return siteVersion ? `v${siteVersion}` : '';
-    },
+    siteVersionLabel: pageShell.versionLabel(siteVersion),
 
     get logoSrc() {
       if (this.logoErrored) return '';
@@ -124,18 +108,6 @@ document.addEventListener('alpine:init', () => {
     get lineNumbers() {
       const count = Math.max(1, this.yamlText.split('\n').length);
       return Array.from({ length: count }, (_, i) => i + 1);
-    },
-
-    get validateTabState() {
-      return this.validateRunState;
-    },
-
-    get schemaTabState() {
-      return this.schemaRunState;
-    },
-
-    get qualityTabState() {
-      return this.qualityRunState;
     },
 
     get previewStartRow() {
@@ -171,15 +143,6 @@ document.addEventListener('alpine:init', () => {
       this.initThemeSwitch();
       this.initSplitPane();
       this.restoreEditorSession();
-      if (this.schemaStarted) {
-        await this.restoreDataFileSession();
-      } else if (typeof this.clearPersistedDataFile === 'function') {
-        try {
-          await this.clearPersistedDataFile();
-        } catch (error) {
-          console.warn(`Unable to clear stale data file: ${error.message}`);
-        }
-      }
       this.registerEditorSessionPersistence();
       this.registerRuntimeErrorHandlers();
       this.startRuntimeProgress();
@@ -208,14 +171,12 @@ document.addEventListener('alpine:init', () => {
 
       if (!this.pythonReady && typeof window.pyValidateContract === 'function') {
         this.onPythonRuntimeReady();
-        if (this.dataFile) await this.refreshDataInsights();
       }
 
-      if (typeof this.syncSchemaFromYaml === 'function') {
-        this.syncSchemaFromYaml({ preserveCurrentOnError: false });
-      }
+      await this.restoreDataFileSession();
     },
 
+    ...(pageShell.themeMethods || {}),
     ...ui,
     ...runtime,
     ...editor,

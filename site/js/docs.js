@@ -1,8 +1,9 @@
 document.addEventListener('alpine:init', () => {
-  const siteVersion = window.ClinicalContractVersion || '';
+  const pageShell = window.ClinicalPageShell;
 
   Alpine.data('docsPage', () => ({
     switchOn: false,
+    siteVersionLabel: pageShell.versionLabel(window.ClinicalContractVersion),
     loading: true,
     error: '',
     content: '',
@@ -10,31 +11,12 @@ document.addEventListener('alpine:init', () => {
     activeTocId: '',
     tocScrollHandler: null,
 
-    get siteVersionLabel() {
-      return siteVersion ? `v${siteVersion}` : '';
-    },
-
     async init() {
-      this.initTheme();
+      this.initThemeSwitch();
       await this.loadMarkdown();
     },
 
-    initTheme() {
-      try {
-        this.switchOn = localStorage.getItem('clinical-ui-dark') === '1';
-      } catch (_error) {
-        this.switchOn = false;
-      }
-    },
-
-    toggleThemeSwitch() {
-      this.switchOn = !this.switchOn;
-      try {
-        localStorage.setItem('clinical-ui-dark', this.switchOn ? '1' : '0');
-      } catch (_error) {
-        // Ignore storage failures.
-      }
-    },
+    ...pageShell.themeMethods,
 
     async loadMarkdown() {
       this.loading = true;

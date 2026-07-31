@@ -126,22 +126,78 @@ test('editor module blocks contract imports until Python is ready', async () => 
   assert.match(context.schemaParseWarning, /Python runtime is still loading/);
 });
 
-test('editor module blocks template loading until Python is ready', async () => {
+test('editor module blocks the template selector until Python is ready', () => {
   const editor = loadEditorModule();
-  const originalFetch = global.fetch;
-  global.fetch = () => {
-    throw new Error('Template fetch should not run while Python is loading');
-  };
   const context = {
     pythonReady: false,
     schemaParseWarning: '',
+    contractTemplateModalOpen: false,
+  };
+
+  editor.openContractTemplateModal.call(context);
+
+  assert.equal(context.contractTemplateModalOpen, false);
+  assert.match(context.schemaParseWarning, /Python runtime is still loading/);
+});
+
+test('editor module loads only the selected contract template', async () => {
+  const editor = loadEditorModule();
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({ ok: true, async text() { return 'name: Example'; } });
+  let dataLoads = 0;
+  const context = {
+    pythonReady: true,
+    yamlText: '',
+    yamlName: '',
+    schemaStarted: false,
+    editorView: 'yaml',
+    contractTemplateModalOpen: true,
+    applyLoadedContract: editor.applyLoadedContract,
+    clearResults() {},
+    syncSchemaFromYaml() {},
+    setSchemaSection() {},
+    persistEditorSession() {},
+    loadDataFile() { dataLoads += 1; },
   };
 
   try {
-    await editor.loadExampleContract.call(context);
+    await editor.loadContractTemplate.call(context, {
+      path: './examples/contract.yaml',
+      fileName: 'template.yaml',
+    });
   } finally {
     global.fetch = originalFetch;
   }
 
-  assert.match(context.schemaParseWarning, /Python runtime is still loading/);
+  assert.equal(context.yamlText, 'name: Example');
+  assert.equal(context.yamlName, 'template.yaml');
+  assert.equal(context.editorView, 'schema');
+  assert.equal(context.contractTemplateModalOpen, false);
+  assert.equal(dataLoads, 0);
+});
+
+test('editor module applies imported YAML through one shared loading path', () => {
+  const editor = loadEditorModule();
+  let syncCount = 0;
+  let persistCount = 0;
+  const context = {
+    yamlText: '',
+    yamlName: '',
+    schemaStarted: false,
+    editorView: 'yaml',
+    clearResults() {},
+    syncSchemaFromYaml() { syncCount += 1; },
+    setSchemaSection(section) { this.schemaSection = section; },
+    persistEditorSession() { persistCount += 1; },
+  };
+
+  editor.applyLoadedContract.call(context, 'name: Imported', 'imported.yaml');
+
+  assert.equal(context.yamlText, 'name: Imported');
+  assert.equal(context.yamlName, 'imported.yaml');
+  assert.equal(context.schemaStarted, true);
+  assert.equal(context.editorView, 'schema');
+  assert.equal(context.schemaSection, 'fundamentals');
+  assert.equal(syncCount, 1);
+  assert.equal(persistCount, 1);
 });

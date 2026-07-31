@@ -18,7 +18,6 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   let pushed = 0;
   const context = {
     ensureContractCodec: () => codec,
-    normalizeTypeToken: schema.normalizeTypeToken,
     pushSchemaToYaml() {
       pushed += 1;
     },
@@ -58,7 +57,6 @@ test('schema module clears physical type when logical type is not specified', ()
   let pushed = 0;
   const context = {
     ensureContractCodec: () => codec,
-    normalizeTypeToken: schema.normalizeTypeToken,
     pushSchemaToYaml() {
       pushed += 1;
     },
@@ -187,9 +185,9 @@ test('schema module updates the selected quality rule column explicitly', () => 
   assert.equal(pushed, 1);
 });
 
-test('resetting a contract also deletes the loaded data file', () => {
+test('resetting a contract preserves the loaded data file', () => {
   const schema = loadSchemaModule();
-  let dataDeleted = 0;
+  const dataFile = { name: 'dataset.parquet' };
   let draftSeeded = 0;
   let resultsCleared = 0;
   let sessionCleared = 0;
@@ -201,9 +199,8 @@ test('resetting a contract also deletes the loaded data file', () => {
     schemaParseWarning: 'warning',
     showRequiredHints: true,
     schemaSection: 'schema',
-    deleteDataFile() {
-      dataDeleted += 1;
-    },
+    dataTab: 'quality',
+    dataFile,
     seedSchemaDraft() {
       draftSeeded += 1;
     },
@@ -217,7 +214,7 @@ test('resetting a contract also deletes the loaded data file', () => {
 
   schema.resetContractDraft.call(context);
 
-  assert.equal(dataDeleted, 1);
+  assert.equal(context.dataFile, dataFile);
   assert.equal(draftSeeded, 1);
   assert.equal(resultsCleared, 1);
   assert.equal(sessionCleared, 1);
@@ -226,6 +223,7 @@ test('resetting a contract also deletes the loaded data file', () => {
   assert.equal(context.yamlName, '');
   assert.equal(context.schemaStarted, false);
   assert.equal(context.schemaSection, 'fundamentals');
+  assert.equal(context.dataTab, 'data');
 });
 
 test('schema module blocks blank contract creation until Python is ready', () => {
@@ -245,7 +243,7 @@ test('schema module blocks blank contract creation until Python is ready', () =>
   assert.match(context.schemaParseWarning, /Python runtime is still loading/);
 });
 
-test('schema module starts blank contracts with the checker collapsed', () => {
+test('schema module starts blank contracts with the checker visible', () => {
   const schema = loadSchemaModule();
   const context = {
     pythonReady: true,
@@ -269,6 +267,6 @@ test('schema module starts blank contracts with the checker collapsed', () => {
   schema.startBlankContract.call(context);
 
   assert.equal(context.schemaStarted, true);
-  assert.equal(context.checkerCollapsed, true);
+  assert.equal(context.checkerCollapsed, false);
   assert.equal(context.schemaSection, 'fundamentals');
 });
