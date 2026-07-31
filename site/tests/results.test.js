@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 
 function loadResultsModule() {
   global.window = { ClinicalModules: {} };
@@ -17,6 +19,16 @@ test('results module maps capitalized failed states to red dots', () => {
   assert.equal(results.tabDotClass('Error'), 'tab-dot--failed');
   assert.equal(results.statusDotClass('Failed'), 'status-dot--failed');
   assert.equal(results.statusDotClass(' missing '), 'status-dot--failed');
+});
+
+test('production CSS retains every dynamically selected result status', () => {
+  const css = fs.readFileSync(path.resolve(__dirname, '../css/tailwind.css'), 'utf8');
+  const variants = ['passed', 'failed', 'error', 'warning'];
+
+  for (const variant of variants) {
+    assert.match(css, new RegExp(`\\.status-chip--${variant}(?:[,\\{])`));
+    assert.match(css, new RegExp(`\\.status-dot--${variant}(?:[,\\{])`));
+  }
 });
 
 test('clearing results restores every result tab to its idle state', () => {
