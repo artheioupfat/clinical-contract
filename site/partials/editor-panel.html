@@ -86,6 +86,7 @@
                     id="yaml-editor"
                     x-ref="yamlEditor"
                     x-model="yamlText"
+                    @input="invalidateResultsFromYamlEditor()"
                     @input.debounce.350ms="syncSchemaFromYamlEditor()"
                     @scroll="syncEditorScroll($event)"
                     @keydown="handleEditorKeydown($event)"
