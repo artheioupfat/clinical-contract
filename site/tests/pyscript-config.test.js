@@ -28,3 +28,11 @@ test('pyscript cache-buster is aligned between editor and config', () => {
 
   assert.equal(versions.size, 1);
 });
+
+test('run checks reports its internal contract validation duration', () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const bridge = fs.readFileSync(path.join(repoRoot, 'site', 'python', 'bridge.py'), 'utf8');
+
+  assert.match(bridge, /validate_started_at = perf_counter\(\)/);
+  assert.match(bridge, /"validate_duration_ms": validate_duration_ms/);
+});

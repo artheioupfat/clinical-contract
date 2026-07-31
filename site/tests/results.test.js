@@ -31,6 +31,26 @@ test('production CSS retains every dynamically selected result status', () => {
   }
 });
 
+test('execution durations are formatted as rounded milliseconds', () => {
+  const results = loadResultsModule();
+
+  assert.equal(results.formatExecutionDuration(29.6), '30 ms');
+  assert.equal(results.formatExecutionDuration(5620.2), '5620 ms');
+  assert.equal(results.formatExecutionDuration(null), '');
+});
+
+test('status bar exposes validate and check execution timings', () => {
+  const footer = fs.readFileSync(
+    path.resolve(__dirname, '../partials/runtime-footer.html'),
+    'utf8'
+  );
+
+  assert.match(footer, /<strong>Validate:<\/strong>/);
+  assert.match(footer, /<strong>Check:<\/strong>/);
+  assert.match(footer, /formatExecutionDuration\(validateDurationMs\)/);
+  assert.match(footer, /formatExecutionDuration\(checkDurationMs\)/);
+});
+
 test('clearing results restores every result tab to its idle state', () => {
   const results = loadResultsModule();
   const context = {
@@ -40,6 +60,8 @@ test('clearing results restores every result tab to its idle state', () => {
     validateRunState: 'passed',
     schemaRunState: 'passed',
     qualityRunState: 'passed',
+    validateDurationMs: 30,
+    checkDurationMs: 5620,
     logoVariant: 'green',
     resetValidateState: results.resetValidateState,
     resetDataCheckState: results.resetDataCheckState,
@@ -50,6 +72,8 @@ test('clearing results restores every result tab to its idle state', () => {
   assert.equal(context.validateRunState, 'idle');
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
+  assert.equal(context.validateDurationMs, null);
+  assert.equal(context.checkDurationMs, null);
   assert.equal(context.logoVariant, 'neutral');
 });
 
@@ -62,6 +86,8 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
     validateRunState: 'passed',
     schemaRunState: 'passed',
     qualityRunState: 'failed',
+    validateDurationMs: 30,
+    checkDurationMs: 5620,
   };
 
   results.resetDataCheckState.call(context);
@@ -70,6 +96,25 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
   assert.equal(context.validateRunState, 'passed');
   assert.deepEqual(context.schemaRows, []);
   assert.deepEqual(context.qualityRows, []);
+  assert.equal(context.schemaRunState, 'idle');
+  assert.equal(context.qualityRunState, 'idle');
+  assert.equal(context.validateDurationMs, 30);
+  assert.equal(context.checkDurationMs, null);
+});
+
+test('resetDataCheckState can preserve the visible check duration during a rerun', () => {
+  const results = loadResultsModule();
+  const context = {
+    schemaRows: [{ status: 'passed' }],
+    qualityRows: [{ status: 'passed' }],
+    schemaRunState: 'passed',
+    qualityRunState: 'passed',
+    checkDurationMs: 5620,
+  };
+
+  results.resetDataCheckState.call(context, { clearDuration: false });
+
+  assert.equal(context.checkDurationMs, 5620);
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
 });
@@ -89,6 +134,7 @@ test('validate opens the contract validation view without changing the checker p
     yamlText: 'id: contract',
     validateRows: [],
     validateRunState: 'idle',
+    validateDurationMs: null,
     normalizeValidateRows: results.normalizeValidateRows,
     setLogoSuccess() {
       this.logoVariant = 'green';
@@ -103,6 +149,7 @@ test('validate opens the contract validation view without changing the checker p
   assert.equal(context.checkerCollapsed, true);
   assert.equal(context.editorView, 'validation');
   assert.equal(context.validateRunState, 'passed');
+  assert.equal(Number.isFinite(context.validateDurationMs), true);
   assert.equal(context.logoVariant, 'green');
 });
 
@@ -110,6 +157,7 @@ test('successful checks finish on quality after evaluating schema first', async 
   const results = loadResultsModule();
   global.window.pyRunContractCheck = () => JSON.stringify({
     validate: { success: true, fields: [] },
+    validate_duration_ms: 8.4,
     schema_rows: [{ status: 'ok' }],
     quality_rows: [{ status: 'passed' }],
     schema_success: true,
@@ -129,9 +177,13 @@ test('successful checks finish on quality after evaluating schema first', async 
     validateRunState: 'idle',
     schemaRunState: 'idle',
     qualityRunState: 'idle',
+    validateDurationMs: 30,
+    checkDurationMs: null,
     normalizeValidateRows: results.normalizeValidateRows,
     normalizeSchemaRows: results.normalizeSchemaRows,
-    resetValidateState: results.resetValidateState,
+    resetValidateState() {
+      throw new Error('Run checks must not clear validation before receiving its result.');
+    },
     resetDataCheckState: results.resetDataCheckState,
     setLogoSuccess() { this.logoVariant = 'green'; },
     setLogoFailure() { this.logoVariant = 'red'; },
@@ -141,6 +193,8 @@ test('successful checks finish on quality after evaluating schema first', async 
 
   assert.equal(context.schemaRunState, 'passed');
   assert.equal(context.qualityRunState, 'passed');
+  assert.equal(context.validateDurationMs, 8.4);
+  assert.equal(Number.isFinite(context.checkDurationMs), true);
   assert.equal(context.dataTab, 'quality');
   assert.equal(context.logoVariant, 'green');
 });

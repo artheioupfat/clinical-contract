@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from time import perf_counter
 
 from pyscript import ffi, window
 
@@ -86,32 +87,43 @@ def py_validate_contract(yaml_text: str) -> str:
     return json.dumps(payload)
 
 
+def _serialize_check_response(validate, validate_duration_ms: float, **payload) -> str:
+    return json.dumps(
+        {
+            "validate": validate,
+            "validate_duration_ms": validate_duration_ms,
+            **payload,
+        }
+    )
+
+
 def py_run_contract_check(yaml_text: str, data_buffer) -> str:
+    validate_started_at = perf_counter()
     validate = _validate_payload(yaml_text)
+    validate_duration_ms = (perf_counter() - validate_started_at) * 1000
+
     if not validate["success"]:
-        return json.dumps(
-            {
-                "validate": validate,
-                "schema_rows": [],
-                "quality_rows": [],
-                "schema_success": False,
-                "report_summary": "Validation failed.",
-                "error": "YAML structure is invalid.",
-            }
+        return _serialize_check_response(
+            validate,
+            validate_duration_ms,
+            schema_rows=[],
+            quality_rows=[],
+            schema_success=False,
+            report_summary="Validation failed.",
+            error="YAML structure is invalid.",
         )
 
     try:
         contract, _ = load_contract(yaml_text)
     except Exception as exc:
-        return json.dumps(
-            {
-                "validate": validate,
-                "schema_rows": [],
-                "quality_rows": [],
-                "schema_success": False,
-                "report_summary": "Contract loading failed.",
-                "error": str(exc),
-            }
+        return _serialize_check_response(
+            validate,
+            validate_duration_ms,
+            schema_rows=[],
+            quality_rows=[],
+            schema_success=False,
+            report_summary="Contract loading failed.",
+            error=str(exc),
         )
 
     data_bytes = _buffer_to_bytes(data_buffer)
@@ -119,15 +131,14 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
     try:
         schema_reports = contract.check_schema(data_bytes)
     except Exception as exc:
-        return json.dumps(
-            {
-                "validate": validate,
-                "schema_rows": [],
-                "quality_rows": [],
-                "schema_success": False,
-                "report_summary": "Schema validation failed.",
-                "error": str(exc),
-            }
+        return _serialize_check_response(
+            validate,
+            validate_duration_ms,
+            schema_rows=[],
+            quality_rows=[],
+            schema_success=False,
+            report_summary="Schema validation failed.",
+            error=str(exc),
         )
 
     schema_rows = []
@@ -148,15 +159,14 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
             )
 
     if not schema_success:
-        return json.dumps(
-            {
-                "validate": validate,
-                "schema_rows": schema_rows,
-                "quality_rows": [],
-                "schema_success": False,
-                "report_summary": "Schema invalid — quality checks cancelled.",
-                "error": "At least one required column is missing or has an incompatible type.",
-            }
+        return _serialize_check_response(
+            validate,
+            validate_duration_ms,
+            schema_rows=schema_rows,
+            quality_rows=[],
+            schema_success=False,
+            report_summary="Schema invalid — quality checks cancelled.",
+            error="At least one required column is missing or has an incompatible type.",
         )
 
     report = contract.check(data_bytes, backend="duckdb")
@@ -178,17 +188,16 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
             }
         )
 
-    return json.dumps(
-        {
-            "validate": validate,
-            "schema_rows": schema_rows,
-            "quality_rows": quality_rows,
-            "schema_success": True,
-            "report_summary": report.summary,
-            "report_success": report.success,
-            "report_code": report.code,
-            "error": "",
-        }
+    return _serialize_check_response(
+        validate,
+        validate_duration_ms,
+        schema_rows=schema_rows,
+        quality_rows=quality_rows,
+        schema_success=True,
+        report_summary=report.summary,
+        report_success=report.success,
+        report_code=report.code,
+        error="",
     )
 
 def _get_query_columns(conn, relation_sql: str) -> list[str]:

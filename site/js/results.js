@@ -11,6 +11,8 @@ const statusClass = (prefix, status) => {
   }
   return `${prefix}--warning`;
 };
+const executionNow = () => globalThis.performance?.now?.() ?? Date.now();
+const elapsedMilliseconds = (startedAt) => Math.max(0, executionNow() - startedAt);
 
 window.ClinicalModules.results = {
   tabDotClass(state) {
@@ -26,6 +28,11 @@ window.ClinicalModules.results = {
 
   statusDotClass(status) {
     return statusClass('status-dot', status);
+  },
+
+  formatExecutionDuration(value) {
+    if (!Number.isFinite(value)) return '';
+    return `${Math.round(Math.max(0, value))} ms`;
   },
 
   normalizeValidateRows(rows) {
@@ -46,16 +53,18 @@ window.ClinicalModules.results = {
     });
   },
 
-  resetDataCheckState() {
+  resetDataCheckState({ clearDuration = true } = {}) {
     this.schemaRows = [];
     this.qualityRows = [];
     this.schemaRunState = 'idle';
     this.qualityRunState = 'idle';
+    if (clearDuration) this.checkDurationMs = null;
   },
 
-  resetValidateState() {
+  resetValidateState({ clearDuration = true } = {}) {
     this.validateRows = [];
     this.validateRunState = 'idle';
+    if (clearDuration) this.validateDurationMs = null;
   },
 
   clearResults() {
@@ -69,8 +78,10 @@ window.ClinicalModules.results = {
       return;
     }
     this.busy = true;
+    this.validateDurationMs = null;
     this.editorView = 'validation';
     this.showRequiredHints = true;
+    const startedAt = executionNow();
     try {
       const payload = JSON.parse(window.pyValidateContract(this.yamlText));
       this.validateRows = this.normalizeValidateRows(payload.fields || []);
@@ -87,6 +98,7 @@ window.ClinicalModules.results = {
       this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {
+      this.validateDurationMs = elapsedMilliseconds(startedAt);
       this.busy = false;
     }
   },
@@ -101,14 +113,17 @@ window.ClinicalModules.results = {
 
     this.busy = true;
     this.showRequiredHints = true;
-    this.resetValidateState();
-    this.resetDataCheckState();
+    this.resetDataCheckState({ clearDuration: false });
     this.dataTab = 'schema';
+    const startedAt = executionNow();
 
     try {
       const buffer = await this.dataFile.arrayBuffer();
       const payload = JSON.parse(window.pyRunContractCheck(this.yamlText, buffer));
 
+      if (Number.isFinite(payload.validate_duration_ms)) {
+        this.validateDurationMs = payload.validate_duration_ms;
+      }
       this.validateRows = this.normalizeValidateRows(payload.validate?.fields || []);
       this.schemaRows = this.normalizeSchemaRows(payload.schema_rows || []);
       this.qualityRows = payload.quality_rows || [];
@@ -137,6 +152,7 @@ window.ClinicalModules.results = {
       this.showRequiredHints = true;
       this.setLogoFailure();
     } finally {
+      this.checkDurationMs = elapsedMilliseconds(startedAt);
       this.busy = false;
     }
   },

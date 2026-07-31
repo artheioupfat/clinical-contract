@@ -19,6 +19,21 @@
               <span class="footer-separator" aria-hidden="true">|</span>
               <span x-text="yamlText.split('\n').length + ' lines'"></span>
             </span>
+            <span
+              class="footer-timings"
+              x-show="!showRuntimeProgress && (validateDurationMs !== null || checkDurationMs !== null)"
+              x-cloak
+              aria-label="Execution times"
+            >
+              <span x-show="validateDurationMs !== null">
+                <strong>Validate:</strong>
+                <span x-text="formatExecutionDuration(validateDurationMs)"></span>
+              </span>
+              <span x-show="checkDurationMs !== null">
+                <strong>Check:</strong>
+                <span x-text="formatExecutionDuration(checkDurationMs)"></span>
+              </span>
+            </span>
             <span class="footer-error" x-show="runtimeError" x-cloak x-text="runtimeError"></span>
           </div>
           <div class="footer-right" x-show="dataFile && !showRuntimeProgress" x-cloak>
