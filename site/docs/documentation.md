@@ -56,14 +56,18 @@ Les types disponibles sont les suivants :
 | `string` | Texte ou chaîne de caractères | `varchar`, `text`, `string`, `char`, `uuid` |
 | `integer` | Nombre entier | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` |
 | `float` | Nombre décimal | `float32`, `float64` |
+| `decimal` | Nombre décimal exact | `decimal` |
 | `boolean` | Valeur booléenne (`true` ou `false`) | `boolean`, `binary` |
 | `date` | Date ou date et heure | `datetime`, `timestamp`, `timestamp with timezone` |
 | `time` | Heure sans information de date | `time` |
+| `interval` | Durée ou écart temporel | `interval` |
 | `array` | Collection de valeurs | `array` |
 
 Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** correspondant au système produisant les données.
 
 Le type `array` accepte les collections DuckDB de taille variable ou fixe. Le type des éléments contenus dans la collection n'est pas contraint pour le moment.
+
+Le type `decimal` vérifie la famille DuckDB `DECIMAL`. La précision et l'échelle, par exemple `DECIMAL(18, 4)`, ne sont pas encore comparées.
 
 Le **Physical Type** est optionnel. Si aucun type n'est renseigné, Clinical-Contract vérifie uniquement la présence de la colonne dans le fichier, sans imposer de type logique ni de représentation technique.
 

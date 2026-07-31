@@ -45,9 +45,18 @@ INTEGER_TYPES = {
     "uinteger",
     "ubigint",
 }
-FLOAT_TYPES = {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"}
+DECIMAL_TYPES = {"decimal", "decimal128"}
+FLOAT_TYPES = {
+    "float",
+    "float16",
+    "float32",
+    "float64",
+    "double",
+    "real",
+} | DECIMAL_TYPES
 DATE_TYPES = {"date", "date32", "date64"}
 TIME_TYPES = {"time"}
+INTERVAL_TYPES = {"interval"}
 ARRAY_TYPES = {"array"}
 DATETIME_TYPES = {
     "datetime",
@@ -67,8 +76,10 @@ TYPE_MAP: dict[str, set[str]] = {
     "string": STRING_TYPES,
     "integer": INTEGER_TYPES,
     "float": FLOAT_TYPES,
+    "decimal": DECIMAL_TYPES,
     "date": DATE_TYPES | DATETIME_TYPES,
     "time": TIME_TYPES,
+    "interval": INTERVAL_TYPES,
     "array": ARRAY_TYPES,
     "boolean": BOOLEAN_TYPES,
     "binary": BINARY_TYPES,
@@ -120,6 +131,7 @@ DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "real": "float32",
     "double": "float64",
     "decimal": "decimal",
+    "interval": "interval",
     "timestamp": "timestamp",
     "timestamp with time zone": "timestamp with time zone",
     "timestamptz": "timestamp with time zone",
@@ -152,6 +164,8 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
     "timestamp_ns": "timestamp_ns",
     "date": "date",
     "time": "time",
+    "decimal": "decimal",
+    "interval": "interval",
     "array": "array",
     "date32": "date32",
     "date64": "date64",
@@ -205,7 +219,7 @@ def _normalize_logical_type(logical_type: str) -> str:
     if logical_lower.startswith("timestamp["):
         return "date"
     if logical_lower.startswith("decimal("):
-        return "float"
+        return "decimal"
     return LOGICAL_TYPE_ALIASES.get(logical_lower, logical_lower)
 
 

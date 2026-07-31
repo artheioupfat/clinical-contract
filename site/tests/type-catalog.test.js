@@ -8,9 +8,11 @@ test('type catalog exposes logical and physical options for the editor', () => {
     'string',
     'date',
     'time',
+    'interval',
     'array',
     'integer',
     'float',
+    'decimal',
     'boolean',
   ]);
   assert.deepEqual(catalog.physicalTypeByLogical.date, [
@@ -19,6 +21,7 @@ test('type catalog exposes logical and physical options for the editor', () => {
     'timestamp with timezone',
   ]);
   assert.deepEqual(catalog.physicalTypeByLogical.time, ['time']);
+  assert.deepEqual(catalog.physicalTypeByLogical.interval, ['interval']);
   assert.deepEqual(catalog.physicalTypeByLogical.array, ['array']);
   assert.deepEqual(catalog.physicalTypeByLogical.integer, [
     'int8',
@@ -30,6 +33,7 @@ test('type catalog exposes logical and physical options for the editor', () => {
     'uint32',
     'uint64',
   ]);
+  assert.deepEqual(catalog.physicalTypeByLogical.decimal, ['decimal']);
   assert.ok(catalog.physicalTypeByLogical.string.includes('varchar'));
   assert.deepEqual(catalog.physicalTypeByLogical.boolean, ['boolean', 'binary']);
 });

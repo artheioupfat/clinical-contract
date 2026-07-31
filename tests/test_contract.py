@@ -562,6 +562,115 @@ def test_check_schema_array_rejects_scalar_column(tmp_path):
     assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
+def test_check_schema_generic_float_matches_duckdb_float(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_float.parquet",
+        "patients",
+        "SELECT CAST(1.5 AS FLOAT) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "float")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "float"
+    assert reports[0].columns[0].parquet_type == "float"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_decimal_matches_duckdb_decimal(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_decimal.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DECIMAL(18, 4)) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "decimal", "decimal")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "decimal"
+    assert reports[0].columns[0].parquet_type == "decimal"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_decimal_rejects_duckdb_double(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_double.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DOUBLE) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "decimal")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].parquet_type == "float64"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_decimal_precision_is_not_strict(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_decimal_precision.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DECIMAL(18, 4)) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column(
+            "measurement",
+            "decimal(10, 2)",
+            "decimal(10, 2)",
+        )
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].parquet_type == "decimal"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_interval_matches_duckdb_interval(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "durations_interval.parquet",
+        "patients",
+        "SELECT INTERVAL '2 days 03:04:05' AS duration",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("duration", "interval", "interval")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "interval"
+    assert reports[0].columns[0].parquet_type == "interval"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_interval_rejects_duckdb_time(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "durations_time.parquet",
+        "patients",
+        "SELECT TIME '03:04:05' AS duration",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("duration", "interval")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].parquet_type == "time"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
 def test_check_schema_date_with_timestamp_timezone_physical_matches(tmp_path):
     parquet_file = _write_parquet_from_select(
         tmp_path,
@@ -1375,6 +1484,22 @@ def test_validate_structure_accepts_time_logical_and_physical_types():
 def test_validate_structure_accepts_array_logical_and_physical_types():
     raw = load_raw(
         _yaml_single_typed_column("measurements", "array", "array")
+    )
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+@pytest.mark.parametrize(
+    ("logical_type", "physical_type"),
+    [("decimal", "decimal"), ("interval", "interval")],
+)
+def test_validate_structure_accepts_decimal_and_interval_types(
+    logical_type,
+    physical_type,
+):
+    raw = load_raw(
+        _yaml_single_typed_column("typed_value", logical_type, physical_type)
     )
     report = DataContract.validate_structure(raw)
 

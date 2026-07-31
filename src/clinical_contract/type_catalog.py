@@ -14,15 +14,18 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
         "string",
         "date",
         "time",
+        "interval",
         "array",
         "integer",
         "float",
+        "decimal",
         "boolean",
     ],
     "physicalTypeByLogical": {
         "string": ["varchar", "text", "string", "char", "uuid"],
         "date": ["datetime", "timestamp", "timestamp with timezone"],
         "time": ["time"],
+        "interval": ["interval"],
         "array": ["array"],
         "integer": [
             "int8",
@@ -35,6 +38,7 @@ EDITOR_TYPE_CATALOG: dict[str, object] = {
             "uint64",
         ],
         "float": ["float32", "float64"],
+        "decimal": ["decimal"],
         "boolean": ["boolean", "binary"],
     },
 }
