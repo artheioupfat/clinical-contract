@@ -41,6 +41,14 @@
     @apply w-full;
   }
 
+  .quality-comparison {
+    @apply grid gap-4 md:col-span-2 md:grid-cols-2;
+  }
+
+  .quality-comparison__range {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
   .quality-sql-editor {
     @apply overflow-hidden rounded-lg border border-slate-800 bg-slate-950 shadow-inner shadow-black/30;
   }

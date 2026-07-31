@@ -13,7 +13,7 @@ It helps you:
 - write a data contract with a guided web editor or YAML;
 - validate that the contract is correctly composed;
 - check that a real `.parquet` or `.csv` file conforms to the expected schema;
-- run SQL quality rules with DuckDB;
+- run expressive SQL quality rules with DuckDB using equality, thresholds, or ranges;
 - use the same logic in the browser, the CLI, and Python pipelines.
 
 <p align="center">

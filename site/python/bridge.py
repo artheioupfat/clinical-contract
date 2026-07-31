@@ -168,8 +168,13 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
                 "property_name": result.property_name,
                 "description": result.description,
                 "status": result.status.value,
-                "obtained": result.obtained if result.obtained is not None else "error",
-                "expected": result.expected,
+                "obtained": (
+                    _to_jsonable(result.obtained)
+                    if result.obtained is not None
+                    else "error"
+                ),
+                "operator": result.operator.value,
+                "expected": result.expected_display,
             }
         )
 

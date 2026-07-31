@@ -11,7 +11,11 @@ from clinical_contract.contract import (
     _is_supported_physical_type,
 )
 from clinical_contract.type_catalog import EDITOR_TYPE_CATALOG
-from clinical_contract.models import CheckStatus, ColumnCheckStatus
+from clinical_contract.models import (
+    CheckStatus,
+    ColumnCheckStatus,
+    ComparisonOperator,
+)
 from pathlib import Path
 
 # ------------------------------------------------------------------ #
@@ -142,6 +146,38 @@ def _write_csv_ids(tmp_path, ids, filename="patients.csv"):
     return csv_file
 
 
+def _yaml_with_quality_expectation(expectation_yaml, query="SELECT COUNT(*) FROM patients"):
+    expectation = "\n".join(
+        f"            {line}" for line in expectation_yaml.splitlines()
+    )
+    return f"""
+apiVersion: v1.0.0
+kind: DataContract
+id: comparison-contract
+name: Comparison Contract
+version: 1.0.0
+status: active
+description:
+  purpose: Test
+  usage: Unit tests
+  limitations: None
+schema:
+  - name: patients
+    physicalType: TABLE
+    description: Patients table
+    properties:
+      - name: id
+        logicalType: string
+        physicalType: VARCHAR
+        required: true
+        quality:
+          - type: sql
+            description: Scalar comparison
+            query: "{query}"
+{expectation}
+"""
+
+
 def _write_parquet_single_typed_column(tmp_path, table_name, column_name, duckdb_type):
     duckdb = pytest.importorskip("duckdb")
     parquet_file = tmp_path / f"{table_name}_{column_name}_{duckdb_type.lower()}.parquet"
@@ -169,7 +205,7 @@ def _write_parquet_from_select(tmp_path, filename, table_name, select_sql):
     return parquet_file
 
 
-def _yaml_single_event_timestamp(logical_type, physical_type=None):
+def _yaml_single_typed_column(column_name, logical_type, physical_type=None):
     physical_type_line = (
         f"        physicalType: {physical_type}\n"
         if physical_type
@@ -191,11 +227,15 @@ schema:
     physicalType: TABLE
     description: Table patients
     properties:
-      - name: event_ts
+      - name: {column_name}
         logicalType: {logical_type}
-{physical_type_line}        description: Event timestamp
+{physical_type_line}        description: Typed test column
         required: true
 """
+
+
+def _yaml_single_event_timestamp(logical_type, physical_type=None):
+    return _yaml_single_typed_column("event_ts", logical_type, physical_type)
 
 
 # ------------------------------------------------------------------ #
@@ -278,6 +318,129 @@ def test_check_echec_si_null(tmp_path):
     assert failures[0].status == CheckStatus.failed
     assert failures[0].obtained == 1
     assert failures[0].expected == 0
+
+
+@pytest.mark.parametrize(
+    ("expectation_yaml", "operator", "expected_display"),
+    [
+        ("expected:\n  equal: 3", ComparisonOperator.equal, "= 3"),
+        ("expected:\n  notEqual: 4", ComparisonOperator.not_equal, "!= 4"),
+        ("expected:\n  greaterThan: 2", ComparisonOperator.greater_than, "> 2"),
+        (
+            "expected:\n  greaterThanOrEqual: 3",
+            ComparisonOperator.greater_than_or_equal,
+            ">= 3",
+        ),
+        ("expected:\n  lessThan: 4", ComparisonOperator.less_than, "< 4"),
+        (
+            "expected:\n  lessThanOrEqual: 3",
+            ComparisonOperator.less_than_or_equal,
+            "<= 3",
+        ),
+        (
+            "expected:\n  between:\n    min: 3\n    max: 3",
+            ComparisonOperator.between,
+            "3 <= value <= 3",
+        ),
+    ],
+)
+def test_check_supports_quality_comparison_operators(
+    tmp_path,
+    expectation_yaml,
+    operator,
+    expected_display,
+):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(_yaml_with_quality_expectation(expectation_yaml))
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.results[0].operator == operator
+    assert report.results[0].expected_display == expected_display
+
+
+def test_check_comparison_failure_returns_code_1(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation("expected:\n  greaterThan: 3")
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is False
+    assert report.code == 1
+    assert report.results[0].obtained == 3
+    assert report.results[0].expected_display == "> 3"
+
+
+def test_check_preserves_fractional_query_results(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation(
+            "expected:\n  greaterThan: 1.4",
+            query="SELECT AVG(value) FROM (VALUES (1), (2)) AS sample(value)",
+        )
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.results[0].obtained == 1.5
+
+
+@pytest.mark.parametrize(
+    ("query", "error_message"),
+    [
+        ("SELECT 1, 2", "exactly one column"),
+        ("SELECT * FROM (VALUES (1), (2))", "exactly one row"),
+        ("SELECT NULL", "returned NULL"),
+    ],
+)
+def test_check_rejects_non_scalar_quality_results(tmp_path, query, error_message):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation("expected:\n  equal: 1", query=query)
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.code == 2
+    assert error_message in report.errors()[0].error_message
+
+
+@pytest.mark.parametrize(
+    "expected",
+    [
+        {},
+        {"equal": 0, "lessThan": 2},
+        {"between": {"min": 10, "max": 1}},
+        {"greaterThan": True},
+    ],
+)
+def test_validate_structure_rejects_invalid_quality_expectations(expected):
+    raw = load_raw(YAML_COMPLET)
+    quality = raw["schema"][0]["properties"][0]["quality"][0]
+    quality.pop("mustBe")
+    quality["expected"] = expected
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(field for field in report.fields if field.field == "schema")
+    assert "quality[0] invalid" in schema_field.display_value
+
+
+def test_validate_structure_rejects_must_be_with_expected():
+    raw = load_raw(YAML_COMPLET)
+    quality = raw["schema"][0]["properties"][0]["quality"][0]
+    quality["expected"] = {"equal": 0}
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(field for field in report.fields if field.field == "schema")
+    assert "mustBe and expected cannot be used together" in schema_field.display_value
 
 
 def test_check_tous_passes_depuis_bytes(tmp_path):
@@ -488,6 +651,183 @@ def test_check_schema_timestamp_tz_compatible(tmp_path):
 
     assert reports[0].success is True
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_time_matches_duckdb_time(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_time.parquet",
+        "patients",
+        "SELECT TIME '12:34:56' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("time", "time"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "time"
+    assert reports[0].columns[0].parquet_type == "time"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_time_rejects_timestamp(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_time_as_timestamp.parquet",
+        "patients",
+        "SELECT TIMESTAMP '2024-01-01 12:34:56' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("time"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "time"
+    assert reports[0].columns[0].parquet_type == "timestamp"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_array_matches_duckdb_list(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_array.parquet",
+        "patients",
+        "SELECT [1, 2, 3] AS measurements",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurements", "array", "array")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "array"
+    assert reports[0].columns[0].parquet_type == "array"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_array_rejects_scalar_column(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_scalar.parquet",
+        "patients",
+        "SELECT 1 AS measurements",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurements", "array")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "array"
+    assert reports[0].columns[0].parquet_type == "int32"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_generic_float_matches_duckdb_float(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_float.parquet",
+        "patients",
+        "SELECT CAST(1.5 AS FLOAT) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "float")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "float"
+    assert reports[0].columns[0].parquet_type == "float"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_decimal_matches_duckdb_decimal(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_decimal.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DECIMAL(18, 4)) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "decimal", "decimal")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "decimal"
+    assert reports[0].columns[0].parquet_type == "decimal"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_decimal_rejects_duckdb_double(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_double.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DOUBLE) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("measurement", "decimal")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].parquet_type == "float64"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
+def test_check_schema_decimal_precision_is_not_strict(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "measurements_decimal_precision.parquet",
+        "patients",
+        "SELECT CAST(123.4567 AS DECIMAL(18, 4)) AS measurement",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column(
+            "measurement",
+            "decimal(10, 2)",
+            "decimal(10, 2)",
+        )
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].parquet_type == "decimal"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_interval_matches_duckdb_interval(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "durations_interval.parquet",
+        "patients",
+        "SELECT INTERVAL '2 days 03:04:05' AS duration",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("duration", "interval", "interval")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "interval"
+    assert reports[0].columns[0].parquet_type == "interval"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_interval_rejects_duckdb_time(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "durations_time.parquet",
+        "patients",
+        "SELECT TIME '03:04:05' AS duration",
+    )
+    contract, _ = load_contract(
+        _yaml_single_typed_column("duration", "interval")
+    )
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].parquet_type == "time"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
 
 
 def test_check_schema_date_with_timestamp_timezone_physical_matches(tmp_path):
@@ -1291,6 +1631,38 @@ schema:
     assert report.success is True
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert schema_field.display_value == "1 column detected"
+
+
+def test_validate_structure_accepts_time_logical_and_physical_types():
+    raw = load_raw(_yaml_single_event_timestamp("time", "time"))
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+def test_validate_structure_accepts_array_logical_and_physical_types():
+    raw = load_raw(
+        _yaml_single_typed_column("measurements", "array", "array")
+    )
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
+
+
+@pytest.mark.parametrize(
+    ("logical_type", "physical_type"),
+    [("decimal", "decimal"), ("interval", "interval")],
+)
+def test_validate_structure_accepts_decimal_and_interval_types(
+    logical_type,
+    physical_type,
+):
+    raw = load_raw(
+        _yaml_single_typed_column("typed_value", logical_type, physical_type)
+    )
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
 
 
 def test_site_type_catalog_matches_python_type_support():

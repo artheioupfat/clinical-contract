@@ -1,8 +1,105 @@
 from __future__ import annotations
 
+from decimal import Decimal
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+
+NumericValue = int | float | Decimal
+
+
+class ComparisonOperator(str, Enum):
+    equal = "equal"
+    not_equal = "notEqual"
+    greater_than = "greaterThan"
+    greater_than_or_equal = "greaterThanOrEqual"
+    less_than = "lessThan"
+    less_than_or_equal = "lessThanOrEqual"
+    between = "between"
+
+
+class BetweenExpectation(BaseModel):
+    min: NumericValue
+    max: NumericValue
+
+    @field_validator("min", "max", mode="before")
+    @classmethod
+    def reject_boolean_bounds(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("comparison values must be numeric, not boolean")
+        return value
+
+    @model_validator(mode="after")
+    def validate_bounds(self):
+        if Decimal(str(self.min)) > Decimal(str(self.max)):
+            raise ValueError("between.min must be less than or equal to between.max")
+        return self
+
+
+class QualityExpectation(BaseModel):
+    equal: Optional[NumericValue] = None
+    not_equal: Optional[NumericValue] = Field(default=None, alias="notEqual")
+    greater_than: Optional[NumericValue] = Field(default=None, alias="greaterThan")
+    greater_than_or_equal: Optional[NumericValue] = Field(
+        default=None,
+        alias="greaterThanOrEqual",
+    )
+    less_than: Optional[NumericValue] = Field(default=None, alias="lessThan")
+    less_than_or_equal: Optional[NumericValue] = Field(
+        default=None,
+        alias="lessThanOrEqual",
+    )
+    between: Optional[BetweenExpectation] = None
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator(
+        "equal",
+        "not_equal",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+        mode="before",
+    )
+    @classmethod
+    def reject_boolean_values(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("comparison values must be numeric, not boolean")
+        return value
+
+    @model_validator(mode="after")
+    def validate_single_operator(self):
+        if len(self.configured_comparisons()) != 1:
+            raise ValueError("expected must define exactly one comparison operator")
+        return self
+
+    def configured_comparisons(
+        self,
+    ) -> list[tuple[ComparisonOperator, NumericValue | BetweenExpectation]]:
+        candidates = (
+            (ComparisonOperator.equal, self.equal),
+            (ComparisonOperator.not_equal, self.not_equal),
+            (ComparisonOperator.greater_than, self.greater_than),
+            (ComparisonOperator.greater_than_or_equal, self.greater_than_or_equal),
+            (ComparisonOperator.less_than, self.less_than),
+            (ComparisonOperator.less_than_or_equal, self.less_than_or_equal),
+            (ComparisonOperator.between, self.between),
+        )
+        return [(operator, value) for operator, value in candidates if value is not None]
+
+    def resolve(
+        self,
+    ) -> tuple[ComparisonOperator, NumericValue | BetweenExpectation]:
+        return self.configured_comparisons()[0]
+
+
+def _format_numeric(value: NumericValue) -> str:
+    if isinstance(value, Decimal):
+        return format(value, "f")
+    return str(value)
 
 
 class CheckStatus(str, Enum):
@@ -13,18 +110,44 @@ class CheckStatus(str, Enum):
 
 class QualityResult(BaseModel):
     """Result of a single quality check."""
+
     schema_name: str
     property_name: str
     description: str
     query: str
     status: CheckStatus
-    expected: int
-    obtained: Optional[int] = None
+    operator: ComparisonOperator = ComparisonOperator.equal
+    expected: NumericValue | BetweenExpectation
+    obtained: Optional[NumericValue] = None
     error_message: Optional[str] = None
 
     @property
     def ok(self) -> bool:
         return self.status == CheckStatus.passed
+
+    @property
+    def expected_display(self) -> str:
+        if self.operator == ComparisonOperator.between:
+            bounds = self.expected
+            if not isinstance(bounds, BetweenExpectation):
+                return str(bounds)
+            return (
+                f"{_format_numeric(bounds.min)} <= value <= "
+                f"{_format_numeric(bounds.max)}"
+            )
+
+        symbols = {
+            ComparisonOperator.equal: "=",
+            ComparisonOperator.not_equal: "!=",
+            ComparisonOperator.greater_than: ">",
+            ComparisonOperator.greater_than_or_equal: ">=",
+            ComparisonOperator.less_than: "<",
+            ComparisonOperator.less_than_or_equal: "<=",
+        }
+        expected = self.expected
+        if isinstance(expected, BetweenExpectation):
+            return str(expected)
+        return f"{symbols[self.operator]} {_format_numeric(expected)}"
 
 
 class ContractReport(BaseModel):

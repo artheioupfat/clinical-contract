@@ -58,6 +58,26 @@ test('contract reset uses accessible dialog semantics', () => {
   assert.match(editorPanel, /class="reset-modal" @click\.stop/);
 });
 
+test('quality editor exposes every supported comparison operator', () => {
+  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+
+  for (const operator of [
+    'equal',
+    'notEqual',
+    'greaterThan',
+    'greaterThanOrEqual',
+    'lessThan',
+    'lessThanOrEqual',
+    'between',
+  ]) {
+    assert.match(editorPanel, new RegExp(`value="${operator}"`));
+  }
+  assert.match(editorPanel, /rule\.comparisonOperator !== 'between'/);
+  assert.match(editorPanel, /rule\.comparisonOperator === 'between'/);
+  assert.match(editorPanel, /rule\.expectedMin/);
+  assert.match(editorPanel, /rule\.expectedMax/);
+});
+
 test('template catalogs keep bundled assets declarative', () => {
   const constants = fs.readFileSync(path.join(siteRoot, 'js/constants.js'), 'utf8');
   const catalog = fs.readFileSync(path.join(siteRoot, 'js/example-catalog.js'), 'utf8');

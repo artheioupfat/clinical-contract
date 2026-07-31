@@ -5,8 +5,12 @@ const catalog = {
   "logicalTypeOptions": [
     "string",
     "date",
+    "time",
+    "interval",
+    "array",
     "integer",
     "float",
+    "decimal",
     "boolean"
   ],
   "physicalTypeByLogical": {
@@ -22,6 +26,15 @@ const catalog = {
       "timestamp",
       "timestamp with timezone"
     ],
+    "time": [
+      "time"
+    ],
+    "interval": [
+      "interval"
+    ],
+    "array": [
+      "array"
+    ],
     "integer": [
       "int8",
       "int16",
@@ -35,6 +48,9 @@ const catalog = {
     "float": [
       "float32",
       "float64"
+    ],
+    "decimal": [
+      "decimal"
     ],
     "boolean": [
       "boolean",
