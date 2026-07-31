@@ -167,6 +167,8 @@ La commande `check` compare un fichier de données avec un contrat de données. 
 clinical-contract check site/examples/contract.yaml site/examples/template.parquet
 ```
 
+
+
 ## Python API
 
 La bibliothèque Python permet d'intégrer les mêmes contrôles dans un pipeline ou une application.
@@ -196,6 +198,7 @@ report = contract.check("data.parquet")
 
 print(report.success)
 ```
+
 
 ## Limites actuelles
 

@@ -1,0 +1,57 @@
+@layer components {
+  /* Symmetric contract and dataset entry states. */
+  .workspace-empty {
+    @apply flex h-full min-h-0 flex-1 items-center justify-center p-6;
+    background: radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.12) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  .workspace-empty--active {
+    background-color: var(--cc-success-soft);
+  }
+
+  .workspace-empty-card {
+    @apply w-full max-w-md rounded-lg border bg-white px-6 py-7 text-center;
+    border-color: var(--cc-border);
+  }
+
+  .workspace-empty-icon {
+    @apply mx-auto flex h-11 w-11 items-center justify-center rounded-lg;
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary);
+  }
+
+  .workspace-empty-icon svg {
+    @apply h-6 w-6;
+  }
+
+  .workspace-empty-title {
+    @apply mt-4 text-xl font-semibold tracking-tight;
+    color: var(--cc-text);
+  }
+
+  .workspace-empty-copy {
+    @apply mx-auto mt-2 max-w-sm text-sm leading-6;
+    color: var(--cc-muted);
+  }
+
+  .workspace-empty-actions {
+    @apply mt-5 flex flex-wrap items-center justify-center gap-2;
+  }
+
+  .workspace-template-link {
+    @apply mt-4 cursor-pointer border-0 bg-transparent p-0 text-xs font-semibold underline decoration-slate-300 underline-offset-4 transition;
+    color: var(--cc-primary);
+  }
+
+  .workspace-template-link:hover:not(:disabled),
+  .workspace-template-link:focus-visible:not(:disabled) {
+    color: var(--cc-primary-strong);
+  }
+
+  .workspace-template-link:disabled {
+    @apply cursor-not-allowed no-underline opacity-50;
+    color: var(--cc-muted);
+  }
+
+}

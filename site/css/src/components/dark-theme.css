@@ -26,16 +26,6 @@
     color: var(--cc-night-text);
   }
 
-  .theme-dark .app-grid--onboarding {
-    background: radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.14) 1px, transparent 0);
-    background-size: 24px 24px;
-  }
-
-  .theme-dark .app-grid--onboarding .panel--editor {
-    background: var(--cc-night-panel);
-    border-color: var(--cc-night-border);
-  }
-
   .theme-dark .pine-header {
     background: linear-gradient(180deg, var(--cc-night-panel) 0%, var(--cc-night) 100%);
   }
@@ -43,15 +33,15 @@
   .theme-dark .pine-logo-box { background: white; }
   .theme-dark .app-footer { background: var(--cc-night-panel); color: var(--cc-night-muted); }
 
-  .theme-dark :is(.app-footer, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .schema-nav, .schema-nav-footer, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar) {
+  .theme-dark :is(.app-footer, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .schema-nav, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar, .template-modal, .template-modal__header, .workspace-empty-card) {
     border-color: var(--cc-night-border);
   }
 
-  .theme-dark :is(.dropzone-title, .entity-modal__title, .panel-title, .pine-brand-title, .reset-modal__title, .schema-empty-title, .schema-nav-item-title, .schema-nav-title, .schema-stage-title) {
+  .theme-dark :is(.entity-modal__title, .panel-title, .pine-brand-title, .reset-modal__title, .schema-nav-item-title, .schema-nav-title, .schema-stage-title, .template-modal__title, .template-option__title, .workspace-empty-title) {
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.dropzone-subtitle, .entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .schema-empty-copy, .schema-empty-template, .schema-form-label, .schema-nav-footer, .schema-nav-item-subtitle, .schema-nav-subtitle, .schema-stage-desc) {
+  .theme-dark :is(.entity-modal__kicker, .entity-modal__label, .preview-pagination__meta, .reset-modal__body, .schema-form-label, .template-option__description, .workspace-empty-copy) {
     color: var(--cc-night-muted);
   }
 
@@ -61,19 +51,19 @@
 
   .theme-dark :is(.footer-context strong, .footer-right strong) { color: var(--cc-night-text); }
 
-  .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .dropzone, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .schema-stage-pill, .team-list-shell, .view-switch) {
+  .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .team-list-shell, .template-modal, .template-option, .view-switch, .workspace-empty-card) {
     background: var(--cc-night-raised);
     border-color: var(--cc-night-border);
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.checker-collapse-btn:hover, .checker-rail-btn:hover, .column-edit-button, .dropzone-icon-wrap, .github-link:hover, .pine-btn:hover:not(:disabled), .pine-tab--active, .quality-edit-button, .schema-nav-item--active, .team-edit-button, .view-switch-btn--active) {
+  .theme-dark :is(.checker-collapse-btn:hover, .checker-rail-btn:hover, .column-edit-button, .github-link:hover, .pine-btn:hover:not(:disabled), .quality-edit-button, .schema-nav-item--active, .team-edit-button, .view-switch-btn--active) {
     background: var(--cc-night-elevated);
     border-color: var(--cc-primary-ring);
     color: white;
   }
 
-  .theme-dark :is(.entity-modal__close, .pine-tab, .view-switch-btn) { color: var(--cc-night-muted); }
+  .theme-dark :is(.entity-modal__close, .view-switch-btn) { color: var(--cc-night-muted); }
   .theme-dark .panel-eyebrow { color: var(--cc-primary-strong); }
   .theme-dark .pine-theme-button {
     background: transparent;
@@ -86,27 +76,21 @@
     stroke: white;
   }
   .theme-dark .pine-theme-button:hover { background: var(--cc-night-elevated); color: white; }
-  .theme-dark :is(.pine-tab--active, .view-switch-btn--active) { box-shadow: inset 0 0 0 1px var(--cc-primary-ring); }
+  .theme-dark .view-switch-btn--active { box-shadow: inset 0 0 0 1px var(--cc-primary-ring); }
 
   /* Editor and builder surfaces */
   .theme-dark .editor-wrap { background: linear-gradient(180deg, var(--cc-night-panel) 0%, var(--cc-night) 100%); }
   .theme-dark .editor-gutter { background: var(--cc-night-panel); border-color: var(--cc-night-border); color: var(--cc-primary-strong); }
   .theme-dark .editor-textarea, .theme-dark :is(.column-table tr, .quality-table tr, .team-table tr, .results-table tbody td, .preview-table tbody td) { color: #e2e8f0; }
   .theme-dark :is(.editor-textarea, .schema-input)::placeholder { color: #93c5fd; }
-  .theme-dark .dropzone--active { background: #022c22; border-color: #10b981; }
   .theme-dark :is(.data-warning, .schema-warning) { @apply border-amber-700 bg-amber-950 text-amber-200; }
-  .theme-dark .schema-empty { background: radial-gradient(circle at 1px 1px, rgba(166, 176, 189, 0.18) 1px, transparent 0); background-size: 22px 22px, 100% 100%; }
-  .theme-dark :is(.pine-tabs, .preview-pagination, .schema-card, .schema-empty-card, .schema-workflow, .schema-workspace) { background: var(--cc-surface); border-color: var(--cc-night-border); }
+  .theme-dark .workspace-empty { background: radial-gradient(circle at 1px 1px, rgba(166, 176, 189, 0.18) 1px, transparent 0); background-size: 22px 22px; }
+  .theme-dark :is(.preview-pagination, .schema-card, .schema-workflow, .schema-workspace) { background: var(--cc-surface); border-color: var(--cc-night-border); }
   .theme-dark .schema-nav { background: var(--cc-dark-nav); }
   .theme-dark :is(.column-table__row:hover, .quality-table__row:hover, .results-table tbody tr:hover, .schema-nav-item:hover, .team-table__row:hover) { background: #1b222b; }
   .theme-dark .schema-nav-item--active .schema-nav-item-title { color: white; }
 
   /* Builder controls */
-  .theme-dark .schema-reset-button { background: var(--cc-dark-control); border-color: #7f1d1d; color: #fecaca; }
-  .theme-dark .schema-reset-button:hover { background: rgba(76, 5, 25, 0.55); border-color: #e11d48; color: #ffe4e6; }
-  .theme-dark .schema-nav-badge { @apply bg-slate-700; }
-  .theme-dark .schema-nav-badge--active { @apply bg-sky-400; }
-  .theme-dark .schema-nav-badge--done { @apply bg-emerald-400; }
   .theme-dark :is(.column-required-checkbox, .schema-editor .schema-input, .schema-form-control) { background: var(--cc-dark-control); border-color: #3f4b59; color: #f1f5f9; }
   .theme-dark :is(.schema-editor .schema-input--description, .team-member-input) { background: var(--cc-night-elevated); border-color: #4b5a6b; color: white; }
   .theme-dark .schema-editor .schema-input--required { background: rgba(76, 5, 25, 0.4); border-color: #fb7185; }
@@ -116,12 +100,12 @@
   .theme-dark .schema-add-btn:disabled { background: var(--cc-dark-control); border-color: var(--cc-night-border); color: #93c5fd; opacity: 0.6; }
 
   /* Code and SQL blocks */
-  .theme-dark :is(.quality-sql-editor, .quality-sql-editor__textarea, .schema-yaml-preview) { background: var(--cc-dark-code); border-color: var(--cc-night-border); color: #dbeafe; }
+  .theme-dark :is(.quality-sql-editor, .quality-sql-editor__textarea) { background: var(--cc-dark-code); border-color: var(--cc-night-border); color: #dbeafe; }
   .theme-dark :is(.quality-sql-editor__bar, .quality-sql-editor__table-hint) { background: var(--cc-dark-code-bar); border-color: var(--cc-dark-code-border); color: #cbd5e1; }
 
   /* Tables and preview */
-  .theme-dark :is(.column-table thead, .preview-table thead th, .quality-table thead, .results-table thead th, .schema-table thead tr, .team-table thead) { background: var(--cc-surface); border-color: var(--cc-night-border); color: var(--cc-night-muted); }
-  .theme-dark :is(.preview-table tbody td, .results-table tbody td, .schema-table tbody tr) { border-color: var(--cc-night-border); }
+  .theme-dark :is(.column-table thead, .preview-table thead th, .quality-table thead, .results-table thead th, .team-table thead) { background: var(--cc-surface); border-color: var(--cc-night-border); color: var(--cc-night-muted); }
+  .theme-dark :is(.preview-table tbody td, .results-table tbody td) { border-color: var(--cc-night-border); }
   .theme-dark :is(.column-table, .quality-table, .team-table) { @apply divide-slate-700; }
   .theme-dark :is(.column-table tbody, .quality-table tbody, .team-table tbody) { @apply divide-slate-800; }
   .theme-dark :is(.column-table th, .column-table__description, .column-table__required, .column-table__type, .empty-row, .preview-empty, .quality-table th, .quality-table__description, .team-table th, .team-table__role) { color: var(--cc-night-muted); }

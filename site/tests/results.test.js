@@ -62,7 +62,7 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
   assert.equal(context.qualityRunState, 'idle');
 });
 
-test('validate opens the checker panel before showing validation results', async () => {
+test('validate opens the contract validation view without changing the checker panel', async () => {
   const results = loadResultsModule();
   global.window.pyValidateContract = () => JSON.stringify({
     success: true,
@@ -72,7 +72,7 @@ test('validate opens the checker panel before showing validation results', async
     pythonReady: true,
     busy: false,
     checkerCollapsed: true,
-    activeTab: 'schema',
+    editorView: 'schema',
     showRequiredHints: false,
     yamlText: 'id: contract',
     validateRows: [],
@@ -88,8 +88,61 @@ test('validate opens the checker panel before showing validation results', async
 
   await results.validateContract.call(context);
 
-  assert.equal(context.checkerCollapsed, false);
-  assert.equal(context.activeTab, 'validate');
+  assert.equal(context.checkerCollapsed, true);
+  assert.equal(context.editorView, 'validation');
   assert.equal(context.validateRunState, 'passed');
   assert.equal(context.logoVariant, 'green');
+});
+
+test('successful checks finish on quality after evaluating schema first', async () => {
+  const results = loadResultsModule();
+  global.window.pyRunContractCheck = () => JSON.stringify({
+    validate: { success: true, fields: [] },
+    schema_rows: [{ status: 'ok' }],
+    quality_rows: [{ status: 'passed' }],
+    schema_success: true,
+    report_success: true,
+  });
+  const context = {
+    pythonReady: true,
+    schemaStarted: true,
+    dataFile: { async arrayBuffer() { return new ArrayBuffer(1); } },
+    yamlText: 'name: contract',
+    busy: false,
+    dataTab: 'data',
+    showRequiredHints: false,
+    validateRows: [],
+    schemaRows: [],
+    qualityRows: [],
+    validateRunState: 'idle',
+    schemaRunState: 'idle',
+    qualityRunState: 'idle',
+    normalizeValidateRows: results.normalizeValidateRows,
+    normalizeSchemaRows: results.normalizeSchemaRows,
+    resetValidateState: results.resetValidateState,
+    resetDataCheckState: results.resetDataCheckState,
+    setLogoSuccess() { this.logoVariant = 'green'; },
+    setLogoFailure() { this.logoVariant = 'red'; },
+  };
+
+  await results.runCheck.call(context);
+
+  assert.equal(context.schemaRunState, 'passed');
+  assert.equal(context.qualityRunState, 'passed');
+  assert.equal(context.dataTab, 'quality');
+  assert.equal(context.logoVariant, 'green');
+});
+
+test('checks stay blocked until contract and data are both available', async () => {
+  const results = loadResultsModule();
+  let calls = 0;
+  global.window.pyRunContractCheck = () => {
+    calls += 1;
+    return '{}';
+  };
+
+  await results.runCheck.call({ pythonReady: true, schemaStarted: false, dataFile: {} });
+  await results.runCheck.call({ pythonReady: true, schemaStarted: true, dataFile: null });
+
+  assert.equal(calls, 0);
 });

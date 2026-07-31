@@ -110,18 +110,6 @@
     @apply grid h-full min-h-0 grid-cols-1;
   }
 
-  .app-grid--onboarding {
-    @apply px-0 py-0;
-    background:
-      radial-gradient(circle at 1px 1px, rgba(0, 92, 169, 0.10) 1px, transparent 0);
-    background-size: 24px 24px;
-  }
-
-  .app-grid--onboarding .panel--editor {
-    @apply h-full w-full overflow-hidden border-0 shadow-none;
-    background: white;
-  }
-
   .split-resizer {
     @apply hidden;
   }

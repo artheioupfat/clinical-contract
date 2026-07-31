@@ -5,23 +5,6 @@ window.ClinicalModules.ui = {
   splitMax: 75,
   splitDefault: 58,
 
-  initThemeSwitch() {
-    try {
-      this.switchOn = localStorage.getItem('clinical-ui-dark') === '1';
-    } catch (_error) {
-      this.switchOn = false;
-    }
-  },
-
-  toggleThemeSwitch() {
-    this.switchOn = !this.switchOn;
-    try {
-      localStorage.setItem('clinical-ui-dark', this.switchOn ? '1' : '0');
-    } catch (_error) {
-      // Ignore storage failures.
-    }
-  },
-
   initSplitPane() {
     try {
       const saved = Number(localStorage.getItem('clinical-ui-split'));
@@ -59,10 +42,14 @@ window.ClinicalModules.ui = {
   },
 
   appGridClass() {
-    if (!this.schemaStarted) return 'app-grid app-grid--onboarding';
     if (this.checkerCollapsed) return 'app-grid app-grid--checker-collapsed';
     if (this.editorView === 'schema') return 'app-grid app-grid--schema';
     return 'app-grid';
+  },
+
+  dataModeButtonClass(mode) {
+    const base = 'view-switch-btn';
+    return this.dataTab === mode ? `${base} view-switch-btn--active` : base;
   },
 
   toggleCheckerPanel() {

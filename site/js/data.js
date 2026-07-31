@@ -20,6 +20,7 @@ window.ClinicalModules.data = {
       this.dataFileSize = this.dataFile.size;
       this.dataColumns = null;
       this.dataRows = null;
+      this.dataTab = 'data';
       this.resetDataCheckState();
 
       if (this.pythonReady) await this.refreshDataInsights();
@@ -44,13 +45,14 @@ window.ClinicalModules.data = {
   },
 
   releasePreviewSession() {
-    if (!this.previewHandle || !window.pyReleaseDataPreview) return;
+    const handle = this.previewHandle;
+    this.previewHandle = null;
+    if (!handle || typeof window.pyReleaseDataPreview !== 'function') return;
     try {
-      window.pyReleaseDataPreview(this.previewHandle);
+      window.pyReleaseDataPreview(handle);
     } catch (error) {
       console.error(error);
     }
-    this.previewHandle = null;
   },
 
   clearPreviewData() {
@@ -58,6 +60,7 @@ window.ClinicalModules.data = {
     this.previewRows = [];
     this.previewTotalRows = 0;
     this.previewPage = 1;
+    this.previewPageSize = this.previewPageSizeDefault;
     this.previewTotalPages = 0;
     this.previewLoading = false;
     this.previewError = '';
@@ -155,10 +158,16 @@ window.ClinicalModules.data = {
   },
 
   async loadDataFile(file) {
+    if (!this.pythonReady) {
+      this.dataStorageWarning = 'Python runtime is still loading. Please wait before loading a data file.';
+      return false;
+    }
+
     this.dataFile = file;
     this.dataFileName = file.name;
     this.dataFileSize = file.size || 0;
     this.dataStorageWarning = '';
+    this.dataTab = 'data';
     this.resetDataCheckState();
     try {
       await this.persistDataFileSession(file);
@@ -167,6 +176,7 @@ window.ClinicalModules.data = {
       this.dataStorageWarning = `This file is loaded for the current session, but browser storage failed: ${error.message}`;
     }
     await this.refreshDataInsights();
+    return true;
   },
 
   deleteDataFile() {
@@ -188,13 +198,42 @@ window.ClinicalModules.data = {
     this.dataStorageWarning = '';
     this.draggingData = false;
     this.resetDataCheckState();
-    this.logoVariant = 'neutral';
-
-    if (['schema', 'quality', 'preview'].includes(this.activeTab)) {
-      this.activeTab = 'validate';
-    }
+    this.dataTab = 'data';
+    if (this.validateRunState === 'passed') this.logoVariant = 'green';
+    else if (this.validateRunState === 'failed') this.logoVariant = 'red';
+    else this.logoVariant = 'neutral';
     if (this.$refs?.dataInput) {
       this.$refs.dataInput.value = '';
+    }
+  },
+
+  openDataTemplateModal() {
+    if (!this.pythonReady) {
+      this.dataStorageWarning = 'Python runtime is still loading. Please wait before loading sample data.';
+      return;
+    }
+    this.dataTemplateModalOpen = true;
+  },
+
+  closeDataTemplateModal() {
+    this.dataTemplateModalOpen = false;
+  },
+
+  async loadDataTemplate(template) {
+    if (!this.pythonReady || !template?.path) return;
+    try {
+      const response = await fetch(template.path);
+      if (!response.ok) {
+        throw new Error(`Template data request failed with status ${response.status}`);
+      }
+      const buffer = await response.arrayBuffer();
+      const file = new File([buffer], template.fileName || 'template.parquet', {
+        type: template.mimeType || 'application/octet-stream',
+      });
+      this.dataTemplateModalOpen = false;
+      await this.loadDataFile(file);
+    } catch (error) {
+      this.dataStorageWarning = `Unable to load sample data: ${error.message}`;
     }
   },
 

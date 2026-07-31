@@ -3,6 +3,14 @@ window.ClinicalModules = window.ClinicalModules || {};
 const normalizeResultState = (value) => String(value || '').trim().toLowerCase();
 const isPassedState = (value) => ['ok', 'passed', 'present', 'success', 'valid'].includes(normalizeResultState(value));
 const isFailedState = (value) => ['error', 'failed', 'failure', 'invalid', 'missing'].includes(normalizeResultState(value));
+const statusClass = (prefix, status) => {
+  const normalized = normalizeResultState(status);
+  if (isPassedState(normalized)) return `${prefix}--passed`;
+  if (isFailedState(normalized)) {
+    return `${prefix}--${normalized === 'error' ? 'error' : 'failed'}`;
+  }
+  return `${prefix}--warning`;
+};
 
 window.ClinicalModules.results = {
   tabDotClass(state) {
@@ -13,25 +21,11 @@ window.ClinicalModules.results = {
   },
 
   statusChipClass(status) {
-    const normalized = normalizeResultState(status);
-    if (isPassedState(normalized)) {
-      return 'status-chip--passed';
-    }
-    if (isFailedState(normalized)) {
-      return normalized === 'error' ? 'status-chip--error' : 'status-chip--failed';
-    }
-    return 'status-chip--warning';
+    return statusClass('status-chip', status);
   },
 
   statusDotClass(status) {
-    const normalized = normalizeResultState(status);
-    if (isPassedState(normalized)) {
-      return 'status-dot--passed';
-    }
-    if (isFailedState(normalized)) {
-      return normalized === 'error' ? 'status-dot--error' : 'status-dot--failed';
-    }
-    return 'status-dot--warning';
+    return statusClass('status-dot', status);
   },
 
   normalizeValidateRows(rows) {
@@ -75,8 +69,7 @@ window.ClinicalModules.results = {
       return;
     }
     this.busy = true;
-    this.checkerCollapsed = false;
-    this.activeTab = 'validate';
+    this.editorView = 'validation';
     this.showRequiredHints = true;
     try {
       const payload = JSON.parse(window.pyValidateContract(this.yamlText));
@@ -102,7 +95,7 @@ window.ClinicalModules.results = {
     if (!this.pythonReady) {
       return;
     }
-    if (!this.dataFile) {
+    if (!this.schemaStarted || !this.dataFile) {
       return;
     }
 
@@ -110,6 +103,7 @@ window.ClinicalModules.results = {
     this.showRequiredHints = true;
     this.resetValidateState();
     this.resetDataCheckState();
+    this.dataTab = 'schema';
 
     try {
       const buffer = await this.dataFile.arrayBuffer();
@@ -121,18 +115,18 @@ window.ClinicalModules.results = {
       this.validateRunState = payload.validate?.success ? 'passed' : 'failed';
 
       if (!payload.validate?.success) {
-        this.activeTab = 'validate';
+        this.editorView = 'validation';
         this.setLogoFailure();
       } else if (!payload.schema_success) {
         this.schemaRunState = 'failed';
         this.showRequiredHints = false;
-        this.activeTab = 'schema';
+        this.dataTab = 'schema';
         this.setLogoFailure();
       } else {
         this.schemaRunState = 'passed';
         this.qualityRunState = payload.report_success ? 'passed' : 'failed';
         this.showRequiredHints = false;
-        this.activeTab = 'quality';
+        this.dataTab = 'quality';
         if (payload.report_success) this.setLogoSuccess();
         else this.setLogoFailure();
       }
