@@ -46,6 +46,7 @@ INTEGER_TYPES = {
 }
 FLOAT_TYPES = {"float16", "float32", "float64", "double", "real", "decimal128", "decimal"}
 DATE_TYPES = {"date", "date32", "date64"}
+TIME_TYPES = {"time"}
 DATETIME_TYPES = {
     "datetime",
     "timestamp",
@@ -65,6 +66,7 @@ TYPE_MAP: dict[str, set[str]] = {
     "integer": INTEGER_TYPES,
     "float": FLOAT_TYPES,
     "date": DATE_TYPES | DATETIME_TYPES,
+    "time": TIME_TYPES,
     "boolean": BOOLEAN_TYPES,
     "binary": BINARY_TYPES,
 
@@ -121,6 +123,7 @@ DUCKDB_TO_CONTRACT_TYPE_DISPLAY_MAP: dict[str, str] = {
     "date32": "date",
     "date64": "date",
     "date": "date",
+    "time": "time",
     "bool": "boolean",
     "boolean": "boolean",
     "binary": "binary",
@@ -144,6 +147,7 @@ PHYSICAL_TYPE_ALIASES: dict[str, str] = {
     "timestamp_us": "timestamp_us",
     "timestamp_ns": "timestamp_ns",
     "date": "date",
+    "time": "time",
     "date32": "date32",
     "date64": "date64",
     "int8": "tinyint",

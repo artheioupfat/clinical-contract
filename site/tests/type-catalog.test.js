@@ -7,6 +7,7 @@ test('type catalog exposes logical and physical options for the editor', () => {
   assert.deepEqual(catalog.logicalTypeOptions, [
     'string',
     'date',
+    'time',
     'integer',
     'float',
     'boolean',
@@ -16,6 +17,7 @@ test('type catalog exposes logical and physical options for the editor', () => {
     'timestamp',
     'timestamp with timezone',
   ]);
+  assert.deepEqual(catalog.physicalTypeByLogical.time, ['time']);
   assert.deepEqual(catalog.physicalTypeByLogical.integer, [
     'int8',
     'int16',

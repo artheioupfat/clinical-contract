@@ -490,6 +490,38 @@ def test_check_schema_timestamp_tz_compatible(tmp_path):
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
 
 
+def test_check_schema_time_matches_duckdb_time(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_time.parquet",
+        "patients",
+        "SELECT TIME '12:34:56' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("time", "time"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "time"
+    assert reports[0].columns[0].parquet_type == "time"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_time_rejects_timestamp(tmp_path):
+    parquet_file = _write_parquet_from_select(
+        tmp_path,
+        "patients_time_as_timestamp.parquet",
+        "patients",
+        "SELECT TIMESTAMP '2024-01-01 12:34:56' AS event_ts",
+    )
+    contract, _ = load_contract(_yaml_single_event_timestamp("time"))
+    reports = contract.check_schema(str(parquet_file))
+
+    assert reports[0].success is False
+    assert reports[0].columns[0].yaml_type == "time"
+    assert reports[0].columns[0].parquet_type == "timestamp"
+    assert reports[0].columns[0].status == ColumnCheckStatus.type_mismatch
+
+
 def test_check_schema_date_with_timestamp_timezone_physical_matches(tmp_path):
     parquet_file = _write_parquet_from_select(
         tmp_path,
@@ -1291,6 +1323,13 @@ schema:
     assert report.success is True
     schema_field = next(f for f in report.fields if f.field == "schema")
     assert schema_field.display_value == "1 column detected"
+
+
+def test_validate_structure_accepts_time_logical_and_physical_types():
+    raw = load_raw(_yaml_single_event_timestamp("time", "time"))
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is True
 
 
 def test_site_type_catalog_matches_python_type_support():

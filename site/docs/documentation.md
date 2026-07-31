@@ -58,6 +58,7 @@ Les types disponibles sont les suivants :
 | `float` | Nombre décimal | `float32`, `float64` |
 | `boolean` | Valeur booléenne (`true` ou `false`) | `boolean`, `binary` |
 | `date` | Date ou date et heure | `datetime`, `timestamp`, `timestamp with timezone` |
+| `time` | Heure sans information de date | `time` |
 
 Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** correspondant au système produisant les données.
 

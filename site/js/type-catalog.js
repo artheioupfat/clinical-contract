@@ -5,6 +5,7 @@ const catalog = {
   "logicalTypeOptions": [
     "string",
     "date",
+    "time",
     "integer",
     "float",
     "boolean"
@@ -21,6 +22,9 @@ const catalog = {
       "datetime",
       "timestamp",
       "timestamp with timezone"
+    ],
+    "time": [
+      "time"
     ],
     "integer": [
       "int8",
