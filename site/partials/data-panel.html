@@ -169,9 +169,9 @@
 
               <div class="results-table-wrap" x-show="dataTab === 'quality'" x-cloak>
                     <table class="results-table">
-                      <thead><tr><th>Schema</th><th>Column</th><th>Rule</th><th>Obtained</th><th>Expected</th><th>Result</th></tr></thead>
+                      <thead><tr><th>Schema</th><th>Column</th><th>Rule</th><th>Obtained</th><th>Expected</th><th>Result</th><th>Log</th></tr></thead>
                       <tbody>
-                        <template x-if="qualityRows.length === 0"><tr><td colspan="6" class="empty-row">No quality result yet.</td></tr></template>
+                        <template x-if="qualityRows.length === 0"><tr><td colspan="7" class="empty-row">No quality result yet.</td></tr></template>
                         <template x-for="(row, idx) in qualityRows" :key="`${row.property_name}-${idx}`">
                           <tr>
                             <td x-text="row.schema_name"></td>
@@ -180,6 +180,7 @@
                             <td x-text="row.obtained"></td>
                             <td x-text="row.expected"></td>
                             <td><span class="status-chip" :class="statusChipClass(row.status)"><span class="status-dot" :class="statusDotClass(row.status)"></span><span x-text="row.status"></span></span></td>
+                            <td class="quality-result-log" :class="row.log ? 'quality-result-log--error' : ''" x-text="row.log || '—'"></td>
                           </tr>
                         </template>
                       </tbody>

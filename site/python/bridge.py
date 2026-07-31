@@ -185,6 +185,7 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
                 ),
                 "operator": result.operator.value,
                 "expected": result.expected_display,
+                "log": result.error_message or "",
             }
         )
 

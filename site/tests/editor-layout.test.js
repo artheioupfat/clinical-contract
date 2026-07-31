@@ -36,6 +36,14 @@ test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
   assert.doesNotMatch(dataPanel, /class="results-shell"/);
 });
 
+test('quality results expose per-rule execution logs', () => {
+  const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
+
+  assert.match(dataPanel, /<th>Result<\/th><th>Log<\/th>/);
+  assert.match(dataPanel, /row\.log \|\| '—'/);
+  assert.match(dataPanel, /colspan="7"/);
+});
+
 test('template selectors use persistent accessible dialogs', () => {
   const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
