@@ -49,7 +49,7 @@
     color: var(--cc-night-text);
   }
 
-  .theme-dark :is(.footer-context strong, .footer-right strong) { color: var(--cc-night-text); }
+  .theme-dark :is(.footer-context strong, .footer-right strong, .footer-timings strong) { color: var(--cc-night-text); }
 
   .theme-dark :is(.checker-collapse-btn, .checker-rail-btn, .column-list-shell, .entity-modal, .pine-btn, .quality-list-shell, .reset-modal, .team-list-shell, .template-modal, .template-option, .view-switch, .workspace-empty-card) {
     background: var(--cc-night-raised);

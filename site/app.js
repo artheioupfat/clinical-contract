@@ -64,6 +64,8 @@ document.addEventListener('alpine:init', () => {
     validateRunState: 'idle',
     schemaRunState: 'idle',
     qualityRunState: 'idle',
+    validateDurationMs: null,
+    checkDurationMs: null,
     previewColumns: [],
     previewRows: [],
     previewTotalRows: 0,

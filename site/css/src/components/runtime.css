@@ -31,11 +31,21 @@
     @apply flex items-center gap-2 tabular-nums;
   }
 
+  .footer-timings {
+    @apply flex items-center gap-3 border-l pl-3 tabular-nums;
+    border-color: var(--cc-border);
+  }
+
+  .footer-timings > span {
+    @apply flex items-center gap-1;
+  }
+
   .footer-right {
     @apply flex shrink-0 items-center gap-3 tabular-nums;
   }
 
   .footer-context strong,
+  .footer-timings strong,
   .footer-right strong {
     @apply font-semibold;
     color: var(--cc-text);
