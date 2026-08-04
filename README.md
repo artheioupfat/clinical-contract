@@ -2,8 +2,8 @@
 
 > Write healthcare data contracts, validate their structure, and check CSV or Parquet datasets against them.
 
-[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg)](https://pypi.org/project/clinical-contract/)
-[![Python](https://img.shields.io/pypi/pyversions/clinical-contract.svg)](https://pypi.org/project/clinical-contract/)
+[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg?cacheSeconds=300)](https://pypi.org/project/clinical-contract/)
+[![Python](https://img.shields.io/pypi/pyversions/clinical-contract.svg?cacheSeconds=300)](https://pypi.org/project/clinical-contract/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 `clinical-contract` is a lightweight tool for teams that need to describe, share, and verify clinical data expectations.
