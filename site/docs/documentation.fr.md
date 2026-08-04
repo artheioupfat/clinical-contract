@@ -209,6 +209,8 @@ clinical-contract check site/examples/contract.yaml site/examples/template.parqu
 
 La bibliothèque Python permet d'intégrer les mêmes contrôles dans un pipeline ou une application.
 
+Python 3.11 ou une version plus récente est nécessaire.
+
 ```bash
 pip install clinical-contract
 ```

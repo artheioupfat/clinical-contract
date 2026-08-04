@@ -163,6 +163,8 @@ Use `clinical-contract --help` to list the available commands and options.
 
 Install the library from PyPI:
 
+Python 3.11 or newer is required.
+
 ```bash
 pip install clinical-contract
 ```

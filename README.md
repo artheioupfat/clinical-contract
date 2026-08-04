@@ -59,6 +59,8 @@ This makes data delivery easier to review, easier to automate, and easier to dis
 
 The same engine is available as a Python package on PyPI.
 
+Python 3.11 or newer is required.
+
 ```bash
 pip install clinical-contract
 ```
