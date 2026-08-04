@@ -157,7 +157,8 @@ clinical-contract validate site/examples/clinical-template.yaml
 clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
 ```
 
-Use `clinical-contract --help` to list the available commands and options.
+Use `clinical-contract --help` to list the available commands and
+`clinical-contract --version` to display the installed version.
 
 ## Python API
 

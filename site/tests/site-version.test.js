@@ -27,6 +27,16 @@ test('site version is generated from pyproject version', () => {
   assert.equal(readSiteVersion(), readProjectVersion());
 });
 
+test('PyPI badge cache key is generated from pyproject version', () => {
+  const readme = read('README.md');
+  const match = readme.match(
+    /img\.shields\.io\/pypi\/v\/clinical-contract\.svg\?cacheSeconds=300&release=([^\)]+)/,
+  );
+
+  assert.ok(match, 'README PyPI badge must expose a release cache key');
+  assert.equal(match[1], readProjectVersion());
+});
+
 test('site pages load version before Alpine page modules', () => {
   const indexHtml = read('site/index.html');
   const editorHtml = read('site/editor.html');

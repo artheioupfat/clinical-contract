@@ -172,6 +172,20 @@ def test_main_help(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.Monke
     out = capsys.readouterr().out
     assert "clinical data contract validator" in out
     assert "Usage:" in out
+    assert "clinical-contract --version" in out
+
+
+@pytest.mark.parametrize("flag", ["--version", "-V"])
+def test_main_version(
+    flag: str,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(cli, "__version__", "1.2.3")
+
+    _run_main(monkeypatch, [flag])
+
+    assert capsys.readouterr().out == "clinical-contract 1.2.3\n"
 
 
 def test_main_unknown_command_exits(
