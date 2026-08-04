@@ -3,8 +3,13 @@ packages = ["pyyaml", "duckdb", "pydantic"]
 
 
 [files]
-"./python/clinical_contract/__init__.py?v=20260731-execution-timings" = "./clinical_contract/__init__.py"
-"./python/clinical_contract/contract.py?v=20260731-execution-timings" = "./clinical_contract/contract.py"
-"./python/clinical_contract/loader.py?v=20260731-execution-timings" = "./clinical_contract/loader.py"
-"./python/clinical_contract/models.py?v=20260731-execution-timings" = "./clinical_contract/models.py"
-"./python/clinical_contract/type_catalog.py?v=20260731-execution-timings" = "./clinical_contract/type_catalog.py"
+"./python/clinical_contract/__init__.py?v=20260804-modular-core" = "./clinical_contract/__init__.py"
+"./python/clinical_contract/contract.py?v=20260804-modular-core" = "./clinical_contract/contract.py"
+"./python/clinical_contract/data_source.py?v=20260804-modular-core" = "./clinical_contract/data_source.py"
+"./python/clinical_contract/loader.py?v=20260804-modular-core" = "./clinical_contract/loader.py"
+"./python/clinical_contract/models.py?v=20260804-modular-core" = "./clinical_contract/models.py"
+"./python/clinical_contract/quality_check.py?v=20260804-modular-core" = "./clinical_contract/quality_check.py"
+"./python/clinical_contract/schema_check.py?v=20260804-modular-core" = "./clinical_contract/schema_check.py"
+"./python/clinical_contract/type_catalog.py?v=20260804-modular-core" = "./clinical_contract/type_catalog.py"
+"./python/clinical_contract/type_system.py?v=20260804-modular-core" = "./clinical_contract/type_system.py"
+"./python/clinical_contract/validation.py?v=20260804-modular-core" = "./clinical_contract/validation.py"

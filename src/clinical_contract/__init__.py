@@ -19,7 +19,7 @@ Python usage:
 """
 
 from .loader import load_contract, load_raw
-from .contract import DataContract, SchemaItem, Property, Quality, Description
+from .contract import DataContract
 from .type_catalog import EDITOR_TYPE_CATALOG
 from .models import (
     BetweenExpectation,
@@ -33,6 +33,10 @@ from .models import (
     ColumnCheckResult,
     ColumnCheckStatus,
     SchemaCheckReport,
+    Description,
+    Property,
+    Quality,
+    SchemaItem,
 )
 
 __all__ = [
@@ -58,6 +62,7 @@ __all__ = [
 ]
 
 from importlib.metadata import version, PackageNotFoundError
+
 try:
     __version__ = version("clinical-contract")
 except PackageNotFoundError:

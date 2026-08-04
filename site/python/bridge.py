@@ -7,7 +7,8 @@ from time import perf_counter
 from pyscript import ffi, window
 
 from clinical_contract.loader import load_contract, load_raw
-from clinical_contract.contract import DataContract, _materialize_data_source, _cleanup_temp_path
+from clinical_contract.contract import DataContract
+from clinical_contract.data_source import _cleanup_temp_path, _materialize_data_source
 
 _PREVIEW_SESSIONS: dict[str, dict[str, object]] = {}
 _PREVIEW_MAX_PAGE_SIZE = 200
