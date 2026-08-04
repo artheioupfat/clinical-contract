@@ -22,6 +22,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: false,
     editorStorageWarning: '',
     editorView: 'schema',
     schemaStarted: false,
@@ -30,10 +31,10 @@ document.addEventListener('alpine:init', () => {
     schemaRowCounter: 0,
     schemaSection: 'fundamentals',
     schemaSections: [
-      { id: 'fundamentals', title: 'Fundamentals' },
-      { id: 'schema', title: 'Schema' },
-      { id: 'quality', title: 'Quality' },
-      { id: 'team', title: 'Team' },
+      { id: 'fundamentals', titleKey: 'editor.sections.fundamentals' },
+      { id: 'schema', titleKey: 'editor.sections.schema' },
+      { id: 'quality', titleKey: 'editor.sections.quality' },
+      { id: 'team', titleKey: 'editor.sections.team' },
     ],
     schemaRootExtras: {},
     schemaOtherSchemas: [],
@@ -77,6 +78,7 @@ document.addEventListener('alpine:init', () => {
     previewError: '',
     previewHandle: null,
     switchOn: false,
+    locale: '',
     runtimeProgress: 0,
     showRuntimeProgress: true,
     runtimeProgressInterval: null,
@@ -93,6 +95,10 @@ document.addEventListener('alpine:init', () => {
     logoErrored: false,
 
     siteVersionLabel: pageShell.versionLabel(siteVersion),
+
+    applyPageMetadata() {
+      pageShell.setPageMetadata(this.t('editor.meta.title'), this.t('editor.meta.description'));
+    },
 
     get logoSrc() {
       if (this.logoErrored) return '';
@@ -143,6 +149,7 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.initThemeSwitch();
+      await this.initLocale();
       this.initSplitPane();
       this.restoreEditorSession();
       this.registerEditorSessionPersistence();
@@ -179,6 +186,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     ...(pageShell.themeMethods || {}),
+    ...(pageShell.localeMethods || {}),
     ...ui,
     ...runtime,
     ...editor,

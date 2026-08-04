@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { t } = require('./test-i18n.js');
 
 function loadEditorModule() {
   global.window = { ClinicalModules: {} };
@@ -25,6 +26,7 @@ test('editor module restores a non-expired contract draft', () => {
   const session = {
     yamlText: 'id: active-contract',
     yamlName: 'contract.yaml',
+    yamlNameGenerated: true,
     editorView: 'yaml',
     schemaSection: 'quality',
     savedAt: new Date().toISOString(),
@@ -36,8 +38,10 @@ test('editor module restores a non-expired contract draft', () => {
     removeItem() {},
   };
   const context = {
+    t,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: false,
     editorView: 'schema',
     schemaSection: 'fundamentals',
     schemaStarted: false,
@@ -51,6 +55,7 @@ test('editor module restores a non-expired contract draft', () => {
 
   assert.equal(context.yamlText, 'id: active-contract');
   assert.equal(context.yamlName, 'contract.yaml');
+  assert.equal(context.yamlNameGenerated, true);
   assert.equal(context.editorView, 'yaml');
   assert.equal(context.schemaSection, 'quality');
   assert.equal(context.schemaStarted, true);
@@ -69,6 +74,7 @@ test('editor module clears expired contract drafts', () => {
     },
   };
   const context = {
+    t,
     yamlText: '',
     editorStorageWarning: '',
     editorSessionKey: editor.editorSessionKey,
@@ -91,6 +97,7 @@ test('editor module exposes contract draft storage failures to the UI state', ()
     removeItem() {},
   };
   const context = {
+    t,
     yamlText: 'id: contract',
     yamlName: 'contract.yaml',
     editorView: 'schema',
@@ -107,6 +114,7 @@ test('editor module exposes contract draft storage failures to the UI state', ()
 test('editor module blocks contract imports until Python is ready', async () => {
   const editor = loadEditorModule();
   const context = {
+    t,
     pythonReady: false,
     schemaParseWarning: '',
     async handleYamlFile() {
@@ -129,6 +137,7 @@ test('editor module blocks contract imports until Python is ready', async () => 
 test('editor module blocks the template selector until Python is ready', () => {
   const editor = loadEditorModule();
   const context = {
+    t,
     pythonReady: false,
     schemaParseWarning: '',
     contractTemplateModalOpen: false,
@@ -146,9 +155,11 @@ test('editor module loads only the selected contract template', async () => {
   global.fetch = async () => ({ ok: true, async text() { return 'name: Example'; } });
   let dataLoads = 0;
   const context = {
+    t,
     pythonReady: true,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: true,
     schemaStarted: false,
     editorView: 'yaml',
     contractTemplateModalOpen: true,
@@ -171,6 +182,7 @@ test('editor module loads only the selected contract template', async () => {
 
   assert.equal(context.yamlText, 'name: Example');
   assert.equal(context.yamlName, 'template.yaml');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.editorView, 'schema');
   assert.equal(context.contractTemplateModalOpen, false);
   assert.equal(dataLoads, 0);
@@ -181,8 +193,10 @@ test('editor module applies imported YAML through one shared loading path', () =
   let syncCount = 0;
   let persistCount = 0;
   const context = {
+    t,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: true,
     schemaStarted: false,
     editorView: 'yaml',
     clearResults() {},
@@ -195,6 +209,7 @@ test('editor module applies imported YAML through one shared loading path', () =
 
   assert.equal(context.yamlText, 'name: Imported');
   assert.equal(context.yamlName, 'imported.yaml');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.schemaStarted, true);
   assert.equal(context.editorView, 'schema');
   assert.equal(context.schemaSection, 'fundamentals');

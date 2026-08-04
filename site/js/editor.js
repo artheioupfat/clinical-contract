@@ -33,6 +33,7 @@ window.ClinicalModules.editor = {
 
       this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
       this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
+      this.yamlNameGenerated = session.yamlNameGenerated === true;
       this.editorView = ['schema', 'yaml'].includes(session.editorView)
         ? session.editorView
         : 'schema';
@@ -62,6 +63,7 @@ window.ClinicalModules.editor = {
       const payload = {
         yamlText: this.yamlText || '',
         yamlName: this.yamlName || '',
+        yamlNameGenerated: this.yamlNameGenerated === true,
         editorView: this.editorView || 'schema',
         schemaSection: this.schemaSection || 'fundamentals',
         savedAt: new Date().toISOString(),
@@ -75,7 +77,7 @@ window.ClinicalModules.editor = {
       sessionStorage.setItem(this.editorSessionKey, JSON.stringify(payload));
       this.editorStorageWarning = '';
     } catch (error) {
-      this.editorStorageWarning = `Contract draft could not be stored in this browser session: ${error.message}`;
+      this.editorStorageWarning = this.t('editor.messages.draftStorage', { message: error.message });
     }
   },
 
@@ -152,7 +154,7 @@ window.ClinicalModules.editor = {
 
   async importYaml(event) {
     if (!this.pythonReady) {
-      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading a contract.';
+      this.schemaParseWarning = this.t('editor.messages.runtimeContract');
       event.target.value = '';
       return;
     }
@@ -165,7 +167,7 @@ window.ClinicalModules.editor = {
 
   openContractTemplateModal() {
     if (!this.pythonReady) {
-      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading the template.';
+      this.schemaParseWarning = this.t('editor.messages.runtimeTemplate');
       return;
     }
     this.contractTemplateModalOpen = true;
@@ -181,7 +183,7 @@ window.ClinicalModules.editor = {
     try {
       const contractResponse = await fetch(template.path);
       if (!contractResponse.ok) {
-        throw new Error(`Template contract request failed with status ${contractResponse.status}`);
+        throw new Error(this.t('editor.messages.templateContractStatus', { status: contractResponse.status }));
       }
 
       this.contractTemplateModalOpen = false;
@@ -190,7 +192,7 @@ window.ClinicalModules.editor = {
         template.fileName || 'template.yaml'
       );
     } catch (error) {
-      this.schemaParseWarning = `Unable to load template: ${error.message}`;
+      this.schemaParseWarning = this.t('editor.messages.templateContractFailed', { message: error.message });
     }
   },
 
@@ -208,7 +210,7 @@ window.ClinicalModules.editor = {
 
   async dropYaml(event) {
     if (!this.pythonReady) {
-      this.schemaParseWarning = 'Python runtime is still loading. Please wait before loading a contract.';
+      this.schemaParseWarning = this.t('editor.messages.runtimeContract');
       return;
     }
 
@@ -224,6 +226,7 @@ window.ClinicalModules.editor = {
   applyLoadedContract(yamlText, fileName) {
     this.yamlText = yamlText;
     this.yamlName = fileName;
+    this.yamlNameGenerated = false;
     this.schemaStarted = Boolean(this.yamlText.trim());
     this.editorView = 'schema';
     this.clearResults();

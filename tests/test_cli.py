@@ -49,6 +49,12 @@ schema:
     properties: []
 """
 
+YAML_INVALID_SYNTAX = """
+schema:
+  - name: patients
+    properties: [
+"""
+
 YAML_INVALID_SCHEMA = """
 apiVersion: v1.0.0
 kind: DataContract
@@ -224,6 +230,22 @@ def test_validate_invalid_schema_reports_invalid_field(
     assert "invalid field(s): schema" in out
 
 
+def test_validate_invalid_yaml_syntax_exits_cleanly(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    contract_path = _write_yaml(tmp_path, YAML_INVALID_SYNTAX)
+
+    with pytest.raises(SystemExit, match="1"):
+        _run_main(monkeypatch, ["validate", str(contract_path)])
+
+    out = capsys.readouterr().out
+    assert "Invalid YAML syntax in contract.yaml" in out
+    assert "line" in out
+    assert "Traceback" not in out
+
+
 def test_check_success_output(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
@@ -237,6 +259,27 @@ def test_check_success_output(
     assert "Contract check" in out
     assert "Data file" in out
     assert "All checks passed." in out
+
+
+def test_check_invalid_yaml_syntax_exits_cleanly(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    contract_path = _write_yaml(tmp_path, YAML_INVALID_SYNTAX)
+    data_path = tmp_path / "data.parquet"
+    data_path.write_bytes(b"not read because YAML parsing fails first")
+
+    with pytest.raises(SystemExit, match="1"):
+        _run_main(
+            monkeypatch,
+            ["check", str(contract_path), str(data_path)],
+        )
+
+    out = capsys.readouterr().out
+    assert "Invalid YAML syntax in contract.yaml" in out
+    assert "line" in out
+    assert "Traceback" not in out
 
 
 def test_check_displays_quality_comparison_operator(

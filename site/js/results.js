@@ -30,6 +30,16 @@ window.ClinicalModules.results = {
     return statusClass('status-dot', status);
   },
 
+  resultStatusLabel(status) {
+    const normalized = normalizeResultState(status);
+    if (isPassedState(normalized)) return this.t('editor.status.passed');
+    if (isFailedState(normalized)) {
+      return this.t(normalized === 'error' ? 'editor.status.error' : 'editor.status.failed');
+    }
+    if (normalized === 'idle') return this.t('editor.status.idle');
+    return this.t('editor.status.warning');
+  },
+
   formatExecutionDuration(value) {
     if (!Number.isFinite(value)) return '';
     return `${Math.round(Math.max(0, value))} ms`;
@@ -98,7 +108,7 @@ window.ClinicalModules.results = {
         field: 'YAML',
         present: false,
         status: 'failed',
-        value: this.schemaParseWarning || 'Contract validation could not be completed. Check the YAML syntax and try again.',
+        value: this.schemaParseWarning || this.t('editor.validation.failed'),
       }];
       this.validateRunState = 'failed';
       this.showRequiredHints = true;

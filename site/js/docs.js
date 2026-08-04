@@ -3,6 +3,7 @@ document.addEventListener('alpine:init', () => {
 
   Alpine.data('docsPage', () => ({
     switchOn: false,
+    locale: '',
     siteVersionLabel: pageShell.versionLabel(window.ClinicalContractVersion),
     loading: true,
     error: '',
@@ -13,17 +14,27 @@ document.addEventListener('alpine:init', () => {
 
     async init() {
       this.initThemeSwitch();
+      await this.initLocale();
       await this.loadMarkdown();
     },
 
     ...pageShell.themeMethods,
+    ...pageShell.localeMethods,
+
+    applyPageMetadata() {
+      pageShell.setPageMetadata(this.t('docs.meta.title'), this.t('docs.meta.description'));
+    },
+
+    async onLocaleChanged() {
+      await this.loadMarkdown();
+    },
 
     async loadMarkdown() {
       this.loading = true;
       this.error = '';
       try {
-        const response = await fetch('./docs/documentation.md', { cache: 'no-cache' });
-        if (!response.ok) throw new Error(`Impossible de charger la documentation (${response.status}).`);
+        const response = await fetch(`./docs/documentation.${this.locale}.md`, { cache: 'no-cache' });
+        if (!response.ok) throw new Error(this.t('docs.loadError', { status: response.status }));
         const markdown = await response.text();
         this.content = marked.parse(markdown);
         setTimeout(() => this.buildToc(), 0);

@@ -225,3 +225,43 @@
   }
 
 }
+.locale-switch {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color, #d8e0ea);
+  border-radius: 0.45rem;
+  padding: 0.125rem;
+  background: var(--surface-color, #fff);
+}
+
+.locale-switch__option {
+  min-width: 2rem;
+  border: 0;
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.45rem;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.locale-switch__option--active {
+  background: #0f67d8;
+  color: #fff;
+}
+
+.theme-dark .locale-switch {
+  border-color: #2d3748;
+  background: #101419;
+}
+
+.theme-dark .locale-switch__option {
+  color: #94a3b8;
+}
+
+.theme-dark .locale-switch__option--active {
+  background: #0f67d8;
+  color: #fff;
+}

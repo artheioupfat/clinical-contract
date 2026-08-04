@@ -32,6 +32,40 @@
         writeDarkMode(this.switchOn);
       },
     },
+
+    localeMethods: {
+      async initLocale() {
+        try {
+          this.locale = await root.ClinicalI18n.init();
+        } catch (error) {
+          console.error('Unable to initialize interface translations.', error);
+          this.locale = root.ClinicalI18n.locale || 'en';
+        }
+        this.applyPageMetadata?.();
+      },
+
+      async setLocale(locale) {
+        try {
+          this.locale = await root.ClinicalI18n.setLocale(locale);
+        } catch (error) {
+          console.error(`Unable to switch interface language to ${locale}.`, error);
+          this.locale = root.ClinicalI18n.locale || 'en';
+        }
+        this.applyPageMetadata?.();
+        await this.onLocaleChanged?.();
+      },
+
+      t(key, params = {}) {
+        void this.locale;
+        return root.ClinicalI18n.t(key, params);
+      },
+    },
+
+    setPageMetadata(title, description = '') {
+      if (title) document.title = title;
+      const meta = document.querySelector('meta[name="description"]');
+      if (meta && description) meta.setAttribute('content', description);
+    },
   };
 
   root.ClinicalPageShell = pageShell;

@@ -7,7 +7,20 @@ test('pyscript config ships every browser-required clinical_contract module', ()
   const repoRoot = path.resolve(__dirname, '..', '..');
   const pyscriptConfig = fs.readFileSync(path.join(repoRoot, 'site', 'pyscript.toml'), 'utf8');
 
-  for (const moduleName of ['__init__', 'contract', 'loader', 'models', 'type_catalog']) {
+  const browserModules = [
+    '__init__',
+    'contract',
+    'data_source',
+    'loader',
+    'models',
+    'quality_check',
+    'schema_check',
+    'type_catalog',
+    'type_system',
+    'validation',
+  ];
+
+  for (const moduleName of browserModules) {
     assert.match(
       pyscriptConfig,
       new RegExp(`clinical_contract/${moduleName}\\.py`),

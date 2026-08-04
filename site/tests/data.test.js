@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { t } = require('./test-i18n.js');
 
 function loadResultsAndDataModules() {
   global.window = { ClinicalModules: {}, ClinicalConstants: {} };
@@ -19,6 +20,7 @@ test('data module deletes the current file and clears dataset-dependent state', 
   let persistedFileCleared = 0;
   const input = { value: '/tmp/dataset.parquet' };
   const context = {
+    t,
     dataFile: { name: 'dataset.parquet' },
     dataFileName: 'dataset.parquet',
     dataFileSize: 2048,
@@ -70,6 +72,7 @@ test('data module persists each loaded file before refreshing insights', async (
   let persisted = null;
   let refreshed = 0;
   const context = {
+    t,
     pythonReady: true,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
@@ -99,6 +102,7 @@ test('data module exposes browser storage failures to the UI state', async () =>
   const originalWarn = console.warn;
   console.warn = () => {};
   const context = {
+    t,
     pythonReady: true,
     schemaRows: [],
     qualityRows: [],
@@ -125,6 +129,7 @@ test('data module rejects new files until the Python runtime is ready', async ()
   const file = new File(['id\n1'], 'dataset.csv', { type: 'text/csv' });
   let persisted = 0;
   const context = {
+    t,
     pythonReady: false,
     dataStorageWarning: '',
     async persistDataFileSession() {
@@ -169,6 +174,7 @@ test('data module derives status bar stats from preview preparation', async () =
 
   const data = global.window.ClinicalModules.data;
   const context = {
+    t,
     pythonReady: true,
     previewHandle: null,
     previewPageSizeDefault: 50,
@@ -198,6 +204,7 @@ test('data module loads the selected sample without modifying the contract', asy
   });
   let loadedFile = null;
   const context = {
+    t,
     pythonReady: true,
     yamlText: 'name: Existing contract',
     dataTemplateModalOpen: true,
@@ -223,6 +230,7 @@ test('data module reconstructs the persisted browser file after reload', async (
   const { data, results } = loadResultsAndDataModules();
   let pruned = 0;
   const context = {
+    t,
     pythonReady: false,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],

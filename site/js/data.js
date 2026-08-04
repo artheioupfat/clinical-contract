@@ -1,7 +1,5 @@
 (function registerDataModule() {
 window.ClinicalModules = window.ClinicalModules || {};
-const dataConstants = window.ClinicalConstants || {};
-const dataMessages = dataConstants.messages || {};
 
 window.ClinicalModules.data = {
   async restoreDataFileSession() {
@@ -28,7 +26,7 @@ window.ClinicalModules.data = {
       return true;
     } catch (error) {
       console.warn(`Unable to restore the data file: ${error.message}`);
-      this.dataStorageWarning = `Stored data file could not be restored: ${error.message}`;
+      this.dataStorageWarning = this.t('editor.messages.dataRestore', { message: error.message });
       return false;
     }
   },
@@ -40,7 +38,7 @@ window.ClinicalModules.data = {
       await this.preparePreview(this.dataFile, buffer);
     } catch (error) {
       console.error(error);
-      this.previewError = `${dataMessages.dataLoadingError || 'Data loading error'}: ${error.message}`;
+      this.previewError = `${this.t('editor.messages.dataLoading')}: ${error.message}`;
     }
   },
 
@@ -159,7 +157,7 @@ window.ClinicalModules.data = {
 
   async loadDataFile(file) {
     if (!this.pythonReady) {
-      this.dataStorageWarning = 'Python runtime is still loading. Please wait before loading a data file.';
+      this.dataStorageWarning = this.t('editor.messages.runtimeData');
       return false;
     }
 
@@ -173,7 +171,7 @@ window.ClinicalModules.data = {
       await this.persistDataFileSession(file);
     } catch (error) {
       console.warn(`Unable to persist the data file: ${error.message}`);
-      this.dataStorageWarning = `This file is loaded for the current session, but browser storage failed: ${error.message}`;
+      this.dataStorageWarning = this.t('editor.messages.dataStorage', { message: error.message });
     }
     await this.refreshDataInsights();
     return true;
@@ -184,7 +182,7 @@ window.ClinicalModules.data = {
     if (cleanup?.catch) {
       cleanup.catch((error) => {
         console.warn(`Unable to clear the stored data file: ${error.message}`);
-        this.dataStorageWarning = `Stored data cleanup failed: ${error.message}`;
+        this.dataStorageWarning = this.t('editor.messages.dataCleanup', { message: error.message });
       });
     }
     this.releasePreviewSession();
@@ -209,7 +207,7 @@ window.ClinicalModules.data = {
 
   openDataTemplateModal() {
     if (!this.pythonReady) {
-      this.dataStorageWarning = 'Python runtime is still loading. Please wait before loading sample data.';
+      this.dataStorageWarning = this.t('editor.messages.runtimeSample');
       return;
     }
     this.dataTemplateModalOpen = true;
@@ -224,7 +222,7 @@ window.ClinicalModules.data = {
     try {
       const response = await fetch(template.path);
       if (!response.ok) {
-        throw new Error(`Template data request failed with status ${response.status}`);
+        throw new Error(this.t('editor.messages.templateDataStatus', { status: response.status }));
       }
       const buffer = await response.arrayBuffer();
       const file = new File([buffer], template.fileName || 'template.parquet', {
@@ -233,7 +231,7 @@ window.ClinicalModules.data = {
       this.dataTemplateModalOpen = false;
       await this.loadDataFile(file);
     } catch (error) {
-      this.dataStorageWarning = `Unable to load sample data: ${error.message}`;
+      this.dataStorageWarning = this.t('editor.messages.templateDataFailed', { message: error.message });
     }
   },
 
@@ -253,7 +251,7 @@ window.ClinicalModules.data = {
 
   setDataRuntimeUnavailable() {
     this.previewRows = [];
-    this.previewError = dataMessages.dataRuntimeUnavailable || 'Data loading requires the Python runtime.';
+    this.previewError = this.t('editor.messages.dataRuntime');
     console.error(this.previewError);
   },
 };

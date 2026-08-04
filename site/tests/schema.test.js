@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { t } = require('./test-i18n.js');
 
 const codec = require('../js/contract-codec.js');
 
@@ -17,6 +18,7 @@ test('schema module resets physicalType whenever logicalType changes', () => {
   const schema = loadSchemaModule();
   let pushed = 0;
   const context = {
+    t,
     ensureContractCodec: () => codec,
     pushSchemaToYaml() {
       pushed += 1;
@@ -38,6 +40,7 @@ test('schema module resets physicalType whenever logicalType changes', () => {
 test('schema module hides physical types until a logical type is selected', () => {
   const schema = loadSchemaModule();
   const context = {
+    t,
     physicalTypeByLogical: {
       integer: ['int32', 'int64'],
       string: ['varchar'],
@@ -56,6 +59,7 @@ test('schema module clears physical type when logical type is not specified', ()
   const schema = loadSchemaModule();
   let pushed = 0;
   const context = {
+    t,
     ensureContractCodec: () => codec,
     pushSchemaToYaml() {
       pushed += 1;
@@ -78,6 +82,7 @@ test('schema module clears physical type when logical type is not specified', ()
 test('schema module required hints ignore optional descriptions and column types', () => {
   const schema = loadSchemaModule();
   const context = {
+    t,
     showRequiredHints: true,
     isBlankRequiredValue: schema.isBlankRequiredValue,
     schemaDraft: {
@@ -112,6 +117,7 @@ test('schema module required hints ignore optional descriptions and column types
 
 test('schema module labels columns without types as unconstrained', () => {
   const schema = loadSchemaModule();
+  schema.t = t;
 
   assert.equal(
     schema.columnTypeSummary({ logicalType: '', physicalType: '' }),
@@ -124,6 +130,7 @@ test('schema module keeps the current builder section when returning from YAML',
   let synced = 0;
   let persisted = 0;
   const context = {
+    t,
     editorView: 'yaml',
     schemaSection: 'quality',
     schemaDraft: {
@@ -150,6 +157,7 @@ test('schema module maps active checkbox to contract status', () => {
   const schema = loadSchemaModule();
   let pushed = 0;
   const context = {
+    t,
     schemaDraft: { status: 'active' },
     pushSchemaToYaml() {
       pushed += 1;
@@ -171,6 +179,7 @@ test('schema module updates the selected quality rule column explicitly', () => 
   const schema = loadSchemaModule();
   let pushed = 0;
   const context = {
+    t,
     pushSchemaToYaml() {
       pushed += 1;
     },
@@ -192,9 +201,11 @@ test('resetting a contract preserves the loaded data file', () => {
   let resultsCleared = 0;
   let sessionCleared = 0;
   const context = {
+    t,
     resetContractModalOpen: true,
     yamlText: 'id: example',
     yamlName: 'example.yaml',
+    yamlNameGenerated: true,
     schemaStarted: true,
     schemaParseWarning: 'warning',
     showRequiredHints: true,
@@ -221,6 +232,7 @@ test('resetting a contract preserves the loaded data file', () => {
   assert.equal(context.resetContractModalOpen, false);
   assert.equal(context.yamlText, '');
   assert.equal(context.yamlName, '');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.schemaStarted, false);
   assert.equal(context.schemaSection, 'fundamentals');
   assert.equal(context.dataTab, 'data');
@@ -229,6 +241,7 @@ test('resetting a contract preserves the loaded data file', () => {
 test('schema module blocks blank contract creation until Python is ready', () => {
   const schema = loadSchemaModule();
   const context = {
+    t,
     pythonReady: false,
     schemaStarted: false,
     schemaParseWarning: '',
@@ -246,12 +259,14 @@ test('schema module blocks blank contract creation until Python is ready', () =>
 test('schema module starts blank contracts with the checker visible', () => {
   const schema = loadSchemaModule();
   const context = {
+    t,
     pythonReady: true,
     schemaStarted: false,
     checkerCollapsed: false,
     schemaParseWarning: 'old warning',
     showRequiredHints: true,
     yamlName: '',
+    yamlNameGenerated: false,
     ensureContractCodec: () => codec,
     nextSchemaRowId: schema.nextSchemaRowId,
     schemaRowCounter: 0,
@@ -269,12 +284,65 @@ test('schema module starts blank contracts with the checker visible', () => {
   assert.equal(context.schemaStarted, true);
   assert.equal(context.checkerCollapsed, false);
   assert.equal(context.schemaSection, 'fundamentals');
+  assert.equal(context.yamlName, 'contract.yaml');
+  assert.equal(context.yamlNameGenerated, true);
+});
+
+test('generated contract filenames follow the contract name', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaStarted: true,
+    schemaDraft: { name: 'Clinical Cohort 2026' },
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    yamlName: 'contract.yaml',
+    yamlNameGenerated: true,
+    schemaParseWarning: '',
+    ensureContractCodec() {
+      return {
+        contractFileName: codec.contractFileName,
+        draftToYamlText: () => 'name: Clinical Cohort 2026\n',
+      };
+    },
+    ensureYamlLibrary: () => ({}),
+    clearResults() {},
+  };
+
+  schema.pushSchemaToYaml.call(context);
+
+  assert.equal(context.yamlName, 'clinical-cohort-2026.yaml');
+});
+
+test('imported contract filenames remain unchanged while editing', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaStarted: true,
+    schemaDraft: { name: 'Renamed Contract' },
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    yamlName: 'hospital-export.yaml',
+    yamlNameGenerated: false,
+    schemaParseWarning: '',
+    ensureContractCodec() {
+      return {
+        contractFileName: codec.contractFileName,
+        draftToYamlText: () => 'name: Renamed Contract\n',
+      };
+    },
+    ensureYamlLibrary: () => ({}),
+    clearResults() {},
+  };
+
+  schema.pushSchemaToYaml.call(context);
+
+  assert.equal(context.yamlName, 'hospital-export.yaml');
 });
 
 test('manual YAML edits immediately invalidate previous results', () => {
   const schema = loadSchemaModule();
   let resultsCleared = 0;
   const context = {
+    t,
     editorView: 'yaml',
     clearResults() {
       resultsCleared += 1;
@@ -290,6 +358,7 @@ test('manual result invalidation is ignored outside the YAML editor', () => {
   const schema = loadSchemaModule();
   let resultsCleared = 0;
   const context = {
+    t,
     editorView: 'schema',
     clearResults() {
       resultsCleared += 1;

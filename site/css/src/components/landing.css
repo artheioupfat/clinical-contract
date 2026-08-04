@@ -110,7 +110,7 @@
     @apply border-b-0;
   }
 
-  .landing-standard__rows span {
+  .landing-standard__rows article > span {
     @apply text-xs font-bold uppercase tracking-[0.18em];
     color: var(--cc-primary-strong);
   }
@@ -190,7 +190,7 @@
   }
 
   .theme-dark .landing-kicker,
-  .theme-dark .landing-standard__rows span,
+  .theme-dark .landing-standard__rows article > span,
   .theme-dark .landing-closing a {
     color: var(--cc-primary-strong);
   }

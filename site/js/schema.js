@@ -42,6 +42,7 @@ window.ClinicalModules.schema = {
     this.resetContractModalOpen = false;
     this.yamlText = '';
     this.yamlName = '';
+    this.yamlNameGenerated = false;
     this.editorView = 'schema';
     this.schemaStarted = false;
     this.schemaParseWarning = '';
@@ -202,7 +203,7 @@ window.ClinicalModules.schema = {
     }
     if (row?.logicalType) return row.logicalType;
     if (row?.physicalType) return row.physicalType;
-    return 'No type constraint';
+    return this.t('editor.columns.noConstraint');
   },
 
   addQualityRule() {
@@ -283,7 +284,7 @@ window.ClinicalModules.schema = {
 
   startBlankContract() {
     if (!this.pythonReady) {
-      this.schemaParseWarning = 'Python runtime is still loading. Please wait before starting a contract.';
+      this.schemaParseWarning = this.t('editor.messages.runtimeStart');
       return;
     }
 
@@ -291,7 +292,8 @@ window.ClinicalModules.schema = {
     this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
-    this.yamlName = 'datacontract.yaml';
+    this.yamlName = 'contract.yaml';
+    this.yamlNameGenerated = true;
     this.editorView = 'schema';
     this.clearResults();
     this.seedSchemaDraft();
@@ -324,8 +326,7 @@ window.ClinicalModules.schema = {
     try {
       parsed = this.ensureYamlLibrary().load(this.yamlText);
     } catch (error) {
-      this.schemaParseWarning =
-        `YAML parse warning: ${error.message}. You can still edit in Schema mode; saving fields will rewrite YAML.`;
+      this.schemaParseWarning = this.t('editor.messages.yamlParse', { message: error.message });
       this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
@@ -334,8 +335,7 @@ window.ClinicalModules.schema = {
     }
 
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      this.schemaParseWarning =
-        'YAML root is not an object. Schema mode will use a clean template and rewrite YAML from form values.';
+      this.schemaParseWarning = this.t('editor.messages.yamlRoot');
       this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
@@ -355,6 +355,9 @@ window.ClinicalModules.schema = {
     this.teamEditorMemberId = null;
     this.schemaParseWarning = '';
     this.schemaStarted = true;
+    if (this.yamlNameGenerated) {
+      this.yamlName = this.ensureContractCodec().contractFileName(this.schemaDraft.name);
+    }
   },
 
   syncSchemaFromYamlEditor() {
@@ -374,11 +377,13 @@ window.ClinicalModules.schema = {
         rootExtras: this.schemaRootExtras || {},
         otherSchemas: this.schemaOtherSchemas || [],
       });
-      this.yamlName = this.yamlName || 'datacontract.yaml';
+      this.yamlName = this.yamlNameGenerated
+        ? this.ensureContractCodec().contractFileName(this.schemaDraft?.name)
+        : this.yamlName || 'contract.yaml';
       this.schemaParseWarning = '';
       this.clearResults();
     } catch (error) {
-      this.schemaParseWarning = `Schema sync error: ${error.message}`;
+      this.schemaParseWarning = this.t('editor.messages.schemaSync', { message: error.message });
     }
   },
 };

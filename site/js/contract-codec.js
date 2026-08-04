@@ -231,6 +231,10 @@
       .replace(/^-+|-+$/g, '');
   }
 
+  function contractFileName(value) {
+    return `${slugifyContractId(value) || 'contract'}.yaml`;
+  }
+
   function contractObjectToDraft(contract, options = {}) {
     const parsed = contract && typeof contract === 'object' && !Array.isArray(contract) ? contract : {};
     const nextRowId = createIdFactory(options);
@@ -514,6 +518,7 @@
     createSchemaProperty,
     createQualityRule,
     createTeamMember,
+    contractFileName,
     contractObjectToDraft,
     draftToContractObject,
     yamlTextToDraft,

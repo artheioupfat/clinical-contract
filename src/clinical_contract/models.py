@@ -88,12 +88,65 @@ class QualityExpectation(BaseModel):
             (ComparisonOperator.less_than_or_equal, self.less_than_or_equal),
             (ComparisonOperator.between, self.between),
         )
-        return [(operator, value) for operator, value in candidates if value is not None]
+        return [
+            (operator, value) for operator, value in candidates if value is not None
+        ]
 
     def resolve(
         self,
     ) -> tuple[ComparisonOperator, NumericValue | BetweenExpectation]:
         return self.configured_comparisons()[0]
+
+
+class Description(BaseModel):
+    purpose: str = ""
+    usage: str = ""
+    limitations: str = ""
+
+
+class Quality(BaseModel):
+    type: str
+    description: str = ""
+    query: str = ""
+    mustBe: Optional[NumericValue] = None
+    expected: Optional[QualityExpectation] = None
+
+    @field_validator("mustBe", mode="before")
+    @classmethod
+    def reject_boolean_must_be(cls, value):
+        if isinstance(value, bool):
+            raise ValueError("mustBe must be numeric, not boolean")
+        return value
+
+    @model_validator(mode="after")
+    def validate_expectation(self):
+        if self.mustBe is not None and self.expected is not None:
+            raise ValueError("mustBe and expected cannot be used together")
+        return self
+
+    def resolved_expectation(
+        self,
+    ) -> tuple[ComparisonOperator, NumericValue | BetweenExpectation]:
+        if self.expected is not None:
+            return self.expected.resolve()
+        fallback = self.mustBe if self.mustBe is not None else 0
+        return ComparisonOperator.equal, fallback
+
+
+class Property(BaseModel):
+    name: str
+    logicalType: str = ""
+    physicalType: str = ""
+    description: str = ""
+    required: bool = False
+    quality: Optional[list[Quality]] = None
+
+
+class SchemaItem(BaseModel):
+    name: str
+    physicalType: str
+    description: str
+    properties: list[Property]
 
 
 def _format_numeric(value: NumericValue) -> str:
@@ -105,7 +158,7 @@ def _format_numeric(value: NumericValue) -> str:
 class CheckStatus(str, Enum):
     passed = "passed"
     failed = "failed"
-    error  = "error"
+    error = "error"
 
 
 class QualityResult(BaseModel):
@@ -158,6 +211,7 @@ class ContractReport(BaseModel):
     code 1 — one or more checks failed
     code 2 — one or more execution errors
     """
+
     success: bool
     code: int
     results: list[QualityResult] = Field(default_factory=list)
@@ -175,6 +229,7 @@ class ContractReport(BaseModel):
 
 class FieldValidation(BaseModel):
     """Result of a single field validation in 'validate' command."""
+
     field: str
     present: bool
     value: Optional[str] = None
@@ -194,6 +249,7 @@ class FieldValidation(BaseModel):
 
 class ValidateReport(BaseModel):
     """Report returned by the validate command."""
+
     success: bool
     fields: list[FieldValidation] = Field(default_factory=list)
 
@@ -210,9 +266,10 @@ class ColumnCheckStatus(str, Enum):
 
 class ColumnCheckResult(BaseModel):
     """Result of a single column check (schema vs parquet)."""
+
     column: str
     yaml_type: str
-    parquet_type: str   # "column not found" si absente
+    parquet_type: str  # "column not found" si absente
     required: bool
     status: ColumnCheckStatus
 
@@ -229,12 +286,15 @@ class ColumnCheckResult(BaseModel):
 
 class SchemaCheckReport(BaseModel):
     """Report of schema compatibility check (columns + types)."""
+
     success: bool
     schema_name: str
     columns: list[ColumnCheckResult] = Field(default_factory=list)
 
     def failures(self) -> list[ColumnCheckResult]:
         return [
-            c for c in self.columns
-            if c.status not in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
+            c
+            for c in self.columns
+            if c.status
+            not in {ColumnCheckStatus.ok, ColumnCheckStatus.optional_missing}
         ]

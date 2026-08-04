@@ -11,14 +11,14 @@ test('editor separates contract validation from dataset checks', () => {
 
   assert.match(editorPanel, /editorModeButtonClass\('validation'\)/);
   assert.match(editorPanel, /tabDotClass\(validateRunState\)/);
-  assert.match(editorPanel, /aria-label="Download contract"/);
+  assert.match(editorPanel, /editor\.actions\.download/);
   assert.match(editorPanel, /pine-btn--action-success pine-btn--icon/);
-  assert.match(editorPanel, /aria-label="Reset contract"/);
+  assert.match(editorPanel, /editor\.actions\.reset/);
   assert.match(editorPanel, /pine-btn--danger pine-btn--icon/);
   assert.match(editorPanel, /x-if="!schemaStarted"/);
-  assert.match(editorPanel, /Show examples/);
+  assert.match(editorPanel, /editor\.actions\.showExamples/);
   assert.match(dataPanel, /dataTab === 'data'/);
-  assert.match(dataPanel, /Show examples/);
+  assert.match(dataPanel, /editor\.actions\.showExamples/);
   assert.match(dataPanel, /!schemaStarted \|\| !dataFile/);
   assert.doesNotMatch(dataPanel, />Validate</);
 });
@@ -39,7 +39,8 @@ test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
 test('quality results expose per-rule execution logs', () => {
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
-  assert.match(dataPanel, /<th>Result<\/th><th>Log<\/th>/);
+  assert.match(dataPanel, /editor\.qualityResults\.result/);
+  assert.match(dataPanel, /editor\.qualityResults\.log/);
   assert.match(dataPanel, /row\.log \|\| '—'/);
   assert.match(dataPanel, /colspan="7"/);
 });

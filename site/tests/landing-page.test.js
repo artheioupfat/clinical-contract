@@ -11,24 +11,22 @@ function readSiteFile(relativePath) {
 
 test('landing page presents a static product overview without loading the editor runtime', () => {
   const indexHtml = readSiteFile('index.html');
+  const french = JSON.parse(readSiteFile('locales/fr.json'));
 
   assert.match(indexHtml, /clinical-contract/);
-  assert.match(indexHtml, /Write\. Share\. Trust\./);
   assert.match(indexHtml, /\.\/logo\/landing_page\.png/);
-  assert.match(indexHtml, /Cadrer les données avant de les échanger/);
-  assert.match(indexHtml, /Data contract/);
-  assert.match(indexHtml, /ODCS 3\.1\.0/);
-  assert.match(indexHtml, /Traitement local/);
-  assert.match(indexHtml, /aucun contrat ni fichier de données n'est récupéré/);
-  assert.match(indexHtml, /Tout reste dans votre navigateur/);
+  assert.equal(french.landing.overviewTitle, 'Cadrer les données avant de les échanger.');
+  assert.equal(french.landing.contractTitle, 'Contrat de données');
+  assert.equal(french.landing.odcsTitle, 'ODCS 3.1.0');
+  assert.equal(french.landing.localTitle, 'Traitement local');
+  assert.match(french.landing.localBody, /Tout reste dans votre navigateur/);
   assert.match(indexHtml, /https:\/\/datacontract\.com\//);
-  assert.match(indexHtml, /existe aussi comme bibliothèque Python/);
-  assert.match(indexHtml, /depuis PyPI/);
-  assert.match(indexHtml, /Python \+ CLI/);
+  assert.match(french.landing.pythonTitle, /bibliothèque Python/);
+  assert.match(french.landing.pythonBody, /PyPI/);
   assert.match(indexHtml, /uv tool install --python python3\.11 clinical-contract/);
   assert.match(indexHtml, /clinical-contract validate site\/examples\/contract\.yaml/);
   assert.match(indexHtml, /clinical-contract check site\/examples\/contract\.yaml site\/examples\/template\.parquet/);
-  assert.match(indexHtml, /Consulter la documentation/);
+  assert.match(indexHtml, /landing\.closingLink/);
   assert.match(indexHtml, /\.\/editor\.html/);
   assert.match(indexHtml, /\.\/docs\.html/);
   assert.match(indexHtml, /\.\/js\/landing\.js/);
