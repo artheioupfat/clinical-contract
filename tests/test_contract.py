@@ -4,6 +4,7 @@ Tests pour clinical-contract.
 import json
 import re
 import pytest
+import clinical_contract.contract as contract_module
 from clinical_contract import load_contract, load_raw
 from clinical_contract.contract import (
     DataContract,
@@ -453,6 +454,56 @@ def test_check_tous_passes_depuis_bytes(tmp_path):
     assert report.success is True
     assert report.code == 0
     assert len(report.passed()) == 1
+
+
+def test_check_reuses_one_materialization_connection_and_view(
+    tmp_path,
+    monkeypatch,
+):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(YAML_COMPLET)
+    quality_rules = contract.schema_[0].properties[0].quality
+    assert quality_rules is not None
+    quality_rules.append(quality_rules[0].model_copy(update={
+        "description": "Expected row count",
+        "query": "SELECT COUNT(*) FROM patients",
+        "mustBe": 3,
+    }))
+
+    calls = {"materialize": 0, "connect": 0, "view": 0}
+    real_materialize = contract_module._materialize_data_source
+    real_connect = contract_module.duckdb.connect
+    real_create_view = contract_module._create_data_source_view
+
+    def counted_materialize(source):
+        calls["materialize"] += 1
+        return real_materialize(source)
+
+    def counted_connect(*args, **kwargs):
+        calls["connect"] += 1
+        return real_connect(*args, **kwargs)
+
+    def counted_create_view(*args, **kwargs):
+        calls["view"] += 1
+        return real_create_view(*args, **kwargs)
+
+    monkeypatch.setattr(
+        contract_module,
+        "_materialize_data_source",
+        counted_materialize,
+    )
+    monkeypatch.setattr(contract_module.duckdb, "connect", counted_connect)
+    monkeypatch.setattr(
+        contract_module,
+        "_create_data_source_view",
+        counted_create_view,
+    )
+
+    report = contract.check(parquet_file.read_bytes(), backend="duckdb")
+
+    assert report.success is True
+    assert len(report.passed()) == 2
+    assert calls == {"materialize": 1, "connect": 1, "view": 1}
 
 
 def test_check_tous_passes_depuis_csv(tmp_path):

@@ -7,6 +7,7 @@ import math
 import os
 import re
 import tempfile
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
 from typing import Optional
@@ -359,85 +360,68 @@ def _cleanup_temp_path(temp_path: str | None) -> None:
         pass
 
 
-def _run_duckdb_query(
-    sql: str,
-    parquet_path: str | bytes,
+def _create_data_source_view(
+    conn: duckdb.DuckDBPyConnection,
     table_name: str,
-) -> NumericValue:
-    try:
-        import duckdb
-    except ImportError as exc:
-        raise ImportError(
-            "DuckDB is required to execute quality checks. "
-            "Install with: pip install \"clinical-contract[duckdb]\""
-        ) from exc
-
-    source_path, temp_path, ext = _materialize_data_source(parquet_path)
+    source_path: str,
+    ext: str,
+) -> None:
     source_path_literal = source_path.replace("'", "''")
+    quoted_table_name = _quote_identifier(table_name)
+
+    if ext == ".parquet":
+        conn.execute(
+            f"CREATE VIEW {quoted_table_name} AS "
+            f"SELECT * FROM read_parquet('{source_path_literal}')"
+        )
+        return
+    if ext == ".csv":
+        conn.execute(
+            f"CREATE VIEW {quoted_table_name} AS "
+            f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+        )
+        return
 
     try:
-        with duckdb.connect() as conn:
-            if ext == ".parquet":
-                conn.execute(
-                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                    f"SELECT * FROM read_parquet('{source_path_literal}')"
-                )
-            elif ext == ".csv":
-                conn.execute(
-                    f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                    f"SELECT * FROM read_csv_auto('{source_path_literal}')"
-                )
-            else:
-                try:
-                    conn.execute(
-                        f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                        f"SELECT * FROM read_parquet('{source_path_literal}')"
-                    )
-                except Exception:
-                    try:
-                        conn.execute(
-                            f"CREATE VIEW {_quote_identifier(table_name)} AS "
-                            f"SELECT * FROM read_csv_auto('{source_path_literal}')"
-                        )
-                    except Exception as csv_exc:
-                        raise ValueError(
-                            "Unsupported or unreadable data source. "
-                            "Use a .parquet/.csv file, or valid parquet/csv bytes."
-                        ) from csv_exc
+        conn.execute(
+            f"CREATE VIEW {quoted_table_name} AS "
+            f"SELECT * FROM read_parquet('{source_path_literal}')"
+        )
+    except Exception:
+        try:
+            conn.execute(
+                f"CREATE VIEW {quoted_table_name} AS "
+                f"SELECT * FROM read_csv_auto('{source_path_literal}')"
+            )
+        except Exception as csv_exc:
+            raise ValueError(
+                "Unsupported or unreadable data source. "
+                "Use a .parquet/.csv file, or valid parquet/csv bytes."
+            ) from csv_exc
 
-            cursor = conn.execute(sql)
-            if not cursor.description or len(cursor.description) != 1:
-                raise ValueError(
-                    "Quality SQL query must return exactly one column."
-                )
 
-            rows = cursor.fetchmany(2)
-            if len(rows) != 1:
-                raise ValueError(
-                    "Quality SQL query must return exactly one row."
-                )
+def _run_duckdb_scalar_query(
+    conn: duckdb.DuckDBPyConnection,
+    sql: str,
+) -> NumericValue:
+    cursor = conn.execute(sql)
+    if not cursor.description or len(cursor.description) != 1:
+        raise ValueError("Quality SQL query must return exactly one column.")
 
-            value = rows[0][0]
-            if value is None:
-                raise ValueError("Quality SQL query returned NULL.")
-            if isinstance(value, bool) or not isinstance(
-                value,
-                (int, float, Decimal),
-            ):
-                raise ValueError(
-                    "Quality SQL query must return a numeric value."
-                )
-            if isinstance(value, float) and not math.isfinite(value):
-                raise ValueError(
-                    "Quality SQL query returned a non-finite number."
-                )
-            if isinstance(value, Decimal) and not value.is_finite():
-                raise ValueError(
-                    "Quality SQL query returned a non-finite number."
-                )
-            return value
-    finally:
-        _cleanup_temp_path(temp_path)
+    rows = cursor.fetchmany(2)
+    if len(rows) != 1:
+        raise ValueError("Quality SQL query must return exactly one row.")
+
+    value = rows[0][0]
+    if value is None:
+        raise ValueError("Quality SQL query returned NULL.")
+    if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+        raise ValueError("Quality SQL query must return a numeric value.")
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("Quality SQL query returned a non-finite number.")
+    if isinstance(value, Decimal) and not value.is_finite():
+        raise ValueError("Quality SQL query returned a non-finite number.")
+    return value
 
 
 def _numeric_as_decimal(value: NumericValue) -> Decimal:
@@ -527,6 +511,15 @@ class Quality(BaseModel):
             return self.expected.resolve()
         fallback = self.mustBe if self.mustBe is not None else 0
         return ComparisonOperator.equal, fallback
+
+
+@dataclass(frozen=True)
+class _QualityJob:
+    schema_name: str
+    property_name: str
+    quality: Quality
+    operator: ComparisonOperator
+    expected: NumericValue | BetweenExpectation
 
 
 class Property(BaseModel):
@@ -803,8 +796,7 @@ class DataContract(BaseModel):
                 "Allowed values: ['auto', 'duckdb']"
             )
 
-        results: list[QualityResult] = []
-
+        quality_jobs: list[_QualityJob] = []
         for schema_item in self.schema_:
             for prop in schema_item.properties:
                 if not prop.quality:
@@ -815,52 +807,102 @@ class DataContract(BaseModel):
                         continue
 
                     operator, expected = q.resolved_expectation()
+                    quality_jobs.append(_QualityJob(
+                        schema_name=schema_item.name,
+                        property_name=prop.name,
+                        quality=q,
+                        operator=operator,
+                        expected=expected,
+                    ))
+
+        if not quality_jobs:
+            return ContractReport(
+                success=True,
+                code=0,
+                results=[],
+                summary="No executable SQL quality checks defined.",
+            )
+
+        results: list[QualityResult] = []
+
+        def append_error(job: _QualityJob, exc: Exception) -> None:
+            results.append(QualityResult(
+                schema_name=job.schema_name,
+                property_name=job.property_name,
+                description=job.quality.description,
+                query=job.quality.query,
+                status=CheckStatus.error,
+                operator=job.operator,
+                expected=job.expected,
+                error_message=str(exc),
+            ))
+
+        temp_path = None
+        try:
+            source_path, temp_path, ext = _materialize_data_source(parquet_path)
+            conn = duckdb.connect()
+        except Exception as exc:
+            for job in quality_jobs:
+                append_error(job, exc)
+        else:
+            prepared_views: dict[str, Exception | None] = {}
+            try:
+                for job in quality_jobs:
+                    if job.schema_name not in prepared_views:
+                        try:
+                            _create_data_source_view(
+                                conn,
+                                job.schema_name,
+                                source_path,
+                                ext,
+                            )
+                            prepared_views[job.schema_name] = None
+                        except Exception as exc:
+                            prepared_views[job.schema_name] = exc
+
+                    view_error = prepared_views[job.schema_name]
+                    if view_error is not None:
+                        append_error(job, view_error)
+                        continue
+
                     try:
-                        obtained = _run_duckdb_query(
-                            sql=q.query,
-                            parquet_path=parquet_path,
-                            table_name=schema_item.name,
+                        obtained = _run_duckdb_scalar_query(
+                            conn,
+                            job.quality.query,
                         )
                         status = (
                             CheckStatus.passed
                             if _quality_comparison_passes(
                                 obtained,
-                                operator,
-                                expected,
+                                job.operator,
+                                job.expected,
                             )
                             else CheckStatus.failed
                         )
                         results.append(QualityResult(
-                            schema_name=schema_item.name,
-                            property_name=prop.name,
-                            description=q.description,
-                            query=q.query,
+                            schema_name=job.schema_name,
+                            property_name=job.property_name,
+                            description=job.quality.description,
+                            query=job.quality.query,
                             status=status,
-                            operator=operator,
-                            expected=expected,
+                            operator=job.operator,
+                            expected=job.expected,
                             obtained=obtained,
                         ))
 
                     except Exception as exc:
-                        results.append(QualityResult(
-                            schema_name=schema_item.name,
-                            property_name=prop.name,
-                            description=q.description,
-                            query=q.query,
-                            status=CheckStatus.error,
-                            operator=operator,
-                            expected=expected,
-                            error_message=str(exc),
-                        ))
+                        append_error(job, exc)
+            finally:
+                conn.close()
+        finally:
+            _cleanup_temp_path(temp_path)
 
         # Code de retour
         has_error  = any(r.status == CheckStatus.error  for r in results)
         has_failed = any(r.status == CheckStatus.failed for r in results)
         all_ok     = not has_error and not has_failed
 
-        if not results:
-            code, summary = 0, "No executable SQL quality checks defined."
-        elif all_ok:
+        if all_ok:
             code, summary = 0, "All checks passed."
         elif has_error:
             code, summary = 2, "Execution errors were encountered."
