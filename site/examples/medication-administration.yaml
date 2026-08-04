@@ -1,0 +1,117 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: medication-administration
+name: Medication Administration
+version: 1.0.0
+status: active
+description:
+  purpose: Specify medication administration records shared for secondary clinical use
+  usage: Demonstrate arrays, float widths, intervals, optional columns, and varied comparison operators
+  limitations: Synthetic administrations that must not be used for clinical decisions
+
+study:
+  startDate: "2024-03-01"
+  endDate: "2024-03-31"
+  type: longitudinal
+  objective: therapeutic
+  healthDomain: pharmacology
+
+schema:
+  - name: medication_administration
+    physicalType: TABLE
+    description: Synthetic medication administrations
+    properties:
+      - name: administration_id
+        logicalType: string
+        physicalType: varchar
+        description: Unique administration identifier
+        examples:
+          - ADM-0001
+        required: true
+        quality:
+          - type: sql
+            description: The extract must contain at least eight administrations
+            query: SELECT COUNT(*) FROM medication_administration
+            expected:
+              greaterThanOrEqual: 8
+
+      - name: patient_id
+        logicalType: string
+        physicalType: varchar
+        description: Synthetic patient identifier
+        required: true
+
+      - name: medication_codes
+        logicalType: array
+        physicalType: array
+        description: Medication codes attached to the administration
+        examples:
+          - ATC-J01CA04
+        required: true
+        quality:
+          - type: sql
+            description: Every administration must contain at least one medication code
+            query: SELECT COUNT(*) FROM medication_administration WHERE len(medication_codes) = 0
+            expected:
+              equal: 0
+
+      - name: dose
+        logicalType: float
+        physicalType: float32
+        description: Administered dose
+        examples:
+          - 275.0
+        required: true
+        quality:
+          - type: sql
+            description: The average dose must remain within the demonstration range
+            query: SELECT AVG(dose) FROM medication_administration
+            expected:
+              between:
+                min: 250
+                max: 500
+
+      - name: dose_unit
+        logicalType: string
+        physicalType: varchar
+        description: Unit used for the administered dose
+        required: true
+
+      - name: route
+        logicalType: string
+        physicalType: varchar
+        description: Route of administration
+        examples:
+          - IV
+          - ORAL
+        required: true
+        quality:
+          - type: sql
+            description: The extract must include at least one intravenous administration
+            query: SELECT COUNT(*) FROM medication_administration WHERE route = 'IV'
+            expected:
+              notEqual: 0
+
+      - name: administration_time
+        logicalType: time
+        physicalType: time
+        description: Local administration time
+        required: true
+
+      - name: infusion_duration
+        logicalType: interval
+        physicalType: interval
+        description: Duration of the administration
+        required: true
+
+      - name: note
+        description: Optional free-text review note without a type constraint
+        required: false
+
+team:
+  name: Medication Data Office
+  description: Synthetic ownership metadata
+  members:
+    - name: John Doe
+      role: Clinical pharmacist
+      email: john.doe@example.org

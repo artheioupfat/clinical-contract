@@ -1,0 +1,118 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: laboratory-results
+name: Laboratory Results
+version: 1.0.0
+status: active
+description:
+  purpose: Define the expected structure of laboratory results exchanged between care organizations
+  usage: Demonstrate precise physical types, timezone-aware timestamps, and numeric quality checks
+  limitations: Synthetic values for product demonstration only
+
+study:
+  startDate: "2024-02-01"
+  endDate: "2024-02-29"
+  type: cohort
+  objective: descriptive
+  healthDomain: laboratory medicine
+
+schema:
+  - name: laboratory_results
+    physicalType: TABLE
+    description: Synthetic laboratory measurements with collection metadata
+    properties:
+      - name: sample_id
+        logicalType: string
+        physicalType: uuid
+        description: Unique identifier of the biological sample
+        examples:
+          - 550e8400-e29b-41d4-a716-446655440000
+        required: true
+        quality:
+          - type: sql
+            description: Sample identifiers must not be null
+            query: SELECT COUNT(*) FROM laboratory_results WHERE sample_id IS NULL
+            expected:
+              equal: 0
+          - type: sql
+            description: Sample identifiers must be unique
+            query: SELECT COUNT(*) - COUNT(DISTINCT sample_id) FROM laboratory_results
+            expected:
+              equal: 0
+
+      - name: patient_id
+        logicalType: string
+        physicalType: varchar
+        description: Synthetic identifier of the patient
+        examples:
+          - PAT-0001
+        required: true
+
+      - name: analyte_code
+        logicalType: string
+        physicalType: varchar
+        description: Local code of the measured analyte
+        examples:
+          - CRP
+          - HB
+        required: true
+
+      - name: result_value
+        logicalType: decimal
+        physicalType: decimal
+        description: Numeric laboratory result
+        examples:
+          - 4.50
+        required: true
+        quality:
+          - type: sql
+            description: The average result must remain positive
+            query: SELECT AVG(result_value) FROM laboratory_results
+            expected:
+              greaterThan: 0
+
+      - name: result_unit
+        logicalType: string
+        physicalType: varchar
+        description: Unit associated with the laboratory result
+        examples:
+          - mg/L
+        required: true
+
+      - name: collected_time
+        logicalType: time
+        physicalType: time
+        description: Local collection time
+        examples:
+          - "08:15:00"
+        required: true
+
+      - name: collected_at
+        logicalType: date
+        physicalType: timestamp with timezone
+        description: Timezone-aware collection timestamp
+        examples:
+          - "2024-02-01T09:00:00+01:00"
+        required: true
+        quality:
+          - type: sql
+            description: Collection timestamps must not be in the future
+            query: SELECT COUNT(*) FROM laboratory_results WHERE collected_at > current_timestamp
+            expected:
+              lessThan: 1
+
+      - name: turnaround
+        logicalType: interval
+        physicalType: interval
+        description: Delay between collection and result availability
+        examples:
+          - 00:25:00
+        required: true
+
+team:
+  name: Laboratory Data Office
+  description: Synthetic ownership metadata
+  members:
+    - name: Jane Doe
+      role: Data steward
+      email: jane.doe@example.org

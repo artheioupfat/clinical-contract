@@ -1,0 +1,106 @@
+apiVersion: v3.1.0
+kind: DataContract
+id: epidemiology-survey
+name: Epidemiology Survey
+version: 1.0.0
+status: active
+description:
+  purpose: Define a compact epidemiological survey exchange in CSV format
+  usage: Demonstrate CSV type inference, broad logical families, and aggregate quality comparisons
+  limitations: Small synthetic cohort with no identifying or clinical data
+
+study:
+  startDate: "2024-04-01"
+  endDate: "2024-04-30"
+  type: cross-sectional
+  objective: epidemiological
+  healthDomain: public health
+
+schema:
+  - name: epidemiology_survey
+    physicalType: TABLE
+    description: Synthetic participant-level survey responses
+    properties:
+      - name: participant_id
+        logicalType: string
+        description: Synthetic participant identifier
+        examples:
+          - SUBJ-001
+        required: true
+        quality:
+          - type: sql
+            description: The survey must contain more than ten participants
+            query: SELECT COUNT(*) FROM epidemiology_survey
+            expected:
+              greaterThan: 10
+
+      - name: age
+        logicalType: integer
+        description: Age at survey completion
+        examples:
+          - 42
+        required: true
+        quality:
+          - type: sql
+            description: Ages must remain within the accepted study range
+            query: SELECT COUNT(*) FROM epidemiology_survey WHERE age < 18 OR age > 90
+            expected:
+              equal: 0
+
+      - name: sex
+        logicalType: string
+        description: Self-reported sex category used by this synthetic survey
+        required: true
+        quality:
+          - type: sql
+            description: At least two categories must be represented
+            query: SELECT COUNT(DISTINCT sex) FROM epidemiology_survey
+            expected:
+              greaterThanOrEqual: 2
+
+      - name: smoker
+        logicalType: boolean
+        description: Current smoking status
+        required: true
+        quality:
+          - type: sql
+            description: The demonstration cohort must include smokers
+            query: SELECT COUNT(*) FROM epidemiology_survey WHERE smoker
+            expected:
+              notEqual: 0
+
+      - name: survey_date
+        logicalType: date
+        description: Survey completion date inferred from the CSV
+        required: true
+        quality:
+          - type: sql
+            description: No survey date may be in the future
+            query: SELECT COUNT(*) FROM epidemiology_survey WHERE survey_date > current_date
+            expected:
+              lessThan: 1
+
+      - name: health_score
+        logicalType: float
+        description: Synthetic self-reported health score
+        required: true
+        quality:
+          - type: sql
+            description: The average score must remain in the expected range
+            query: SELECT AVG(health_score) FROM epidemiology_survey
+            expected:
+              between:
+                min: 65
+                max: 90
+
+      - name: notes
+        description: Optional free text intentionally left without a type constraint
+        required: false
+
+team:
+  name: Epidemiology Unit
+  description: Synthetic ownership metadata
+  members:
+    - name: Alex Smith
+      role: Epidemiologist
+      email: alex.smith@example.org
