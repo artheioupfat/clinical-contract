@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from decimal import Decimal
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-NumericValue = int | float | Decimal
+NumericValue = Union[int, float, Decimal]
 
 
 class ComparisonOperator(str, Enum):
