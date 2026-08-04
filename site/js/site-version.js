@@ -1,7 +1,7 @@
 (function registerSiteVersion(root) {
 // Generated from pyproject.toml. Do not edit by hand.
 // SITE_VERSION_JSON_START
-const version = "0.2.0";
+const version = "0.2.1";
 // SITE_VERSION_JSON_END
 
 root.ClinicalContractVersion = version;
