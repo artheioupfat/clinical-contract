@@ -10,6 +10,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import yaml
+
 from .loader import load_raw, load_contract
 from .contract import DataContract
 from .models import CheckStatus, ColumnCheckStatus, ValidateReport
@@ -61,6 +63,21 @@ def _field_issue_summary(report: ValidateReport) -> str:
     return "; ".join(parts)
 
 
+def _load_raw_for_cli(path: Path) -> dict:
+    """Load YAML for a CLI command and report syntax errors without a traceback."""
+    try:
+        return load_raw(path)
+    except yaml.YAMLError as exc:
+        problem = getattr(exc, "problem", None) or str(exc)
+        mark = getattr(exc, "problem_mark", None)
+        location = ""
+        if mark is not None:
+            location = f" (line {mark.line + 1}, column {mark.column + 1})"
+        print(f"❌  Invalid YAML syntax in {path.name}:")
+        print(f"    {problem}{location}")
+        sys.exit(1)
+
+
 # ------------------------------------------------------------------ #
 # Command: validate                                                    #
 # ------------------------------------------------------------------ #
@@ -78,7 +95,7 @@ def cmd_validate(yaml_path: str) -> None:
     print(f"\n📋  Structure validation: {path.name}\n")
 
     # Raw load, without Pydantic, to show missing fields clearly
-    raw = load_raw(path)
+    raw = _load_raw_for_cli(path)
     report = DataContract.validate_structure(raw)
 
     headers = ["Field", "Status", "Value"]
@@ -120,7 +137,7 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     print(f"    Data file: {data_file.name}")
 
     # ── 1. YAML structure validation ────────────────────────────────
-    raw = load_raw(yaml_file)
+    raw = _load_raw_for_cli(yaml_file)
     val_report = DataContract.validate_structure(raw)
     if not val_report.success:
         print(f"\n❌  Invalid YAML — {_field_issue_summary(val_report)}")
