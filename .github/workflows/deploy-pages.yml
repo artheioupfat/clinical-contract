@@ -35,6 +35,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install Python dependencies
+        run: |
+          python -m pip install uv
+          uv pip install --system -e ".[dev]"
+
+      - name: Test Python package
+        run: |
+          ruff check .
+          pytest tests/ -v --tb=short
+
       - name: Test and build site
         run: |
           set -euo pipefail
