@@ -247,3 +247,9 @@ test('yaml helpers delegate parsing and dumping to the injected YAML library', (
   assert.equal(decoded.draft.id, 'contract-id');
   assert.equal(yamlText, 'dumped:contract-id');
 });
+
+test('contract file names are derived safely from contract names', () => {
+  assert.equal(codec.contractFileName('Clinical Cohort 2026'), 'clinical-cohort-2026.yaml');
+  assert.equal(codec.contractFileName('Étude cardiologique'), 'etude-cardiologique.yaml');
+  assert.equal(codec.contractFileName(''), 'contract.yaml');
+});

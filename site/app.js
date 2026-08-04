@@ -22,6 +22,7 @@ document.addEventListener('alpine:init', () => {
   Alpine.data('clinicalApp', () => ({
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: false,
     editorStorageWarning: '',
     editorView: 'schema',
     schemaStarted: false,

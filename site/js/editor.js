@@ -33,6 +33,7 @@ window.ClinicalModules.editor = {
 
       this.yamlText = typeof session.yamlText === 'string' ? session.yamlText : '';
       this.yamlName = typeof session.yamlName === 'string' ? session.yamlName : '';
+      this.yamlNameGenerated = session.yamlNameGenerated === true;
       this.editorView = ['schema', 'yaml'].includes(session.editorView)
         ? session.editorView
         : 'schema';
@@ -62,6 +63,7 @@ window.ClinicalModules.editor = {
       const payload = {
         yamlText: this.yamlText || '',
         yamlName: this.yamlName || '',
+        yamlNameGenerated: this.yamlNameGenerated === true,
         editorView: this.editorView || 'schema',
         schemaSection: this.schemaSection || 'fundamentals',
         savedAt: new Date().toISOString(),
@@ -224,6 +226,7 @@ window.ClinicalModules.editor = {
   applyLoadedContract(yamlText, fileName) {
     this.yamlText = yamlText;
     this.yamlName = fileName;
+    this.yamlNameGenerated = false;
     this.schemaStarted = Boolean(this.yamlText.trim());
     this.editorView = 'schema';
     this.clearResults();

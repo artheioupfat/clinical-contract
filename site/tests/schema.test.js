@@ -205,6 +205,7 @@ test('resetting a contract preserves the loaded data file', () => {
     resetContractModalOpen: true,
     yamlText: 'id: example',
     yamlName: 'example.yaml',
+    yamlNameGenerated: true,
     schemaStarted: true,
     schemaParseWarning: 'warning',
     showRequiredHints: true,
@@ -231,6 +232,7 @@ test('resetting a contract preserves the loaded data file', () => {
   assert.equal(context.resetContractModalOpen, false);
   assert.equal(context.yamlText, '');
   assert.equal(context.yamlName, '');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.schemaStarted, false);
   assert.equal(context.schemaSection, 'fundamentals');
   assert.equal(context.dataTab, 'data');
@@ -264,6 +266,7 @@ test('schema module starts blank contracts with the checker visible', () => {
     schemaParseWarning: 'old warning',
     showRequiredHints: true,
     yamlName: '',
+    yamlNameGenerated: false,
     ensureContractCodec: () => codec,
     nextSchemaRowId: schema.nextSchemaRowId,
     schemaRowCounter: 0,
@@ -281,6 +284,58 @@ test('schema module starts blank contracts with the checker visible', () => {
   assert.equal(context.schemaStarted, true);
   assert.equal(context.checkerCollapsed, false);
   assert.equal(context.schemaSection, 'fundamentals');
+  assert.equal(context.yamlName, 'contract.yaml');
+  assert.equal(context.yamlNameGenerated, true);
+});
+
+test('generated contract filenames follow the contract name', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaStarted: true,
+    schemaDraft: { name: 'Clinical Cohort 2026' },
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    yamlName: 'contract.yaml',
+    yamlNameGenerated: true,
+    schemaParseWarning: '',
+    ensureContractCodec() {
+      return {
+        contractFileName: codec.contractFileName,
+        draftToYamlText: () => 'name: Clinical Cohort 2026\n',
+      };
+    },
+    ensureYamlLibrary: () => ({}),
+    clearResults() {},
+  };
+
+  schema.pushSchemaToYaml.call(context);
+
+  assert.equal(context.yamlName, 'clinical-cohort-2026.yaml');
+});
+
+test('imported contract filenames remain unchanged while editing', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaStarted: true,
+    schemaDraft: { name: 'Renamed Contract' },
+    schemaRootExtras: {},
+    schemaOtherSchemas: [],
+    yamlName: 'hospital-export.yaml',
+    yamlNameGenerated: false,
+    schemaParseWarning: '',
+    ensureContractCodec() {
+      return {
+        contractFileName: codec.contractFileName,
+        draftToYamlText: () => 'name: Renamed Contract\n',
+      };
+    },
+    ensureYamlLibrary: () => ({}),
+    clearResults() {},
+  };
+
+  schema.pushSchemaToYaml.call(context);
+
+  assert.equal(context.yamlName, 'hospital-export.yaml');
 });
 
 test('manual YAML edits immediately invalidate previous results', () => {

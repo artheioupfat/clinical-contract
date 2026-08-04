@@ -26,6 +26,7 @@ test('editor module restores a non-expired contract draft', () => {
   const session = {
     yamlText: 'id: active-contract',
     yamlName: 'contract.yaml',
+    yamlNameGenerated: true,
     editorView: 'yaml',
     schemaSection: 'quality',
     savedAt: new Date().toISOString(),
@@ -40,6 +41,7 @@ test('editor module restores a non-expired contract draft', () => {
     t,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: false,
     editorView: 'schema',
     schemaSection: 'fundamentals',
     schemaStarted: false,
@@ -53,6 +55,7 @@ test('editor module restores a non-expired contract draft', () => {
 
   assert.equal(context.yamlText, 'id: active-contract');
   assert.equal(context.yamlName, 'contract.yaml');
+  assert.equal(context.yamlNameGenerated, true);
   assert.equal(context.editorView, 'yaml');
   assert.equal(context.schemaSection, 'quality');
   assert.equal(context.schemaStarted, true);
@@ -156,6 +159,7 @@ test('editor module loads only the selected contract template', async () => {
     pythonReady: true,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: true,
     schemaStarted: false,
     editorView: 'yaml',
     contractTemplateModalOpen: true,
@@ -178,6 +182,7 @@ test('editor module loads only the selected contract template', async () => {
 
   assert.equal(context.yamlText, 'name: Example');
   assert.equal(context.yamlName, 'template.yaml');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.editorView, 'schema');
   assert.equal(context.contractTemplateModalOpen, false);
   assert.equal(dataLoads, 0);
@@ -191,6 +196,7 @@ test('editor module applies imported YAML through one shared loading path', () =
     t,
     yamlText: '',
     yamlName: '',
+    yamlNameGenerated: true,
     schemaStarted: false,
     editorView: 'yaml',
     clearResults() {},
@@ -203,6 +209,7 @@ test('editor module applies imported YAML through one shared loading path', () =
 
   assert.equal(context.yamlText, 'name: Imported');
   assert.equal(context.yamlName, 'imported.yaml');
+  assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.schemaStarted, true);
   assert.equal(context.editorView, 'schema');
   assert.equal(context.schemaSection, 'fundamentals');

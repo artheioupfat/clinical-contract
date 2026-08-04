@@ -42,6 +42,7 @@ window.ClinicalModules.schema = {
     this.resetContractModalOpen = false;
     this.yamlText = '';
     this.yamlName = '';
+    this.yamlNameGenerated = false;
     this.editorView = 'schema';
     this.schemaStarted = false;
     this.schemaParseWarning = '';
@@ -291,7 +292,8 @@ window.ClinicalModules.schema = {
     this.checkerCollapsed = false;
     this.schemaParseWarning = '';
     this.showRequiredHints = false;
-    this.yamlName = 'datacontract.yaml';
+    this.yamlName = 'contract.yaml';
+    this.yamlNameGenerated = true;
     this.editorView = 'schema';
     this.clearResults();
     this.seedSchemaDraft();
@@ -353,6 +355,9 @@ window.ClinicalModules.schema = {
     this.teamEditorMemberId = null;
     this.schemaParseWarning = '';
     this.schemaStarted = true;
+    if (this.yamlNameGenerated) {
+      this.yamlName = this.ensureContractCodec().contractFileName(this.schemaDraft.name);
+    }
   },
 
   syncSchemaFromYamlEditor() {
@@ -372,7 +377,9 @@ window.ClinicalModules.schema = {
         rootExtras: this.schemaRootExtras || {},
         otherSchemas: this.schemaOtherSchemas || [],
       });
-      this.yamlName = this.yamlName || 'datacontract.yaml';
+      this.yamlName = this.yamlNameGenerated
+        ? this.ensureContractCodec().contractFileName(this.schemaDraft?.name)
+        : this.yamlName || 'contract.yaml';
       this.schemaParseWarning = '';
       this.clearResults();
     } catch (error) {
