@@ -140,6 +140,14 @@ expected:
 
 L'ancien champ `mustBe` reste accepté comme alias de `expected.equal` afin de préserver les contrats existants.
 
+### Sécurité des règles SQL
+
+Clinical-Contract considère les contrats chargés comme des entrées non fiables. Une règle de qualité doit contenir une seule requête de lecture `SELECT`. Les commandes permettant de modifier des données, d'écrire un fichier, de charger une extension ou de changer la configuration DuckDB sont refusées.
+
+Le fichier CSV ou Parquet sélectionné est d'abord chargé dans une table temporaire interne. Clinical-Contract désactive ensuite les accès externes au système de fichiers et au réseau avant d'exécuter les règles. Dans l'application web, le contrat et les données restent dans le navigateur et ne sont envoyés à aucun serveur.
+
+Une requête de lecture peut néanmoins être volontairement très coûteuse. Il reste recommandé de relire les règles SQL provenant d'une organisation externe avant leur exécution automatisée sur une infrastructure partagée.
+
 
 ## Valider un contrat de données
 

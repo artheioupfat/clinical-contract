@@ -470,14 +470,24 @@ def test_check_reuses_one_materialization_connection_and_view(
         "mustBe": 3,
     }))
 
-    calls = {"materialize": 0, "connect": 0, "view": 0}
+    calls = {
+        "file_materialization": 0,
+        "table_materialization": 0,
+        "connect": 0,
+        "view": 0,
+    }
     real_materialize = contract_module._materialize_data_source
+    real_materialize_table = contract_module._materialize_data_source_table
     real_connect = contract_module.duckdb.connect
     real_create_view = contract_module._create_data_source_view
 
     def counted_materialize(source):
-        calls["materialize"] += 1
+        calls["file_materialization"] += 1
         return real_materialize(source)
+
+    def counted_materialize_table(*args, **kwargs):
+        calls["table_materialization"] += 1
+        return real_materialize_table(*args, **kwargs)
 
     def counted_connect(*args, **kwargs):
         calls["connect"] += 1
@@ -492,6 +502,11 @@ def test_check_reuses_one_materialization_connection_and_view(
         "_materialize_data_source",
         counted_materialize,
     )
+    monkeypatch.setattr(
+        contract_module,
+        "_materialize_data_source_table",
+        counted_materialize_table,
+    )
     monkeypatch.setattr(contract_module.duckdb, "connect", counted_connect)
     monkeypatch.setattr(
         contract_module,
@@ -503,7 +518,128 @@ def test_check_reuses_one_materialization_connection_and_view(
 
     assert report.success is True
     assert len(report.passed()) == 2
-    assert calls == {"materialize": 1, "connect": 1, "view": 1}
+    assert calls == {
+        "file_materialization": 1,
+        "table_materialization": 1,
+        "connect": 1,
+        "view": 1,
+    }
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT COUNT(*) FROM patients; DELETE FROM patients",
+        "DELETE FROM patients",
+        "CREATE TABLE stolen AS SELECT * FROM patients",
+        "COPY patients TO '/tmp/stolen.csv'",
+        "ATTACH '/tmp/stolen.duckdb'",
+        "SET threads = 8",
+        "PRAGMA enable_profiling",
+        "INSTALL httpfs",
+        "LOAD httpfs",
+        "CALL checkpoint()",
+    ],
+)
+def test_check_rejects_unsafe_quality_sql(tmp_path, query):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation(
+            "expected:\n  equal: 3",
+            query=query,
+        )
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.code == 2
+    assert report.success is False
+    assert report.errors()[0].error_message == (
+        "Unsafe quality SQL: exactly one read-only SELECT statement is required."
+    )
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "WITH source AS (SELECT * FROM patients) SELECT COUNT(*) FROM source",
+        "FROM patients SELECT COUNT(*)",
+    ],
+)
+def test_check_accepts_read_only_select_variants(tmp_path, query):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation(
+            "expected:\n  equal: 3",
+            query=query,
+        )
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+
+
+def test_check_blocks_quality_sql_from_reading_another_file(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001"])
+    other_file = _write_csv_ids(tmp_path, ["SECRET"], filename="private.csv")
+    escaped_path = str(other_file).replace("'", "''")
+    contract, _ = load_contract(
+        _yaml_with_quality_expectation(
+            "expected:\n  equal: 1",
+            query=f"SELECT COUNT(*) FROM read_csv_auto('{escaped_path}')",
+        )
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.code == 2
+    assert "Cannot access file" in report.errors()[0].error_message
+
+
+def test_check_locks_duckdb_security_configuration(
+    tmp_path,
+    monkeypatch,
+):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001"])
+    contract, _ = load_contract(YAML_COMPLET)
+    real_run_query = contract_module._run_duckdb_scalar_query
+    observed = {}
+
+    def inspect_connection(conn, sql):
+        settings = dict(conn.execute(
+            "SELECT name, value FROM duckdb_settings() "
+            "WHERE name IN ("
+            "'allow_community_extensions', "
+            "'autoinstall_known_extensions', "
+            "'autoload_known_extensions', "
+            "'enable_external_access', "
+            "'lock_configuration'"
+            ")"
+        ).fetchall())
+        observed.update(settings)
+        try:
+            conn.execute("SET threads = 8")
+        except Exception as exc:
+            observed["lock_error"] = str(exc)
+        return real_run_query(conn, sql)
+
+    monkeypatch.setattr(
+        contract_module,
+        "_run_duckdb_scalar_query",
+        inspect_connection,
+    )
+
+    report = contract.check(str(parquet_file), backend="duckdb")
+
+    assert report.success is True
+    assert observed["allow_community_extensions"] == "false"
+    assert observed["autoinstall_known_extensions"] == "false"
+    assert observed["autoload_known_extensions"] == "false"
+    assert observed["enable_external_access"] == "false"
+    assert observed["lock_configuration"] == "true"
+    assert "configuration has been locked" in observed["lock_error"]
 
 
 def test_check_tous_passes_depuis_csv(tmp_path):

@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 import os
 import re
+import sys
 import tempfile
 from dataclasses import dataclass
 from decimal import Decimal
@@ -35,6 +36,13 @@ from .models import (
     SchemaCheckReport,
     ValidateReport,
 )
+
+_UNSAFE_QUALITY_SQL_MESSAGE = (
+    "Unsafe quality SQL: exactly one read-only SELECT statement is required."
+)
+_QUALITY_MEMORY_LIMIT = "2GB"
+_QUALITY_TEMP_DIRECTORY_LIMIT = "2GB"
+_QUALITY_THREADS = 1 if sys.platform == "emscripten" else 2
 
 # ------------------------------------------------------------------ #
 # Type matching                                                       #
@@ -360,7 +368,28 @@ def _cleanup_temp_path(temp_path: str | None) -> None:
         pass
 
 
-def _create_data_source_view(
+def _configure_quality_connection(
+    conn: duckdb.DuckDBPyConnection,
+) -> None:
+    conn.execute("SET allow_community_extensions = false")
+    conn.execute("SET autoinstall_known_extensions = false")
+    conn.execute("SET autoload_known_extensions = false")
+    conn.execute("SET allow_persistent_secrets = false")
+    conn.execute("SET allow_unredacted_secrets = false")
+    conn.execute(f"SET threads = {_QUALITY_THREADS}")
+    conn.execute(f"SET memory_limit = '{_QUALITY_MEMORY_LIMIT}'")
+    conn.execute(
+        "SET max_temp_directory_size = "
+        f"'{_QUALITY_TEMP_DIRECTORY_LIMIT}'"
+    )
+
+
+def _lock_quality_connection(conn: duckdb.DuckDBPyConnection) -> None:
+    conn.execute("SET enable_external_access = false")
+    conn.execute("SET lock_configuration = true")
+
+
+def _materialize_data_source_table(
     conn: duckdb.DuckDBPyConnection,
     table_name: str,
     source_path: str,
@@ -371,26 +400,27 @@ def _create_data_source_view(
 
     if ext == ".parquet":
         conn.execute(
-            f"CREATE VIEW {quoted_table_name} AS "
+            f"CREATE TEMP TABLE {quoted_table_name} AS "
             f"SELECT * FROM read_parquet('{source_path_literal}')"
         )
         return
     if ext == ".csv":
         conn.execute(
-            f"CREATE VIEW {quoted_table_name} AS "
+            f"CREATE TEMP TABLE {quoted_table_name} AS "
             f"SELECT * FROM read_csv_auto('{source_path_literal}')"
         )
         return
 
     try:
         conn.execute(
-            f"CREATE VIEW {quoted_table_name} AS "
+            f"CREATE TEMP TABLE {quoted_table_name} AS "
             f"SELECT * FROM read_parquet('{source_path_literal}')"
         )
     except Exception:
+        conn.execute(f"DROP TABLE IF EXISTS {quoted_table_name}")
         try:
             conn.execute(
-                f"CREATE VIEW {quoted_table_name} AS "
+                f"CREATE TEMP TABLE {quoted_table_name} AS "
                 f"SELECT * FROM read_csv_auto('{source_path_literal}')"
             )
         except Exception as csv_exc:
@@ -400,10 +430,39 @@ def _create_data_source_view(
             ) from csv_exc
 
 
+def _create_data_source_view(
+    conn: duckdb.DuckDBPyConnection,
+    view_name: str,
+    source_table_name: str,
+) -> None:
+    conn.execute(
+        f"CREATE VIEW {_quote_identifier(view_name)} AS "
+        f"SELECT * FROM {_quote_identifier(source_table_name)}"
+    )
+
+
+def _validate_quality_sql(
+    conn: duckdb.DuckDBPyConnection,
+    sql: str,
+) -> None:
+    try:
+        statements = conn.extract_statements(sql)
+    except Exception as exc:
+        raise ValueError(f"Invalid quality SQL: {exc}") from exc
+
+    if len(statements) != 1:
+        raise ValueError(_UNSAFE_QUALITY_SQL_MESSAGE)
+
+    statement_type = getattr(statements[0].type, "name", "")
+    if statement_type != "SELECT":
+        raise ValueError(_UNSAFE_QUALITY_SQL_MESSAGE)
+
+
 def _run_duckdb_scalar_query(
     conn: duckdb.DuckDBPyConnection,
     sql: str,
 ) -> NumericValue:
+    _validate_quality_sql(conn, sql)
     cursor = conn.execute(sql)
     if not cursor.description or len(cursor.description) != 1:
         raise ValueError("Quality SQL query must return exactly one column.")
@@ -837,64 +896,76 @@ class DataContract(BaseModel):
                 error_message=str(exc),
             ))
 
+        schema_names = {job.schema_name for job in quality_jobs}
+        source_table_name = "__clinical_contract_quality_source"
+        while source_table_name in schema_names:
+            source_table_name += "_"
+
+        conn = None
         temp_path = None
         try:
             source_path, temp_path, ext = _materialize_data_source(parquet_path)
             conn = duckdb.connect()
+            _configure_quality_connection(conn)
+            _materialize_data_source_table(
+                conn,
+                source_table_name,
+                source_path,
+                ext,
+            )
+            _lock_quality_connection(conn)
         except Exception as exc:
             for job in quality_jobs:
                 append_error(job, exc)
         else:
             prepared_views: dict[str, Exception | None] = {}
-            try:
-                for job in quality_jobs:
-                    if job.schema_name not in prepared_views:
-                        try:
-                            _create_data_source_view(
-                                conn,
-                                job.schema_name,
-                                source_path,
-                                ext,
-                            )
-                            prepared_views[job.schema_name] = None
-                        except Exception as exc:
-                            prepared_views[job.schema_name] = exc
-
-                    view_error = prepared_views[job.schema_name]
-                    if view_error is not None:
-                        append_error(job, view_error)
-                        continue
-
+            for job in quality_jobs:
+                if job.schema_name not in prepared_views:
                     try:
-                        obtained = _run_duckdb_scalar_query(
+                        _create_data_source_view(
                             conn,
-                            job.quality.query,
+                            job.schema_name,
+                            source_table_name,
                         )
-                        status = (
-                            CheckStatus.passed
-                            if _quality_comparison_passes(
-                                obtained,
-                                job.operator,
-                                job.expected,
-                            )
-                            else CheckStatus.failed
-                        )
-                        results.append(QualityResult(
-                            schema_name=job.schema_name,
-                            property_name=job.property_name,
-                            description=job.quality.description,
-                            query=job.quality.query,
-                            status=status,
-                            operator=job.operator,
-                            expected=job.expected,
-                            obtained=obtained,
-                        ))
-
+                        prepared_views[job.schema_name] = None
                     except Exception as exc:
-                        append_error(job, exc)
-            finally:
-                conn.close()
+                        prepared_views[job.schema_name] = exc
+
+                view_error = prepared_views[job.schema_name]
+                if view_error is not None:
+                    append_error(job, view_error)
+                    continue
+
+                try:
+                    obtained = _run_duckdb_scalar_query(
+                        conn,
+                        job.quality.query,
+                    )
+                    status = (
+                        CheckStatus.passed
+                        if _quality_comparison_passes(
+                            obtained,
+                            job.operator,
+                            job.expected,
+                        )
+                        else CheckStatus.failed
+                    )
+                    results.append(QualityResult(
+                        schema_name=job.schema_name,
+                        property_name=job.property_name,
+                        description=job.quality.description,
+                        query=job.quality.query,
+                        status=status,
+                        operator=job.operator,
+                        expected=job.expected,
+                        obtained=obtained,
+                    ))
+
+                except Exception as exc:
+                    append_error(job, exc)
         finally:
+            if conn is not None:
+                conn.close()
             _cleanup_temp_path(temp_path)
 
         # Code de retour

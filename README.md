@@ -97,6 +97,22 @@ report = contract.check("data.parquet")
 print(report.success)
 ```
 
+## Security Model
+
+Data contracts are treated as untrusted input. Each SQL quality rule must contain
+exactly one read-only `SELECT` statement and return one finite numeric value.
+Commands that modify data, files, extensions, or DuckDB settings are rejected.
+
+Before quality rules run, the selected CSV or Parquet file is loaded into an
+isolated in-memory DuckDB connection. External file and network access is then
+disabled, extensions are locked down, and execution resources are limited. The
+web application performs these checks locally in the browser and does not upload
+the contract or dataset.
+
+Read-only SQL can still be computationally expensive. Contracts received from an
+untrusted organization should therefore be reviewed before automated execution
+on shared production infrastructure.
+
 ## Local Development
 
 Clone the repository:
