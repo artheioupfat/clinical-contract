@@ -4,20 +4,65 @@
 const catalog = {
   "contractTemplates": [
     {
-      "id": "contract-contract-yaml",
+      "id": "contract-clinical-template-yaml",
       "name": "Clinical Template Contract",
       "description": "Bundled YAML data contract.",
-      "path": "./examples/contract.yaml",
-      "fileName": "contract.yaml"
+      "path": "./examples/clinical-template.yaml",
+      "fileName": "clinical-template.yaml"
+    },
+    {
+      "id": "contract-epidemiology-survey-yaml",
+      "name": "Epidemiology Survey",
+      "description": "Bundled YAML data contract.",
+      "path": "./examples/epidemiology-survey.yaml",
+      "fileName": "epidemiology-survey.yaml"
+    },
+    {
+      "id": "contract-laboratory-results-yaml",
+      "name": "Laboratory Results",
+      "description": "Bundled YAML data contract.",
+      "path": "./examples/laboratory-results.yaml",
+      "fileName": "laboratory-results.yaml"
+    },
+    {
+      "id": "contract-medication-administration-yaml",
+      "name": "Medication Administration",
+      "description": "Bundled YAML data contract.",
+      "path": "./examples/medication-administration.yaml",
+      "fileName": "medication-administration.yaml"
     }
   ],
   "dataTemplates": [
     {
-      "id": "data-template-parquet",
-      "name": "Template dataset",
+      "id": "data-clinical-template-parquet",
+      "name": "Clinical template dataset",
       "description": "Bundled PARQUET dataset.",
-      "path": "./examples/template.parquet",
-      "fileName": "template.parquet",
+      "path": "./examples/clinical-template.parquet",
+      "fileName": "clinical-template.parquet",
+      "mimeType": "application/octet-stream"
+    },
+    {
+      "id": "data-epidemiology-survey-csv",
+      "name": "Epidemiology survey dataset",
+      "description": "Bundled CSV dataset.",
+      "path": "./examples/epidemiology-survey.csv",
+      "fileName": "epidemiology-survey.csv",
+      "mimeType": "text/csv"
+    },
+    {
+      "id": "data-laboratory-results-parquet",
+      "name": "Laboratory results dataset",
+      "description": "Bundled PARQUET dataset.",
+      "path": "./examples/laboratory-results.parquet",
+      "fileName": "laboratory-results.parquet",
+      "mimeType": "application/octet-stream"
+    },
+    {
+      "id": "data-medication-administration-parquet",
+      "name": "Medication administration dataset",
+      "description": "Bundled PARQUET dataset.",
+      "path": "./examples/medication-administration.parquet",
+      "fileName": "medication-administration.parquet",
       "mimeType": "application/octet-stream"
     }
   ]

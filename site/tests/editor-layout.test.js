@@ -95,6 +95,6 @@ test('template catalogs keep bundled assets declarative', () => {
   assert.doesNotMatch(constants, /dataTemplates:/);
   assert.match(catalog, /contractTemplates/);
   assert.match(catalog, /dataTemplates/);
-  assert.match(catalog, /\.\/examples\/contract\.yaml/);
-  assert.match(catalog, /\.\/examples\/template\.parquet/);
+  assert.match(catalog, /\.\/examples\/clinical-template\.yaml/);
+  assert.match(catalog, /\.\/examples\/clinical-template\.parquet/);
 });

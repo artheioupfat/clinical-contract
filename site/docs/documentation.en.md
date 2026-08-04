@@ -12,7 +12,7 @@ Clinical-Contract guides you through contract authoring step by step. Start with
 
 Each editor section corresponds to part of the generated YAML contract. YAML remains the source of truth: you can use the guided editor or edit the YAML directly.
 
-Bundled examples are available from the editor to demonstrate a complete contract and its matching dataset.
+Several synthetic contract/dataset pairs are bundled with the editor. They cover CSV and Parquet exchanges, simple and advanced types, and different quality comparisons. Files in a matching pair share the same name so they are easy to identify.
 
 ## Describe the context, purpose and use
 
@@ -148,13 +148,13 @@ uv tool install --python python3.11 clinical-contract
 ### Validate a contract
 
 ```bash
-clinical-contract validate site/examples/contract.yaml
+clinical-contract validate site/examples/clinical-template.yaml
 ```
 
 ### Check a data file
 
 ```bash
-clinical-contract check site/examples/contract.yaml site/examples/template.parquet
+clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
 ```
 
 Use `clinical-contract --help` to list the available commands and options.

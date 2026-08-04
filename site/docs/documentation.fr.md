@@ -13,7 +13,7 @@ Clinical-Contract vous guide dans la rédaction d'un contrat de données étape 
 
 Chaque étape correspond à une partie du contrat et vous accompagne dans la rédaction d'un fichier *YAML* conforme au standard.
 
-Un modèle de contrat est également intégré à Clinical-Contract. Il permet de découvrir un contrat entièrement rédigé et de comprendre rapidement comment les différentes sections s'articulent.
+Plusieurs paires de contrats et de jeux de données synthétiques sont intégrées à Clinical-Contract. Elles couvrent des échanges CSV et Parquet, des types simples ou avancés et plusieurs formes de règles qualité. Les fichiers d'une même paire portent le même nom afin de les identifier facilement dans l'éditeur.
 
 
 ## Renseigner les informations générales, l'objectif et l'usage
@@ -192,7 +192,7 @@ uv tool install --python python3.11 clinical-contract
 La commande `validate` vérifie qu'un contrat est correctement rédigé et que tous les champs obligatoires sont présents.
 
 ```bash
-clinical-contract validate site/examples/contract.yaml
+clinical-contract validate site/examples/clinical-template.yaml
 ```
 
 ### Vérifier un fichier de données
@@ -200,7 +200,7 @@ clinical-contract validate site/examples/contract.yaml
 La commande `check` compare un fichier de données avec un contrat de données. Elle vérifie d'abord le schéma (colonnes et types), puis exécute les règles de qualité définies dans le contrat.
 
 ```bash
-clinical-contract check site/examples/contract.yaml site/examples/template.parquet
+clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
 ```
 
 
