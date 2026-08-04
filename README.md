@@ -2,7 +2,7 @@
 
 > Write healthcare data contracts, validate their structure, and check CSV or Parquet datasets against them.
 
-[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg?cacheSeconds=300)](https://pypi.org/project/clinical-contract/)
+[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg?cacheSeconds=300&release=0.2.2)](https://pypi.org/project/clinical-contract/)
 [![Python](https://img.shields.io/pypi/pyversions/clinical-contract.svg?cacheSeconds=300)](https://pypi.org/project/clinical-contract/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -76,6 +76,8 @@ Check a data file:
 ```bash
 clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
 ```
+
+Display the installed version with `clinical-contract --version`.
 
 Use it from Python to validate a contract structure:
 

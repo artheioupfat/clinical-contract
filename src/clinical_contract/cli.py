@@ -12,6 +12,7 @@ from pathlib import Path
 
 import yaml
 
+from . import __version__
 from .loader import load_raw, load_contract
 from .contract import DataContract
 from .models import CheckStatus, ColumnCheckStatus, ValidateReport
@@ -256,6 +257,10 @@ def main() -> None:
         _print_help()
         return
 
+    if args[0] in ("-V", "--version"):
+        print(f"clinical-contract {__version__}")
+        return
+
     command = args[0]
 
     if command == "validate":
@@ -282,6 +287,9 @@ def _print_help() -> None:
 clinical-contract - clinical data contract validator
 
 Usage:
+  clinical-contract --version
+      Display the installed clinical-contract version.
+
   clinical-contract validate <contract.yaml>
       Validate that required fields are present in the YAML contract.
 

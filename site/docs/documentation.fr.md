@@ -203,7 +203,8 @@ La commande `check` compare un fichier de données avec un contrat de données. 
 clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
 ```
 
-
+Utilisez `clinical-contract --help` pour afficher les commandes disponibles et
+`clinical-contract --version` pour connaître la version installée.
 
 ## Python API
 

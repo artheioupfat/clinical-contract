@@ -54,7 +54,7 @@ jobs:
           npm run generate:site-types
           git diff --exit-code site/js/type-catalog.js
           npm run generate:site-version
-          git diff --exit-code site/js/site-version.js
+          git diff --exit-code README.md site/js/site-version.js
           npm run test:site
           npm run build:site:css
 
