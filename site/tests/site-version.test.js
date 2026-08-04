@@ -37,6 +37,19 @@ test('site pages load version before Alpine page modules', () => {
   assert.ok(docsHtml.indexOf('./js/site-version.js') < docsHtml.indexOf('./js/docs.js'));
 });
 
+test('site badges do not duplicate the generated version in HTML', () => {
+  const badgeSources = [
+    read('site/index.html'),
+    read('site/docs.html'),
+    read('site/partials/header.html'),
+  ];
+
+  for (const source of badgeSources) {
+    assert.doesNotMatch(source, /class="pine-badge"[^>]*>v\d/);
+    assert.match(source, /class="pine-badge"[^>]*x-text="siteVersionLabel"[^>]*x-cloak/);
+  }
+});
+
 test('site pages load the shared page shell before their Alpine modules', () => {
   const indexHtml = read('site/index.html');
   const editorHtml = read('site/editor.html');
