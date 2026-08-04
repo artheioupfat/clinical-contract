@@ -20,7 +20,9 @@ Then open `http://localhost:8000`.
 
 - `index.html`: lightweight landing page. It must not load PyScript.
 - `editor.html`: interactive editor shell. It loads HTML partials before Alpine starts.
-- `docs.html`: documentation page rendered from Markdown.
+- `docs.html`: localized documentation page rendered from Markdown.
+- `docs/documentation.en.md`: English documentation source.
+- `docs/documentation.fr.md`: French documentation source.
 - `partials/header.html`: brand header and theme switch.
 - `partials/editor-panel.html`: contract input, YAML/schema editor, and validation results.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
@@ -33,6 +35,7 @@ Then open `http://localhost:8000`.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
 - `js/landing.js`: Alpine state for the landing page theme and version badge.
 - `js/docs.js`: Markdown documentation loader.
+- `js/i18n.js`: locale resolution, catalog loading, persistence, and translation lookup.
 - `js/app.js`: editor Alpine root state and application composition.
 - `js/include-html.js`: loads static partials, then starts Alpine.
 - `js/constants.js`: shared UI constants and runtime messages.
@@ -46,6 +49,8 @@ Then open `http://localhost:8000`.
 - `js/data-storage.js`: IndexedDB persistence for the current browser data session.
 - `js/data.js`: CSV/Parquet loading, sample datasets, and paginated preview actions.
 - `js/results.js`: validate/check result presentation.
+- `locales/en.json`: English interface catalog.
+- `locales/fr.json`: French interface catalog.
 - `python/bridge.py`: Python bridge executed by PyScript.
 - `tests/`: lightweight Node tests for browser-safe logic.
 
@@ -54,20 +59,21 @@ Then open `http://localhost:8000`.
 `editor.html` intentionally loads scripts in this order:
 
 1. `constants.js`
-2. `page-shell.js`
-3. `example-catalog.js`
-4. `ui.js`
-5. `runtime.js`
-6. `editor.js`
-7. `contract-codec.js`
-8. `type-catalog.js`
-9. `site-version.js`
-10. `schema.js`
-11. `data-storage.js`
-12. `data.js`
-13. `results.js`
-14. `app.js`
-15. `include-html.js`
+2. `i18n.js`
+3. `page-shell.js`
+4. `example-catalog.js`
+5. `ui.js`
+6. `runtime.js`
+7. `editor.js`
+8. `contract-codec.js`
+9. `type-catalog.js`
+10. `site-version.js`
+11. `schema.js`
+12. `data-storage.js`
+13. `data.js`
+14. `results.js`
+15. `app.js`
+16. `include-html.js`
 
 Keep `contract-codec.js` before `schema.js`, because the schema builder uses the codec to convert between YAML and the visual draft.
 Keep `include-html.js` last: it injects the partials and only then loads Alpine, so Alpine can initialize the final DOM once.
@@ -76,6 +82,8 @@ Keep `include-html.js` last: it injects the partials and only then loads Alpine,
 
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
+- Add user-facing interface text to both locale catalogs and keep their key sets identical.
+- Edit documentation in both localized Markdown files; do not add hardcoded prose to `docs.html`.
 - Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
 - Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.

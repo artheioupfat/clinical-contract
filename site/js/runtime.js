@@ -1,6 +1,4 @@
 window.ClinicalModules = window.ClinicalModules || {};
-const runtimeConstants = window.ClinicalConstants || {};
-const runtimeMessages = runtimeConstants.messages || {};
 
 window.ClinicalModules.runtime = {
   startRuntimeProgress() {
@@ -22,7 +20,7 @@ window.ClinicalModules.runtime = {
 
     this.runtimeFailureTimer = window.setTimeout(() => {
       if (!this.pythonReady) {
-        this.setRuntimeError(runtimeMessages.runtimeTimeout);
+        this.setRuntimeError(this.t('editor.runtime.timeout'));
       }
     }, 45000);
   },
@@ -72,13 +70,13 @@ window.ClinicalModules.runtime = {
   },
 
   runtimeBadgeLabel() {
-    if (this.runtimeError) return runtimeMessages.runtimeFailed || 'Python runtime error';
-    return this.pythonReady ? 'Python ready' : 'Python loading';
+    if (this.runtimeError) return this.t('editor.runtime.failed');
+    return this.pythonReady ? this.t('editor.runtime.ready') : this.t('editor.runtime.loading');
   },
 
   setRuntimeError(message) {
     if (this.pythonReady) return;
-    const fallback = runtimeMessages.runtimeTimeout || 'Python runtime could not initialize.';
+    const fallback = this.t('editor.runtime.timeout');
     this.runtimeError = message || fallback;
     this.showRuntimeProgress = true;
     this.runtimeProgress = Math.max(this.runtimeProgress || 0, 92);

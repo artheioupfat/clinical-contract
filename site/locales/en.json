@@ -1,0 +1,138 @@
+{
+  "common": {
+    "nav": { "home": "Home", "editor": "Editor", "docs": "Documentation", "main": "Main navigation" },
+    "github": "Open clinical-contract on GitHub",
+    "brandHome": "Open the clinical-contract home page",
+    "themeLight": "Switch to light theme",
+    "themeDark": "Switch to dark theme",
+    "language": "Language",
+    "close": "Close",
+    "cancel": "Cancel",
+    "done": "Done",
+    "edit": "Edit",
+    "remove": "Remove",
+    "required": "* required",
+    "yes": "Yes",
+    "no": "No",
+    "notSpecified": "Not specified"
+  },
+  "landing": {
+    "meta": {
+      "title": "clinical-contract | Data contracts for clinical data exchanges",
+      "description": "Write, validate and check clinical data contracts before exchanging CSV or Parquet files."
+    },
+    "tagline": "Write. Share. Trust.",
+    "openEditor": "Editor",
+    "readDocs": "Read the documentation",
+    "visualAria": "How clinical-contract works",
+    "visualAlt": "Clinical-contract workflow between data consumers, data producers, contract validation and data checks",
+    "overviewKicker": "Clinical-Contract",
+    "overviewTitle": "Define data before exchanging it.",
+    "overviewBody": "Clinical-Contract helps you write data contracts. Define the expected schema and requirements at the start of a project, validate the contract structure, then check the compliance of a CSV or Parquet file.",
+    "contractTitle": "Data contract",
+    "contractBody": "A shared reference between the teams that produce data and those that use it.",
+    "odcsTitle": "ODCS 3.1.0",
+    "odcsBeforeLink": "A readable and versionable YAML format based on the ",
+    "odcsLink": "Open Data Contract Standard",
+    "localTitle": "Local processing",
+    "localBody": "Clinical-Contract is a static application: contracts and data files are never uploaded. Everything stays in your browser.",
+    "pythonKicker": "Python library",
+    "pythonTitle": "Clinical-Contract is also available as a Python library.",
+    "pythonBody": "Install it from PyPI to validate contracts and check CSV or Parquet files from a terminal or your own pipelines.",
+    "terminalLabel": "Python + CLI",
+    "closing": "Need details about the YAML model, types or quality checks?",
+    "closingLink": "Read the documentation"
+  },
+  "docs": {
+    "meta": { "title": "Documentation | clinical-contract", "description": "Clinical-contract documentation: contracts, schemas, data types, quality rules, CLI and Python API." },
+    "nav": "Documentation navigation",
+    "heroTitle": "Documentation",
+    "heroBody": "Learn how to write and validate a data contract, then use it to check the compliance of exchanged data.",
+    "toc": "Contents",
+    "tocAria": "Documentation contents",
+    "loading": "Loading documentation...",
+    "loadError": "Unable to load the documentation ({status})."
+  },
+  "editor": {
+    "meta": { "title": "Editor | clinical-contract", "description": "Write, validate and check a clinical data contract directly in your browser." },
+    "sections": { "fundamentals": "Fundamentals", "schema": "Schema", "quality": "Quality", "team": "Team" },
+    "panel": {
+      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded",
+      "unlockContract": "Create or load a contract to unlock", "unlockData": "Load a data file to unlock"
+    },
+    "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
+    "actions": {
+      "download": "Download contract", "reset": "Reset contract", "resetQuestion": "Reset contract?", "validate": "Validate",
+      "validateTitle": "Validate contract structure", "newContract": "New contract", "loadContract": "Load contract", "showExamples": "Show examples",
+      "loadData": "Load data", "deleteData": "Delete data file", "deleteDataQuestion": "Delete data file?", "runChecks": "Run checks",
+      "runChecksTitle": "Run schema and quality checks", "contractFirst": "Create or load a contract first", "dataFirst": "Load a data file first"
+    },
+    "emptyContract": {
+      "title": "Drop or write a data contract", "body": "Build your contract step by step, or load an existing YAML contract.", "placeholder": "Drop a YAML data contract here."
+    },
+    "emptyData": { "title": "Drop a data file", "body": "Load a CSV or Parquet file to check its compliance with a data contract." },
+    "builder": {
+      "title": "Write contract", "contractName": "Contract name", "contractVersion": "Contract version", "status": "Status", "active": "Active contract",
+      "purpose": "Purpose", "purposePlaceholder": "Why this dataset exists", "usage": "Usage", "usagePlaceholder": "How consumers should use it",
+      "limitations": "Limitations", "limitationsPlaceholder": "Known caveats, scope, or historical issues", "studyStart": "Study start date", "studyEnd": "Study end date",
+      "studyType": "Study type", "studyObjective": "Study objective", "healthDomain": "Health domain", "healthPlaceholder": "Example: oncology, cardiology, emergency care",
+      "studyTypes": { "cohort": "Cohort", "crossSectional": "Cross-sectional", "caseControl": "Case-control", "registry": "Registry", "clinicalTrial": "Clinical trial", "retrospective": "Retrospective", "prospective": "Prospective" },
+      "objectives": { "predictive": "Predictive", "therapeutic": "Therapeutic", "diagnostic": "Diagnostic", "epidemiological": "Epidemiological", "descriptive": "Descriptive", "operational": "Operational" }
+    },
+    "columns": {
+      "tableName": "Table name", "description": "Description", "title": "Columns", "empty": "Add a column, then edit its type and description from the details panel.",
+      "column": "Column", "type": "Type", "required": "Required", "action": "Action", "unnamed": "Unnamed column", "noDescription": "No description yet",
+      "details": "Column details", "name": "Column name", "logicalType": "Logical type", "physicalType": "Physical type", "noConstraint": "No type constraint",
+      "descriptionPlaceholder": "Example: Patient identifier used to link healthcare records across hospital stays.", "examples": "Examples", "examplesPlaceholder": "One example per line",
+      "add": "Add column", "remove": "Remove column"
+    },
+    "quality": {
+      "empty": "Add at least one named column, then create SQL quality checks here.", "column": "Column", "description": "Description", "action": "Action",
+      "noColumn": "No column selected", "untitled": "Untitled quality check", "add": "Add check", "details": "Quality check", "comparison": "Comparison",
+      "operators": { "equal": "Equal", "notEqual": "Not equal", "greaterThan": "Greater than", "greaterThanOrEqual": "Greater than or equal", "lessThan": "Less than", "lessThanOrEqual": "Less than or equal", "between": "Between" },
+      "expected": "Expected value", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Explain what this quality check protects",
+      "sqlQuery": "SQL query", "duckdbSql": "DuckDB SQL", "tableName": "Table name:", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Remove check"
+    },
+    "team": {
+      "name": "Team name", "description": "Description", "members": "Members", "empty": "No team members yet.", "memberName": "Name", "role": "Role", "action": "Action",
+      "unnamed": "Unnamed member", "noRole": "No role specified", "add": "Add member", "details": "Team member", "email": "Email", "namePlaceholder": "Jane Doe", "rolePlaceholder": "Data owner", "remove": "Remove member"
+    },
+    "validation": {
+      "field": "Field", "status": "Status", "value": "Value", "empty": "No validation result yet. Run Validate to inspect the contract structure.",
+      "failed": "Contract validation could not be completed. Check the YAML syntax and try again."
+    },
+    "preview": {
+      "title": "Data preview", "loading": "Loading preview page...", "empty": "No preview rows available.", "showing": "Showing {start} to {end} of {total} results",
+      "pages": "Dataset preview pages", "previous": "Previous", "next": "Next"
+    },
+    "schemaResults": {
+      "schema": "Schema", "column": "Column", "required": "Required", "expected": "Expected", "detected": "Detected", "status": "Status", "empty": "No schema result yet.", "missing": "missing"
+    },
+    "qualityResults": { "schema": "Schema", "column": "Column", "rule": "Rule", "obtained": "Obtained", "expected": "Expected", "result": "Result", "log": "Log", "empty": "No quality result yet." },
+    "status": { "passed": "Passed", "failed": "Failed", "error": "Error", "warning": "Warning", "idle": "Not run" },
+    "templates": {
+      "contracts": "Contract templates", "datasets": "Sample datasets", "contractChoice": "Choose a starting point", "dataChoice": "Choose a local example",
+      "contractDescription": "Bundled YAML data contract.", "dataDescription": "Bundled {format} dataset."
+    },
+    "reset": {
+      "title": "Reset contract", "question": "Delete the current draft?", "body": "This removes only the contract being edited. A loaded data file remains available in the checker.",
+      "download": "Download draft", "confirm": "Reset contract"
+    },
+    "footer": {
+      "runtimeLoading": "Python runtime loading", "contract": "Contract", "lines": "{count} lines", "times": "Execution times", "validate": "Validate:", "check": "Check:",
+      "dataFile": "Data file", "columns": "Cols:", "rows": "Rows:", "size": "Size:"
+    },
+    "resize": { "show": "Show checker panel", "hide": "Hide checker panel", "panels": "Resize editor and checker panels" },
+    "runtime": { "failed": "Python runtime error", "timeout": "Python runtime could not initialize. PyScript or DuckDB may have failed to load.", "loading": "Python loading", "ready": "Python ready" },
+    "messages": {
+      "draftStorage": "Contract draft could not be stored in this browser session: {message}", "runtimeContract": "Python runtime is still loading. Please wait before loading a contract.",
+      "runtimeTemplate": "Python runtime is still loading. Please wait before loading the template.", "templateContractStatus": "Template contract request failed with status {status}",
+      "templateContractFailed": "Unable to load template: {message}", "runtimeStart": "Python runtime is still loading. Please wait before starting a contract.",
+      "yamlParse": "YAML parse warning: {message}. You can still edit in Schema mode; saving fields will rewrite YAML.", "yamlRoot": "YAML root is not an object. Schema mode will use a clean template and rewrite YAML from form values.",
+      "schemaSync": "Schema sync error: {message}", "dataRestore": "Stored data file could not be restored: {message}", "dataLoading": "Data loading error", "dataRuntime": "Data loading requires the Python runtime with DuckDB. Runtime is not ready.",
+      "runtimeData": "Python runtime is still loading. Please wait before loading a data file.", "dataStorage": "This file is loaded for the current session, but browser storage failed: {message}",
+      "dataCleanup": "Stored data cleanup failed: {message}", "runtimeSample": "Python runtime is still loading. Please wait before loading sample data.", "templateDataStatus": "Template data request failed with status {status}",
+      "templateDataFailed": "Unable to load sample data: {message}"
+    }
+  }
+}

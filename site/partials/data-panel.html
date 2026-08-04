@@ -6,31 +6,31 @@
                     type="button"
                     class="checker-collapse-btn"
                     @click.stop="toggleCheckerPanel()"
-                    aria-label="Hide checker panel"
-                    title="Hide checker panel"
+                    :aria-label="t('editor.resize.hide')"
+                    :title="t('editor.resize.hide')"
                   >
                     <svg class="checker-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6" />
                     </svg>
                   </button>
                   <div>
-                    <div class="panel-eyebrow">Checker</div>
-                    <div class="panel-title" x-text="dataFileName || 'No data file loaded'"></div>
+                    <div class="panel-eyebrow" x-text="t('editor.panel.checker')"></div>
+                    <div class="panel-title" x-text="dataFileName || t('editor.panel.noData')"></div>
                   </div>
                 </div>
                 <div class="pine-toolbar">
-                  <div class="view-switch" :class="!dataFile ? 'view-switch--locked' : ''" :title="!dataFile ? 'Load a data file to unlock' : ''">
-                    <button type="button" :class="dataModeButtonClass('data')" @click="dataTab = 'data'" :disabled="!dataFile">Data</button>
+                  <div class="view-switch" :class="!dataFile ? 'view-switch--locked' : ''" :title="!dataFile ? t('editor.panel.unlockData') : ''">
+                    <button type="button" :class="dataModeButtonClass('data')" @click="dataTab = 'data'" :disabled="!dataFile" x-text="t('editor.tabs.data')"></button>
                     <button type="button" :class="dataModeButtonClass('schema')" @click="dataTab = 'schema'" :disabled="!dataFile">
                       <span class="view-switch-label">
                         <span class="tab-dot" :class="tabDotClass(schemaRunState)"></span>
-                        <span>Schema</span>
+                        <span x-text="t('editor.tabs.schema')"></span>
                       </span>
                     </button>
                     <button type="button" :class="dataModeButtonClass('quality')" @click="dataTab = 'quality'" :disabled="!dataFile">
                       <span class="view-switch-label">
                         <span class="tab-dot" :class="tabDotClass(qualityRunState)"></span>
-                        <span>Quality</span>
+                        <span x-text="t('editor.tabs.quality')"></span>
                       </span>
                     </button>
                   </div>
@@ -42,8 +42,8 @@
                     @click="deleteDataFile()"
                     :disabled="busy || previewLoading"
                     class="pine-btn pine-btn--danger pine-btn--icon"
-                    aria-label="Delete data file"
-                    title="Delete data file?"
+                    :aria-label="t('editor.actions.deleteData')"
+                    :title="t('editor.actions.deleteDataQuestion')"
                   >
                     <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
@@ -54,8 +54,9 @@
                     @click="runCheck()"
                     :disabled="busy || !pythonReady || !schemaStarted || !dataFile"
                     class="pine-btn pine-btn--action-success"
-                    :title="!schemaStarted ? 'Create or load a contract first' : !dataFile ? 'Load a data file first' : 'Run schema and quality checks'"
-                  >Run checks</button>
+                    :title="!schemaStarted ? t('editor.actions.contractFirst') : !dataFile ? t('editor.actions.dataFirst') : t('editor.actions.runChecksTitle')"
+                    x-text="t('editor.actions.runChecks')"
+                  ></button>
                 </div>
               </div>
 
@@ -79,12 +80,12 @@
                               <path stroke-linecap="round" stroke-linejoin="round" d="M4 7.5v4c0 1.93 3.58 3.5 8 3.5s8-1.57 8-3.5v-4M4 11.5v4C4 17.43 7.58 19 12 19s8-1.57 8-3.5v-4" />
                             </svg>
                           </div>
-                          <h2 class="workspace-empty-title">Drop a data file</h2>
-                          <p class="workspace-empty-copy">Load a CSV or Parquet file to check its compliance with a data contract.</p>
+                          <h2 class="workspace-empty-title" x-text="t('editor.emptyData.title')"></h2>
+                          <p class="workspace-empty-copy" x-text="t('editor.emptyData.body')"></p>
                           <div class="workspace-empty-actions">
-                            <button type="button" class="pine-btn pine-btn--primary" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="$refs.dataInput.click()">Load data</button>
+                            <button type="button" class="pine-btn pine-btn--primary" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="$refs.dataInput.click()" x-text="t('editor.actions.loadData')"></button>
                           </div>
-                          <button type="button" class="workspace-template-link" :disabled="!pythonReady" @click="openDataTemplateModal()">Show examples</button>
+                          <button type="button" class="workspace-template-link" :disabled="!pythonReady" @click="openDataTemplateModal()" x-text="t('editor.actions.showExamples')"></button>
                         </div>
                       </div>
                     </template>
@@ -96,7 +97,7 @@
                             <thead>
                               <tr>
                                 <template x-if="previewColumns.length === 0">
-                                  <th class="preview-th preview-th--single">Data preview</th>
+                                  <th class="preview-th preview-th--single" x-text="t('editor.preview.title')"></th>
                                 </template>
                                 <template x-for="(columnName, idx) in previewColumns" :key="`preview-col-${idx}`">
                                   <th class="preview-th" :class="idx === 0 ? 'preview-th--first' : ''" :title="columnName" x-text="columnName"></th>
@@ -105,13 +106,13 @@
                             </thead>
                             <tbody>
                               <template x-if="previewLoading">
-                                <tr><td class="preview-empty" :colspan="Math.max(1, previewColumns.length)">Loading preview page...</td></tr>
+                                <tr><td class="preview-empty" :colspan="Math.max(1, previewColumns.length)" x-text="t('editor.preview.loading')"></td></tr>
                               </template>
                               <template x-if="!previewLoading && previewError">
                                 <tr><td class="preview-empty preview-empty--error" :colspan="Math.max(1, previewColumns.length)" x-text="previewError"></td></tr>
                               </template>
                               <template x-if="!previewLoading && !previewError && previewRows.length === 0">
-                                <tr><td class="preview-empty" :colspan="Math.max(1, previewColumns.length)">No preview rows available.</td></tr>
+                                <tr><td class="preview-empty" :colspan="Math.max(1, previewColumns.length)" x-text="t('editor.preview.empty')"></td></tr>
                               </template>
                               <template x-for="(row, rowIdx) in previewRows" :key="`preview-row-${rowIdx}`">
                                 <tr>
@@ -126,12 +127,10 @@
                           </table>
                         </div>
                         <div class="preview-pagination" x-show="!previewError" x-cloak>
-                          <p class="preview-pagination__meta">
-                            Showing <span x-text="previewStartRow"></span> to <span x-text="previewEndRow"></span> of <span x-text="previewTotalRows"></span> results
-                          </p>
-                          <nav aria-label="Dataset preview pages">
+                          <p class="preview-pagination__meta" x-text="t('editor.preview.showing', { start: previewStartRow, end: previewEndRow, total: previewTotalRows })"></p>
+                          <nav :aria-label="t('editor.preview.pages')">
                             <ul class="pager">
-                              <li><button type="button" class="pager-btn" @click="goPreviewPrev()" :disabled="previewLoading || previewPage <= 1 || previewTotalPages === 0">Previous</button></li>
+                              <li><button type="button" class="pager-btn" @click="goPreviewPrev()" :disabled="previewLoading || previewPage <= 1 || previewTotalPages === 0" x-text="t('editor.preview.previous')"></button></li>
                               <template x-for="(item, idx) in previewPageItems" :key="`preview-page-${idx}-${item}`">
                                 <li class="pager-item--desktop">
                                   <template x-if="item === 'ellipsis'"><span class="pager-ellipsis">...</span></template>
@@ -140,7 +139,7 @@
                                   </template>
                                 </li>
                               </template>
-                              <li><button type="button" class="pager-btn" @click="goPreviewNext()" :disabled="previewLoading || previewPage >= previewTotalPages || previewTotalPages === 0">Next</button></li>
+                              <li><button type="button" class="pager-btn" @click="goPreviewNext()" :disabled="previewLoading || previewPage >= previewTotalPages || previewTotalPages === 0" x-text="t('editor.preview.next')"></button></li>
                             </ul>
                           </nav>
                         </div>
@@ -150,17 +149,17 @@
 
               <div class="results-table-wrap" x-show="dataTab === 'schema'" x-cloak>
                     <table class="results-table">
-                      <thead><tr><th>Schema</th><th>Column</th><th>Required</th><th>Expected</th><th>Detected</th><th>Status</th></tr></thead>
+                      <thead><tr><th x-text="t('editor.schemaResults.schema')"></th><th x-text="t('editor.schemaResults.column')"></th><th x-text="t('editor.schemaResults.required')"></th><th x-text="t('editor.schemaResults.expected')"></th><th x-text="t('editor.schemaResults.detected')"></th><th x-text="t('editor.schemaResults.status')"></th></tr></thead>
                       <tbody>
-                        <template x-if="schemaRows.length === 0"><tr><td colspan="6" class="empty-row">No schema result yet.</td></tr></template>
+                        <template x-if="schemaRows.length === 0"><tr><td colspan="6" class="empty-row" x-text="t('editor.schemaResults.empty')"></td></tr></template>
                         <template x-for="(row, idx) in schemaRows" :key="`${row.schema_name}-${row.column}-${idx}`">
                           <tr>
                             <td x-text="row.schema_name"></td>
                             <td x-text="row.column"></td>
-                            <td x-text="row.required === true ? 'true' : row.required === false ? 'false' : 'missing'"></td>
+                            <td x-text="row.required === true ? t('common.yes') : row.required === false ? t('common.no') : t('editor.schemaResults.missing')"></td>
                             <td x-text="row.yaml_type"></td>
                             <td x-text="row.parquet_type"></td>
-                            <td><span class="status-chip" :class="statusChipClass(row.status)"><span class="status-dot" :class="statusDotClass(row.status)"></span><span x-text="row.status"></span></span></td>
+                            <td><span class="status-chip" :class="statusChipClass(row.status)"><span class="status-dot" :class="statusDotClass(row.status)"></span><span x-text="resultStatusLabel(row.status)"></span></span></td>
                           </tr>
                         </template>
                       </tbody>
@@ -169,9 +168,9 @@
 
               <div class="results-table-wrap" x-show="dataTab === 'quality'" x-cloak>
                     <table class="results-table">
-                      <thead><tr><th>Schema</th><th>Column</th><th>Rule</th><th>Obtained</th><th>Expected</th><th>Result</th><th>Log</th></tr></thead>
+                      <thead><tr><th x-text="t('editor.qualityResults.schema')"></th><th x-text="t('editor.qualityResults.column')"></th><th x-text="t('editor.qualityResults.rule')"></th><th x-text="t('editor.qualityResults.obtained')"></th><th x-text="t('editor.qualityResults.expected')"></th><th x-text="t('editor.qualityResults.result')"></th><th x-text="t('editor.qualityResults.log')"></th></tr></thead>
                       <tbody>
-                        <template x-if="qualityRows.length === 0"><tr><td colspan="7" class="empty-row">No quality result yet.</td></tr></template>
+                        <template x-if="qualityRows.length === 0"><tr><td colspan="7" class="empty-row" x-text="t('editor.qualityResults.empty')"></td></tr></template>
                         <template x-for="(row, idx) in qualityRows" :key="`${row.property_name}-${idx}`">
                           <tr>
                             <td x-text="row.schema_name"></td>
@@ -179,7 +178,7 @@
                             <td x-text="row.description"></td>
                             <td x-text="row.obtained"></td>
                             <td x-text="row.expected"></td>
-                            <td><span class="status-chip" :class="statusChipClass(row.status)"><span class="status-dot" :class="statusDotClass(row.status)"></span><span x-text="row.status"></span></span></td>
+                            <td><span class="status-chip" :class="statusChipClass(row.status)"><span class="status-dot" :class="statusDotClass(row.status)"></span><span x-text="resultStatusLabel(row.status)"></span></span></td>
                             <td class="quality-result-log" :class="row.log ? 'quality-result-log--error' : ''" x-text="row.log || '—'"></td>
                           </tr>
                         </template>
@@ -201,16 +200,16 @@
                   <div class="template-modal" @click.stop>
                     <div class="template-modal__header">
                       <div>
-                        <div class="entity-modal__kicker">Sample datasets</div>
-                        <div id="data-template-title" class="template-modal__title">Choose a local example</div>
+                        <div class="entity-modal__kicker" x-text="t('editor.templates.datasets')"></div>
+                        <div id="data-template-title" class="template-modal__title" x-text="t('editor.templates.dataChoice')"></div>
                       </div>
-                      <button type="button" class="entity-modal__close" @click="closeDataTemplateModal()">Close</button>
+                      <button type="button" class="entity-modal__close" @click="closeDataTemplateModal()" x-text="t('common.close')"></button>
                     </div>
                     <div class="template-modal__list">
                       <template x-for="template in dataTemplates" :key="template.id">
                         <button type="button" class="template-option" @click="loadDataTemplate(template)">
                           <span class="template-option__title" x-text="template.name"></span>
-                          <span class="template-option__description" x-text="template.description"></span>
+                          <span class="template-option__description" x-text="t('editor.templates.dataDescription', { format: (template.fileName.split('.').pop() || 'data').toUpperCase() })"></span>
                           <span class="template-option__file" x-text="template.fileName"></span>
                         </button>
                       </template>

@@ -1,0 +1,138 @@
+{
+  "common": {
+    "nav": { "home": "Accueil", "editor": "Éditeur", "docs": "Documentation", "main": "Navigation principale" },
+    "github": "Ouvrir clinical-contract sur GitHub",
+    "brandHome": "Ouvrir la page d’accueil de clinical-contract",
+    "themeLight": "Passer au thème clair",
+    "themeDark": "Passer au thème sombre",
+    "language": "Langue",
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "done": "Terminer",
+    "edit": "Modifier",
+    "remove": "Supprimer",
+    "required": "* obligatoire",
+    "yes": "Oui",
+    "no": "Non",
+    "notSpecified": "Non spécifié"
+  },
+  "landing": {
+    "meta": {
+      "title": "clinical-contract | Contrats pour les échanges de données cliniques",
+      "description": "Rédigez, validez et vérifiez des contrats de données cliniques avant l’échange de fichiers CSV ou Parquet."
+    },
+    "tagline": "Write. Share. Trust.",
+    "openEditor": "Éditeur",
+    "readDocs": "Consultez la documentation",
+    "visualAria": "Fonctionnement de clinical-contract",
+    "visualAlt": "Flux Clinical-Contract entre consommateurs de données, producteurs, validation du contrat et contrôle des données",
+    "overviewKicker": "Clinical-Contract",
+    "overviewTitle": "Cadrer les données avant de les échanger.",
+    "overviewBody": "Clinical-Contract vous accompagne dans la rédaction de contrats de données. Définissez dès le début d’un projet le schéma et les exigences attendues, validez la structure du contrat, puis vérifiez la conformité d’un fichier CSV ou Parquet.",
+    "contractTitle": "Contrat de données",
+    "contractBody": "Une référence commune entre les équipes qui produisent les données et celles qui les utilisent.",
+    "odcsTitle": "ODCS 3.1.0",
+    "odcsBeforeLink": "Un format YAML lisible et versionnable, fondé sur l’",
+    "odcsLink": "Open Data Contract Standard",
+    "localTitle": "Traitement local",
+    "localBody": "Clinical-Contract est une application statique : aucun contrat ni fichier de données n’est envoyé. Tout reste dans votre navigateur.",
+    "pythonKicker": "Bibliothèque Python",
+    "pythonTitle": "Clinical-Contract existe aussi comme bibliothèque Python.",
+    "pythonBody": "Installez-la depuis PyPI pour valider les contrats et contrôler les fichiers CSV ou Parquet depuis un terminal ou vos propres pipelines.",
+    "terminalLabel": "Python + CLI",
+    "closing": "Besoin de comprendre le modèle YAML, les types ou les contrôles qualité ?",
+    "closingLink": "Consultez la documentation"
+  },
+  "docs": {
+    "meta": { "title": "Documentation | clinical-contract", "description": "Documentation clinical-contract : contrats, schémas, types, règles qualité, CLI et API Python." },
+    "nav": "Navigation de la documentation",
+    "heroTitle": "Documentation",
+    "heroBody": "Cette documentation présente les principes des contrats de données et accompagne leur rédaction, leur validation et leur utilisation pour vérifier la conformité des données échangées.",
+    "toc": "Sommaire",
+    "tocAria": "Sommaire de la documentation",
+    "loading": "Chargement de la documentation...",
+    "loadError": "Impossible de charger la documentation ({status})."
+  },
+  "editor": {
+    "meta": { "title": "Éditeur | clinical-contract", "description": "Rédigez, validez et vérifiez un contrat de données cliniques directement dans votre navigateur." },
+    "sections": { "fundamentals": "Fondamentaux", "schema": "Schéma", "quality": "Qualité", "team": "Équipe" },
+    "panel": {
+      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé",
+      "unlockContract": "Créez ou chargez un contrat pour déverrouiller", "unlockData": "Chargez un fichier de données pour déverrouiller"
+    },
+    "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
+    "actions": {
+      "download": "Télécharger le contrat", "reset": "Réinitialiser le contrat", "resetQuestion": "Réinitialiser le contrat ?", "validate": "Validate",
+      "validateTitle": "Valider la structure du contrat", "newContract": "Nouveau contrat", "loadContract": "Charger un contrat", "showExamples": "Voir les exemples",
+      "loadData": "Charger des données", "deleteData": "Supprimer le fichier de données", "deleteDataQuestion": "Supprimer le fichier de données ?", "runChecks": "Run checks",
+      "runChecksTitle": "Lancer les contrôles de schéma et de qualité", "contractFirst": "Créez ou chargez d’abord un contrat", "dataFirst": "Chargez d’abord un fichier de données"
+    },
+    "emptyContract": {
+      "title": "Déposez ou rédigez un contrat de données", "body": "Construisez votre contrat étape par étape ou chargez un contrat YAML existant.", "placeholder": "Déposez ici un contrat de données YAML."
+    },
+    "emptyData": { "title": "Déposez un fichier de données", "body": "Chargez un fichier CSV ou Parquet pour vérifier sa conformité avec un contrat de données." },
+    "builder": {
+      "title": "Rédiger le contrat", "contractName": "Nom du contrat", "contractVersion": "Version du contrat", "status": "Statut", "active": "Contrat actif",
+      "purpose": "Objectif", "purposePlaceholder": "Pourquoi ce jeu de données existe", "usage": "Usage", "usagePlaceholder": "Comment les consommateurs doivent l’utiliser",
+      "limitations": "Limites", "limitationsPlaceholder": "Limites, périmètre ou problèmes historiques connus", "studyStart": "Date de début de l’étude", "studyEnd": "Date de fin de l’étude",
+      "studyType": "Type d’étude", "studyObjective": "Objectif de l’étude", "healthDomain": "Domaine de santé", "healthPlaceholder": "Exemple : oncologie, cardiologie, urgences",
+      "studyTypes": { "cohort": "Cohorte", "crossSectional": "Transversale", "caseControl": "Cas-témoins", "registry": "Registre", "clinicalTrial": "Essai clinique", "retrospective": "Rétrospective", "prospective": "Prospective" },
+      "objectives": { "predictive": "Prédictif", "therapeutic": "Thérapeutique", "diagnostic": "Diagnostique", "epidemiological": "Épidémiologique", "descriptive": "Descriptif", "operational": "Opérationnel" }
+    },
+    "columns": {
+      "tableName": "Nom de la table", "description": "Description", "title": "Colonnes", "empty": "Ajoutez une colonne, puis renseignez son type et sa description dans le panneau de détails.",
+      "column": "Colonne", "type": "Type", "required": "Obligatoire", "action": "Action", "unnamed": "Colonne sans nom", "noDescription": "Aucune description",
+      "details": "Détails de la colonne", "name": "Nom de la colonne", "logicalType": "Type logique", "physicalType": "Type physique", "noConstraint": "Aucune contrainte de type",
+      "descriptionPlaceholder": "Exemple : Identifiant patient utilisé pour relier les dossiers entre plusieurs séjours hospitaliers.", "examples": "Exemples", "examplesPlaceholder": "Un exemple par ligne",
+      "add": "Ajouter une colonne", "remove": "Supprimer la colonne"
+    },
+    "quality": {
+      "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "column": "Colonne", "description": "Description", "action": "Action",
+      "noColumn": "Aucune colonne sélectionnée", "untitled": "Contrôle qualité sans titre", "add": "Ajouter un contrôle", "details": "Contrôle qualité", "comparison": "Comparaison",
+      "operators": { "equal": "Égal", "notEqual": "Différent", "greaterThan": "Supérieur à", "greaterThanOrEqual": "Supérieur ou égal à", "lessThan": "Inférieur à", "lessThanOrEqual": "Inférieur ou égal à", "between": "Compris entre" },
+      "expected": "Valeur attendue", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Expliquez ce que protège ce contrôle qualité",
+      "sqlQuery": "Requête SQL", "duckdbSql": "SQL DuckDB", "tableName": "Nom de la table :", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Supprimer le contrôle"
+    },
+    "team": {
+      "name": "Nom de l’équipe", "description": "Description", "members": "Membres", "empty": "Aucun membre dans l’équipe.", "memberName": "Nom", "role": "Rôle", "action": "Action",
+      "unnamed": "Membre sans nom", "noRole": "Aucun rôle renseigné", "add": "Ajouter un membre", "details": "Membre de l’équipe", "email": "E-mail", "namePlaceholder": "Jane Doe", "rolePlaceholder": "Responsable des données", "remove": "Supprimer le membre"
+    },
+    "validation": {
+      "field": "Champ", "status": "Statut", "value": "Valeur", "empty": "Aucun résultat de validation. Lancez Valider pour contrôler la structure du contrat.",
+      "failed": "La validation du contrat n’a pas pu aboutir. Vérifiez la syntaxe YAML puis réessayez."
+    },
+    "preview": {
+      "title": "Aperçu des données", "loading": "Chargement de l’aperçu...", "empty": "Aucune ligne disponible dans l’aperçu.", "showing": "Résultats {start} à {end} sur {total}",
+      "pages": "Pages de l’aperçu du jeu de données", "previous": "Précédent", "next": "Suivant"
+    },
+    "schemaResults": {
+      "schema": "Schéma", "column": "Colonne", "required": "Obligatoire", "expected": "Attendu", "detected": "Détecté", "status": "Statut", "empty": "Aucun résultat de schéma.", "missing": "absent"
+    },
+    "qualityResults": { "schema": "Schéma", "column": "Colonne", "rule": "Règle", "obtained": "Obtenu", "expected": "Attendu", "result": "Résultat", "log": "Journal", "empty": "Aucun résultat qualité." },
+    "status": { "passed": "Réussi", "failed": "Échec", "error": "Erreur", "warning": "Avertissement", "idle": "Non exécuté" },
+    "templates": {
+      "contracts": "Modèles de contrats", "datasets": "Jeux de données d’exemple", "contractChoice": "Choisissez un point de départ", "dataChoice": "Choisissez un exemple local",
+      "contractDescription": "Contrat de données YAML embarqué.", "dataDescription": "Jeu de données {format} embarqué."
+    },
+    "reset": {
+      "title": "Réinitialiser le contrat", "question": "Supprimer le brouillon actuel ?", "body": "Seul le contrat en cours d’édition sera supprimé. Le fichier de données chargé restera disponible dans le panneau de vérification.",
+      "download": "Télécharger le brouillon", "confirm": "Réinitialiser le contrat"
+    },
+    "footer": {
+      "runtimeLoading": "Chargement du runtime Python", "contract": "Contrat", "lines": "{count} lignes", "times": "Temps d’exécution", "validate": "Validation :", "check": "Contrôle :",
+      "dataFile": "Fichier de données", "columns": "Colonnes :", "rows": "Lignes :", "size": "Taille :"
+    },
+    "resize": { "show": "Afficher le panneau de vérification", "hide": "Masquer le panneau de vérification", "panels": "Redimensionner les panneaux éditeur et vérification" },
+    "runtime": { "failed": "Erreur du runtime Python", "timeout": "Le runtime Python n’a pas pu démarrer. Le chargement de PyScript ou DuckDB a peut-être échoué.", "loading": "Chargement de Python", "ready": "Python prêt" },
+    "messages": {
+      "draftStorage": "Le brouillon n’a pas pu être enregistré dans cette session du navigateur : {message}", "runtimeContract": "Le runtime Python est encore en cours de chargement. Patientez avant de charger un contrat.",
+      "runtimeTemplate": "Le runtime Python est encore en cours de chargement. Patientez avant de charger le modèle.", "templateContractStatus": "La requête du modèle de contrat a échoué avec le statut {status}",
+      "templateContractFailed": "Impossible de charger le modèle : {message}", "runtimeStart": "Le runtime Python est encore en cours de chargement. Patientez avant de créer un contrat.",
+      "yamlParse": "Avertissement YAML : {message}. Vous pouvez continuer dans le mode Schéma ; l’enregistrement des champs réécrira le YAML.", "yamlRoot": "La racine YAML n’est pas un objet. Le mode Schéma utilisera un modèle vierge et réécrira le YAML depuis le formulaire.",
+      "schemaSync": "Erreur de synchronisation du schéma : {message}", "dataRestore": "Le fichier de données enregistré n’a pas pu être restauré : {message}", "dataLoading": "Erreur de chargement des données", "dataRuntime": "Le chargement des données nécessite le runtime Python avec DuckDB. Le runtime n’est pas prêt.",
+      "runtimeData": "Le runtime Python est encore en cours de chargement. Patientez avant de charger un fichier de données.", "dataStorage": "Le fichier est chargé pour la session actuelle, mais son enregistrement dans le navigateur a échoué : {message}",
+      "dataCleanup": "Le nettoyage du fichier de données enregistré a échoué : {message}", "runtimeSample": "Le runtime Python est encore en cours de chargement. Patientez avant de charger les données d’exemple.", "templateDataStatus": "La requête des données d’exemple a échoué avec le statut {status}",
+      "templateDataFailed": "Impossible de charger les données d’exemple : {message}"
+    }
+  }
+}

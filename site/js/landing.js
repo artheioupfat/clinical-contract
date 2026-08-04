@@ -3,12 +3,19 @@ document.addEventListener('alpine:init', () => {
 
   Alpine.data('landingPage', () => ({
     switchOn: false,
+    locale: '',
     siteVersionLabel: pageShell.versionLabel(window.ClinicalContractVersion),
 
-    init() {
+    async init() {
       this.initThemeSwitch();
+      await this.initLocale();
+    },
+
+    applyPageMetadata() {
+      pageShell.setPageMetadata(this.t('landing.meta.title'), this.t('landing.meta.description'));
     },
 
     ...pageShell.themeMethods,
+    ...pageShell.localeMethods,
   }));
 });

@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { t } = require('./test-i18n.js');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -45,8 +46,8 @@ test('status bar exposes validate and check execution timings', () => {
     'utf8'
   );
 
-  assert.match(footer, /<strong>Validate:<\/strong>/);
-  assert.match(footer, /<strong>Check:<\/strong>/);
+  assert.match(footer, /editor\.footer\.validate/);
+  assert.match(footer, /editor\.footer\.check/);
   assert.match(footer, /formatExecutionDuration\(validateDurationMs\)/);
   assert.match(footer, /formatExecutionDuration\(checkDurationMs\)/);
 });
@@ -54,6 +55,7 @@ test('status bar exposes validate and check execution timings', () => {
 test('clearing results restores every result tab to its idle state', () => {
   const results = loadResultsModule();
   const context = {
+    t,
     validateRows: [{ status: 'passed' }],
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
@@ -80,6 +82,7 @@ test('clearing results restores every result tab to its idle state', () => {
 test('resetDataCheckState clears only schema and quality execution state', () => {
   const results = loadResultsModule();
   const context = {
+    t,
     validateRows: [{ status: 'passed' }],
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'failed' }],
@@ -105,6 +108,7 @@ test('resetDataCheckState clears only schema and quality execution state', () =>
 test('resetDataCheckState can preserve the visible check duration during a rerun', () => {
   const results = loadResultsModule();
   const context = {
+    t,
     schemaRows: [{ status: 'passed' }],
     qualityRows: [{ status: 'passed' }],
     schemaRunState: 'passed',
@@ -126,6 +130,7 @@ test('validate opens the contract validation view without changing the checker p
     fields: [{ field: 'id', present: true }],
   });
   const context = {
+    t,
     pythonReady: true,
     busy: false,
     checkerCollapsed: true,
@@ -161,6 +166,7 @@ test('failed validation replaces stale rows with the current YAML error', async 
     throw new Error('Invalid YAML');
   };
   const context = {
+    t,
     pythonReady: true,
     busy: false,
     editorView: 'yaml',
@@ -207,6 +213,7 @@ test('successful checks finish on quality after evaluating schema first', async 
     report_success: true,
   });
   const context = {
+    t,
     pythonReady: true,
     schemaStarted: true,
     dataFile: { async arrayBuffer() { return new ArrayBuffer(1); } },

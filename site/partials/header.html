@@ -1,6 +1,6 @@
         <!-- Header: brand, runtime-independent controls, and theme switch. -->
         <header class="pine-header">
-          <a class="pine-brand" href="./index.html" aria-label="Retour à l'accueil Clinical-Contract">
+          <a class="pine-brand" href="./index.html" :aria-label="t('common.brandHome')">
             <div class="pine-logo-box">
               <img :src="logoSrc" :alt="logoAlt" class="pine-logo-image" @error="handleLogoError" />
             </div>
@@ -11,15 +11,19 @@
           </a>
 
           <div class="header-actions">
-            <a class="docs-nav-link" href="./index.html">Accueil</a>
-            <a class="docs-nav-link docs-nav-link--active" href="./editor.html" aria-current="page">Éditeur</a>
-            <a class="docs-nav-link" href="./docs.html">Documentation</a>
+            <a class="docs-nav-link" href="./index.html" x-text="t('common.nav.home')"></a>
+            <a class="docs-nav-link docs-nav-link--active" href="./editor.html" aria-current="page" x-text="t('common.nav.editor')"></a>
+            <a class="docs-nav-link" href="./docs.html" x-text="t('common.nav.docs')"></a>
+            <div class="locale-switch" :aria-label="t('common.language')" role="group" x-cloak>
+              <button type="button" class="locale-switch__option" :class="{ 'locale-switch__option--active': locale === 'fr' }" @click="setLocale('fr')" :aria-pressed="locale === 'fr'">FR</button>
+              <button type="button" class="locale-switch__option" :class="{ 'locale-switch__option--active': locale === 'en' }" @click="setLocale('en')" :aria-pressed="locale === 'en'">EN</button>
+            </div>
             <a
               class="github-link"
               href="https://github.com/artheioupfat/clinical-contract"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Open clinical-contract on GitHub"
+              :aria-label="t('common.github')"
               style="display: inline-flex; width: 2.25rem; height: 2.25rem; align-items: center; justify-content: center; flex-shrink: 0;"
             >
               <svg class="github-link__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor" style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;">
@@ -31,7 +35,7 @@
               type="button"
               @click="toggleThemeSwitch()"
               class="pine-theme-button"
-              :aria-label="switchOn ? 'Switch to light theme' : 'Switch to dark theme'"
+              :aria-label="switchOn ? t('common.themeLight') : t('common.themeDark')"
               x-cloak
             >
               <svg x-show="!switchOn" class="pine-theme-button__icon" viewBox="0 0 24 24" aria-hidden="true" fill="none">

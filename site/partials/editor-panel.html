@@ -2,17 +2,17 @@
             <section class="panel panel--editor">
               <div class="panel-head">
                 <div>
-                  <div class="panel-eyebrow">Editor</div>
-                  <div class="panel-title" x-text="yamlName || 'Untitled contract'"></div>
+                  <div class="panel-eyebrow" x-text="t('editor.panel.editor')"></div>
+                  <div class="panel-title" x-text="yamlName || t('editor.panel.untitled')"></div>
                 </div>
                 <div class="pine-toolbar">
-                  <div class="view-switch" :class="!schemaStarted ? 'view-switch--locked' : ''" :title="!schemaStarted ? 'Create or load a contract to unlock' : ''">
-                    <button type="button" :class="editorModeButtonClass('schema')" @click="setEditorView('schema')" :disabled="!schemaStarted">Schema</button>
+                  <div class="view-switch" :class="!schemaStarted ? 'view-switch--locked' : ''" :title="!schemaStarted ? t('editor.panel.unlockContract') : ''">
+                    <button type="button" :class="editorModeButtonClass('schema')" @click="setEditorView('schema')" :disabled="!schemaStarted" x-text="t('editor.tabs.schema')"></button>
                     <button type="button" :class="editorModeButtonClass('yaml')" @click="setEditorView('yaml')" :disabled="!schemaStarted">YAML</button>
                     <button type="button" :class="editorModeButtonClass('validation')" @click="setEditorView('validation')" :disabled="!schemaStarted">
                       <span class="view-switch-label">
                         <span class="tab-dot" :class="tabDotClass(validateRunState)"></span>
-                        <span>Validation</span>
+                        <span x-text="t('editor.tabs.validation')"></span>
                       </span>
                     </button>
                   </div>
@@ -22,8 +22,8 @@
                     @click="downloadYaml()"
                     :disabled="!schemaStarted || !yamlText.trim()"
                     class="pine-btn pine-btn--action-success pine-btn--icon"
-                    aria-label="Download contract"
-                    :title="schemaStarted ? 'Download contract' : 'Create or load a contract to unlock'"
+                    :aria-label="t('editor.actions.download')"
+                    :title="schemaStarted ? t('editor.actions.download') : t('editor.panel.unlockContract')"
                   >
                     <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
@@ -35,14 +35,14 @@
                     x-cloak
                     @click.stop.prevent="resetContractModalOpen = true"
                     class="pine-btn pine-btn--danger pine-btn--icon"
-                    aria-label="Reset contract"
-                    title="Reset contract?"
+                    :aria-label="t('editor.actions.reset')"
+                    :title="t('editor.actions.resetQuestion')"
                   >
                     <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
                     </svg>
                   </button>
-                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady || !schemaStarted" class="pine-btn pine-btn--action" :class="!schemaStarted ? 'pine-btn--locked' : ''" :title="schemaStarted ? 'Validate contract structure' : 'Create or load a contract to unlock'">Validate</button>
+                  <button type="button" @click="validateContract()" :disabled="busy || !pythonReady || !schemaStarted" class="pine-btn pine-btn--action" :class="!schemaStarted ? 'pine-btn--locked' : ''" :title="schemaStarted ? t('editor.actions.validateTitle') : t('editor.panel.unlockContract')" x-text="t('editor.actions.validate')"></button>
                 </div>
               </div>
 
@@ -63,13 +63,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M14.5 3.75v4.5H19M9.5 13h7M9.5 16.5h5" />
                       </svg>
                     </div>
-                    <h2 class="workspace-empty-title">Drop or write a data contract</h2>
-                    <p class="workspace-empty-copy">Build your contract step by step, or load an existing YAML contract.</p>
+                    <h2 class="workspace-empty-title" x-text="t('editor.emptyContract.title')"></h2>
+                    <p class="workspace-empty-copy" x-text="t('editor.emptyContract.body')"></p>
                     <div class="workspace-empty-actions">
-                      <button type="button" class="pine-btn pine-btn--primary" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="startBlankContract()">New contract</button>
-                      <button type="button" class="pine-btn" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="$refs.yamlInput.click()">Load contract</button>
+                      <button type="button" class="pine-btn pine-btn--primary" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="startBlankContract()" x-text="t('editor.actions.newContract')"></button>
+                      <button type="button" class="pine-btn" :disabled="!pythonReady" :class="!pythonReady ? 'pine-btn--locked' : ''" @click="$refs.yamlInput.click()" x-text="t('editor.actions.loadContract')"></button>
                     </div>
-                    <button type="button" class="workspace-template-link" :disabled="!pythonReady" @click="openContractTemplateModal()">Show examples</button>
+                    <button type="button" class="workspace-template-link" :disabled="!pythonReady" @click="openContractTemplateModal()" x-text="t('editor.actions.showExamples')"></button>
                   </div>
                 </div>
               </template>
@@ -95,7 +95,7 @@
                     autocorrect="off"
                     autocapitalize="off"
                     class="editor-textarea"
-                    placeholder="Drop a YAML data contract here."
+                    :placeholder="t('editor.emptyContract.placeholder')"
                   ></textarea>
                 </div>
               </template>
@@ -114,14 +114,14 @@
                     <!-- Builder navigation: high-level contract sections. -->
                     <aside class="schema-nav">
                       <div class="schema-nav-head">
-                        <div class="schema-nav-title">Write contract</div>
+                        <div class="schema-nav-title" x-text="t('editor.builder.title')"></div>
                       </div>
 
                       <nav class="schema-nav-list">
                         <template x-for="section in schemaSections" :key="`schema-section-${section.id}`">
                           <button type="button" :class="schemaSectionClass(section.id)" @click="setSchemaSection(section.id)">
                             <span class="schema-nav-copy">
-                              <span class="schema-nav-item-title" x-text="section.title"></span>
+                              <span class="schema-nav-item-title" x-text="t(section.titleKey)"></span>
                             </span>
                           </button>
                         </template>
@@ -134,20 +134,20 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'fundamentals'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
-                            <div class="schema-stage-title">Fundamentals</div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.fundamentals')"></div>
                           </div>
                         </div>
                         <div class="schema-business-stack">
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Contract Name <span class="schema-required" x-show="showRequiredFor('name')" x-cloak>* required</span></span>
+                            <span class="schema-form-label"><span x-text="t('editor.builder.contractName')"></span> <span class="schema-required" x-show="showRequiredFor('name')" x-cloak x-text="t('common.required')"></span></span>
                             <input type="text" x-model="schemaDraft.name" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('name')" class="schema-input schema-form-control" />
                           </label>
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Contract Version <span class="schema-required" x-show="showRequiredFor('version')" x-cloak>* required</span></span>
+                            <span class="schema-form-label"><span x-text="t('editor.builder.contractVersion')"></span> <span class="schema-required" x-show="showRequiredFor('version')" x-cloak x-text="t('common.required')"></span></span>
                             <input type="text" x-model="schemaDraft.version" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('version')" class="schema-input schema-form-control" />
                           </label>
                           <label class="schema-form-field schema-status-field">
-                            <span class="schema-form-label">Status</span>
+                            <span class="schema-form-label" x-text="t('editor.builder.status')"></span>
                             <span class="schema-status-toggle">
                               <input
                                 type="checkbox"
@@ -155,59 +155,59 @@
                                 :checked="isContractActive()"
                                 @change="setContractActive($event.target.checked)"
                               />
-                              <span>Active contract</span>
+                              <span x-text="t('editor.builder.active')"></span>
                             </span>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Purpose</span>
-                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="Why this dataset exists"></textarea>
+                            <span class="schema-form-label" x-text="t('editor.builder.purpose')"></span>
+                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.purposePlaceholder')"></textarea>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Usage</span>
-                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="How consumers should use it"></textarea>
+                            <span class="schema-form-label" x-text="t('editor.builder.usage')"></span>
+                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.usagePlaceholder')"></textarea>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Limitations</span>
-                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" placeholder="Known caveats, scope, or historical issues"></textarea>
+                            <span class="schema-form-label" x-text="t('editor.builder.limitations')"></span>
+                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.limitationsPlaceholder')"></textarea>
                           </label>
                           <div class="schema-inline-grid schema-wide-field">
                             <label class="schema-form-field">
-                              <span class="schema-form-label">Study Start Date</span>
+                              <span class="schema-form-label" x-text="t('editor.builder.studyStart')"></span>
                               <input type="date" x-model="schemaDraft.studyStartDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
                             </label>
                             <label class="schema-form-field">
-                              <span class="schema-form-label">Study End Date</span>
+                              <span class="schema-form-label" x-text="t('editor.builder.studyEnd')"></span>
                               <input type="date" x-model="schemaDraft.studyEndDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
                             </label>
                           </div>
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Study Type</span>
+                            <span class="schema-form-label" x-text="t('editor.builder.studyType')"></span>
                             <select x-model="schemaDraft.studyType" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
-                              <option value="">Not specified</option>
-                              <option value="cohort">Cohort</option>
-                              <option value="cross-sectional">Cross-sectional</option>
-                              <option value="case-control">Case-control</option>
-                              <option value="registry">Registry</option>
-                              <option value="clinical-trial">Clinical trial</option>
-                              <option value="retrospective">Retrospective</option>
-                              <option value="prospective">Prospective</option>
+                              <option value="" x-text="t('common.notSpecified')"></option>
+                              <option value="cohort" x-text="t('editor.builder.studyTypes.cohort')"></option>
+                              <option value="cross-sectional" x-text="t('editor.builder.studyTypes.crossSectional')"></option>
+                              <option value="case-control" x-text="t('editor.builder.studyTypes.caseControl')"></option>
+                              <option value="registry" x-text="t('editor.builder.studyTypes.registry')"></option>
+                              <option value="clinical-trial" x-text="t('editor.builder.studyTypes.clinicalTrial')"></option>
+                              <option value="retrospective" x-text="t('editor.builder.studyTypes.retrospective')"></option>
+                              <option value="prospective" x-text="t('editor.builder.studyTypes.prospective')"></option>
                             </select>
                           </label>
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Study Objective</span>
+                            <span class="schema-form-label" x-text="t('editor.builder.studyObjective')"></span>
                             <select x-model="schemaDraft.studyObjective" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
-                              <option value="">Not specified</option>
-                              <option value="predictive">Predictive</option>
-                              <option value="therapeutic">Therapeutic</option>
-                              <option value="diagnostic">Diagnostic</option>
-                              <option value="epidemiological">Epidemiological</option>
-                              <option value="descriptive">Descriptive</option>
-                              <option value="operational">Operational</option>
+                              <option value="" x-text="t('common.notSpecified')"></option>
+                              <option value="predictive" x-text="t('editor.builder.objectives.predictive')"></option>
+                              <option value="therapeutic" x-text="t('editor.builder.objectives.therapeutic')"></option>
+                              <option value="diagnostic" x-text="t('editor.builder.objectives.diagnostic')"></option>
+                              <option value="epidemiological" x-text="t('editor.builder.objectives.epidemiological')"></option>
+                              <option value="descriptive" x-text="t('editor.builder.objectives.descriptive')"></option>
+                              <option value="operational" x-text="t('editor.builder.objectives.operational')"></option>
                             </select>
                           </label>
                           <label class="schema-form-field schema-wide-field">
-                            <span class="schema-form-label">Health Domain</span>
-                            <input type="text" x-model="schemaDraft.healthDomain" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" placeholder="Example: oncology, cardiology, emergency care" />
+                            <span class="schema-form-label" x-text="t('editor.builder.healthDomain')"></span>
+                            <input type="text" x-model="schemaDraft.healthDomain" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" :placeholder="t('editor.builder.healthPlaceholder')" />
                           </label>
                         </div>
                       </div>
@@ -216,54 +216,52 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
-                            <div class="schema-stage-title">Schema</div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.schema')"></div>
                           </div>
                         </div>
                         <div class="schema-form-grid schema-form-grid--schema">
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Table Name <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak>* required</span></span>
+                            <span class="schema-form-label"><span x-text="t('editor.columns.tableName')"></span> <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak x-text="t('common.required')"></span></span>
                             <input type="text" x-model="schemaDraft.tableName" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableName')" class="schema-input schema-form-control" />
                           </label>
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Description <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak>* required</span></span>
+                            <span class="schema-form-label"><span x-text="t('editor.columns.description')"></span> <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak x-text="t('common.required')"></span></span>
                             <input type="text" x-model="schemaDraft.tableDescription" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableDescription')" class="schema-input schema-form-control" />
                           </label>
                         </div>
 
                         <div class="schema-subsection-bar">
-                          <div class="schema-stage-title">Columns</div>
+                          <div class="schema-stage-title" x-text="t('editor.columns.title')"></div>
                         </div>
 
                         <div class="column-list-shell mt-3">
                           <template x-if="schemaDraft.properties.length === 0">
-                            <div class="column-empty">
-                              Add a column, then edit its type and description from the details panel.
-                            </div>
+                            <div class="column-empty" x-text="t('editor.columns.empty')"></div>
                           </template>
                           <table x-show="schemaDraft.properties.length > 0" x-cloak class="column-table">
                             <thead>
                               <tr>
-                                <th>Column</th>
-                                <th>Type</th>
-                                <th>Required</th>
-                                <th>Description</th>
-                                <th class="text-right">Action</th>
+                                <th x-text="t('editor.columns.column')"></th>
+                                <th x-text="t('editor.columns.type')"></th>
+                                <th x-text="t('editor.columns.required')"></th>
+                                <th x-text="t('editor.columns.description')"></th>
+                                <th class="text-right" x-text="t('editor.columns.action')"></th>
                               </tr>
                             </thead>
                             <tbody>
                               <template x-for="row in schemaDraft.properties" :key="row._rowId">
                                 <tr class="column-table__row" @click="openSchemaProperty(row._rowId)" tabindex="0" @keydown.enter.prevent="openSchemaProperty(row._rowId)">
                                   <td class="column-table__column">
-                                    <span x-text="row.name || 'Unnamed column'"></span>
-                                    <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span>
+                                    <span x-text="row.name || t('editor.columns.unnamed')"></span>
+                                    <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak x-text="t('common.required')"></span>
                                   </td>
                                   <td class="column-table__type">
                                     <span x-text="columnTypeSummary(row)"></span>
                                   </td>
-                                  <td class="column-table__required" x-text="row.required ? 'Yes' : 'No'"></td>
-                                  <td class="column-table__description" x-text="row.description || 'No description yet'"></td>
+                                  <td class="column-table__required" x-text="row.required ? t('common.yes') : t('common.no')"></td>
+                                  <td class="column-table__description" x-text="row.description || t('editor.columns.noDescription')"></td>
                                   <td class="column-table__action">
-                                    <button type="button" class="column-edit-button" @click.stop.prevent="openSchemaProperty(row._rowId)">Edit</button>
+                                    <button type="button" class="column-edit-button" @click.stop.prevent="openSchemaProperty(row._rowId)" x-text="t('common.edit')"></button>
                                   </td>
                                 </tr>
                               </template>
@@ -271,7 +269,7 @@
                           </table>
                         </div>
                         <div class="schema-add-row">
-                          <button type="button" class="schema-add-btn" @click="addSchemaProperty()">Add column</button>
+                          <button type="button" class="schema-add-btn" @click="addSchemaProperty()" x-text="t('editor.columns.add')"></button>
                         </div>
                       </div>
 
@@ -283,31 +281,31 @@
                           <div class="entity-modal" x-data="{ row: schemaEditorProperty() }" @click.outside="closeSchemaProperty()">
                             <div class="entity-modal__header">
                               <div>
-                                <div class="entity-modal__kicker">Column details</div>
-                                <div class="entity-modal__title" x-text="row.name || 'Unnamed column'"></div>
+                                <div class="entity-modal__kicker" x-text="t('editor.columns.details')"></div>
+                                <div class="entity-modal__title" x-text="row.name || t('editor.columns.unnamed')"></div>
                               </div>
                             </div>
 
                             <div class="entity-modal__body">
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Column name <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak>* required</span></span>
+                                <span class="entity-modal__label"><span x-text="t('editor.columns.name')"></span> <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak x-text="t('common.required')"></span></span>
                                 <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input" placeholder="column_name" />
                               </label>
 
                               <label class="entity-modal__field column-required-field">
-                                <span class="entity-modal__label">Required</span>
+                                <span class="entity-modal__label" x-text="t('editor.columns.required')"></span>
                                 <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="column-required-checkbox" />
                               </label>
 
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Logical type</span>
+                                <span class="entity-modal__label" x-text="t('editor.columns.logicalType')"></span>
                                 <select
                                   :value="row.logicalType || ''"
                                   @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
                                   x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
                                   class="schema-input"
                                 >
-                                  <option value="">No type constraint</option>
+                                  <option value="" x-text="t('editor.columns.noConstraint')"></option>
                                   <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-modal-${row._rowId}-${logicalType}`">
                                     <option :value="logicalType" x-text="logicalType"></option>
                                   </template>
@@ -315,14 +313,14 @@
                               </label>
 
                               <label class="entity-modal__field" x-show="shouldShowPhysicalType(row)" x-cloak>
-                                <span class="entity-modal__label">Physical type</span>
+                                <span class="entity-modal__label" x-text="t('editor.columns.physicalType')"></span>
                                 <select
                                   :value="row.physicalType || ''"
                                   @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
                                   x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
                                   class="schema-input"
                                 >
-                                  <option value="">Not specified</option>
+                                  <option value="" x-text="t('common.notSpecified')"></option>
                                   <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-modal-${row._rowId}-${physicalType}`">
                                     <option :value="physicalType" x-text="physicalType"></option>
                                   </template>
@@ -330,19 +328,19 @@
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide column-description-field">
-                                <span class="entity-modal__label">Description</span>
-                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" rows="5" class="schema-input schema-input--description column-description-textarea" placeholder="Example: Patient identifier used to link healthcare records across hospital stays."></textarea>
+                                <span class="entity-modal__label" x-text="t('editor.columns.description')"></span>
+                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" rows="5" class="schema-input schema-input--description column-description-textarea" :placeholder="t('editor.columns.descriptionPlaceholder')"></textarea>
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide">
-                                <span class="entity-modal__label">Examples</span>
-                                <textarea x-model="row.examplesText" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" placeholder="One example per line"></textarea>
+                                <span class="entity-modal__label" x-text="t('editor.columns.examples')"></span>
+                                <textarea x-model="row.examplesText" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" :placeholder="t('editor.columns.examplesPlaceholder')"></textarea>
                               </label>
                             </div>
 
                             <div class="entity-modal__footer">
-                              <button type="button" class="entity-modal__remove" @click="removeSchemaProperty(row._rowId)">Remove column</button>
-                              <button type="button" class="pine-btn pine-btn--primary" @click="closeSchemaProperty()">Done</button>
+                              <button type="button" class="entity-modal__remove" @click="removeSchemaProperty(row._rowId)" x-text="t('editor.columns.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeSchemaProperty()" x-text="t('common.done')"></button>
                             </div>
                           </div>
                         </div>
@@ -352,30 +350,28 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
-                            <div class="schema-stage-title">Quality</div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
                           </div>
                         </div>
                         <div class="quality-list-shell">
                           <template x-if="schemaDraft.qualityRules.length === 0">
-                            <div class="quality-empty">
-                              Add at least one named column, then create SQL quality checks here.
-                            </div>
+                            <div class="quality-empty" x-text="t('editor.quality.empty')"></div>
                           </template>
                           <table x-show="schemaDraft.qualityRules.length > 0" x-cloak class="quality-table">
                             <thead>
                               <tr>
-                                <th>Column</th>
-                                <th>Description</th>
-                                <th class="text-right">Action</th>
+                                <th x-text="t('editor.quality.column')"></th>
+                                <th x-text="t('editor.quality.description')"></th>
+                                <th class="text-right" x-text="t('editor.quality.action')"></th>
                               </tr>
                             </thead>
                             <tbody>
                               <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
                                 <tr class="quality-table__row" @click="openQualityRule(rule._rowId)" tabindex="0" @keydown.enter.prevent="openQualityRule(rule._rowId)">
-                                  <td class="quality-table__column" x-text="rule.propertyName || 'No column selected'"></td>
-                                  <td class="quality-table__description" x-text="rule.description || 'Untitled quality check'"></td>
+                                  <td class="quality-table__column" x-text="rule.propertyName || t('editor.quality.noColumn')"></td>
+                                  <td class="quality-table__description" x-text="rule.description || t('editor.quality.untitled')"></td>
                                   <td class="quality-table__action">
-                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)">Edit</button>
+                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)" x-text="t('common.edit')"></button>
                                   </td>
                                 </tr>
                               </template>
@@ -383,7 +379,7 @@
                           </table>
                         </div>
                         <div class="schema-add-row">
-                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)">Add check</button>
+                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)" x-text="t('editor.quality.add')"></button>
                         </div>
                       </div>
 
@@ -395,14 +391,14 @@
                           <div class="entity-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
                             <div class="entity-modal__header">
                               <div>
-                                <div class="entity-modal__kicker">Quality check</div>
-                                <div class="entity-modal__title" x-text="rule.description || 'Untitled quality check'"></div>
+                                <div class="entity-modal__kicker" x-text="t('editor.quality.details')"></div>
+                                <div class="entity-modal__title" x-text="rule.description || t('editor.quality.untitled')"></div>
                               </div>
                             </div>
 
                             <div class="entity-modal__body">
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Column</span>
+                                <span class="entity-modal__label" x-text="t('editor.quality.column')"></span>
                                 <select
                                   x-ref="qualityColumnSelect"
                                   :value="rule.propertyName || ''"
@@ -417,7 +413,7 @@
                                     <option
                                       :value="property.name"
                                       :selected="property.name === rule.propertyName"
-                                      x-text="property.name || 'Unnamed column'"
+                                      x-text="property.name || t('editor.columns.unnamed')"
                                     ></option>
                                   </template>
                                 </select>
@@ -425,58 +421,58 @@
 
                               <div class="quality-comparison">
                                 <label class="entity-modal__field">
-                                  <span class="entity-modal__label">Comparison</span>
+                                  <span class="entity-modal__label" x-text="t('editor.quality.comparison')"></span>
                                   <select x-model="rule.comparisonOperator" @change="pushSchemaToYaml()" class="schema-input">
-                                    <option value="equal">Equal</option>
-                                    <option value="notEqual">Not equal</option>
-                                    <option value="greaterThan">Greater than</option>
-                                    <option value="greaterThanOrEqual">Greater than or equal</option>
-                                    <option value="lessThan">Less than</option>
-                                    <option value="lessThanOrEqual">Less than or equal</option>
-                                    <option value="between">Between</option>
+                                    <option value="equal" x-text="t('editor.quality.operators.equal')"></option>
+                                    <option value="notEqual" x-text="t('editor.quality.operators.notEqual')"></option>
+                                    <option value="greaterThan" x-text="t('editor.quality.operators.greaterThan')"></option>
+                                    <option value="greaterThanOrEqual" x-text="t('editor.quality.operators.greaterThanOrEqual')"></option>
+                                    <option value="lessThan" x-text="t('editor.quality.operators.lessThan')"></option>
+                                    <option value="lessThanOrEqual" x-text="t('editor.quality.operators.lessThanOrEqual')"></option>
+                                    <option value="between" x-text="t('editor.quality.operators.between')"></option>
                                   </select>
                                 </label>
 
                                 <label class="entity-modal__field" x-show="rule.comparisonOperator !== 'between'">
-                                  <span class="entity-modal__label">Expected value</span>
+                                  <span class="entity-modal__label" x-text="t('editor.quality.expected')"></span>
                                   <input type="number" step="any" x-model.number="rule.expectedValue" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
                                 </label>
 
                                 <div class="quality-comparison__range" x-show="rule.comparisonOperator === 'between'" x-cloak>
                                   <label class="entity-modal__field">
-                                    <span class="entity-modal__label">Minimum</span>
+                                    <span class="entity-modal__label" x-text="t('editor.quality.minimum')"></span>
                                     <input type="number" step="any" x-model.number="rule.expectedMin" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
                                   </label>
                                   <label class="entity-modal__field">
-                                    <span class="entity-modal__label">Maximum</span>
+                                    <span class="entity-modal__label" x-text="t('editor.quality.maximum')"></span>
                                     <input type="number" step="any" x-model.number="rule.expectedMax" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
                                   </label>
                                 </div>
                               </div>
 
                               <label class="entity-modal__field entity-modal__field--wide">
-                                <span class="entity-modal__label">Description</span>
-                                <textarea x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description quality-description-textarea" placeholder="Explain what this quality check protects"></textarea>
+                                <span class="entity-modal__label" x-text="t('editor.quality.description')"></span>
+                                <textarea x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description quality-description-textarea" :placeholder="t('editor.quality.descriptionPlaceholder')"></textarea>
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide">
-                                <span class="entity-modal__label">SQL query</span>
+                                <span class="entity-modal__label" x-text="t('editor.quality.sqlQuery')"></span>
                                 <div class="quality-sql-editor">
                                   <div class="quality-sql-editor__bar">
-                                    <span>DuckDB SQL</span>
+                                    <span x-text="t('editor.quality.duckdbSql')"></span>
                                     <span class="quality-sql-editor__table-hint">
-                                      <span class="quality-sql-editor__table-label">Table name:</span>
+                                      <span class="quality-sql-editor__table-label" x-text="t('editor.quality.tableName')"></span>
                                       <span class="quality-sql-editor__table-name" x-text="schemaDraft.tableName || 'data'"></span>
                                     </span>
                                   </div>
-                                  <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" placeholder="select count(*) from data where ..."></textarea>
+                                  <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" :placeholder="t('editor.quality.sqlPlaceholder')"></textarea>
                                 </div>
                               </label>
                             </div>
 
                             <div class="entity-modal__footer">
-                              <button type="button" class="entity-modal__remove" @click="removeQualityRule(rule._rowId)">Remove check</button>
-                              <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()">Done</button>
+                              <button type="button" class="entity-modal__remove" @click="removeQualityRule(rule._rowId)" x-text="t('editor.quality.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()" x-text="t('common.done')"></button>
                             </div>
                           </div>
                         </div>
@@ -486,43 +482,41 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'team'" x-cloak>
                         <div class="schema-stage-bar">
                           <div>
-                            <div class="schema-stage-title">Team</div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.team')"></div>
                           </div>
                         </div>
                         <div class="schema-form-grid schema-form-grid--two">
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Team Name</span>
+                            <span class="schema-form-label" x-text="t('editor.team.name')"></span>
                             <input type="text" x-model="schemaDraft.teamName" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
                           </label>
                           <label class="schema-form-field">
-                            <span class="schema-form-label">Description</span>
+                            <span class="schema-form-label" x-text="t('editor.team.description')"></span>
                             <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
                           </label>
                         </div>
                         <div class="schema-subsection-bar">
-                          <div class="schema-stage-title">Members</div>
+                          <div class="schema-stage-title" x-text="t('editor.team.members')"></div>
                         </div>
                         <div class="team-list-shell mt-3">
                           <template x-if="schemaDraft.teamMembers.length === 0">
-                            <div class="team-empty">
-                              No team members yet.
-                            </div>
+                            <div class="team-empty" x-text="t('editor.team.empty')"></div>
                           </template>
                           <table x-show="schemaDraft.teamMembers.length > 0" x-cloak class="team-table">
                             <thead>
                               <tr>
-                                <th>Name</th>
-                                <th>Role</th>
-                                <th class="text-right">Action</th>
+                                <th x-text="t('editor.team.memberName')"></th>
+                                <th x-text="t('editor.team.role')"></th>
+                                <th class="text-right" x-text="t('editor.team.action')"></th>
                               </tr>
                             </thead>
                             <tbody>
                               <template x-for="member in schemaDraft.teamMembers" :key="member._rowId">
                                 <tr class="team-table__row" @click="openTeamMember(member._rowId)" tabindex="0" @keydown.enter.prevent="openTeamMember(member._rowId)">
-                                  <td class="team-table__name" x-text="member.name || 'Unnamed member'"></td>
-                                  <td class="team-table__role" x-text="member.role || 'No role specified'"></td>
+                                  <td class="team-table__name" x-text="member.name || t('editor.team.unnamed')"></td>
+                                  <td class="team-table__role" x-text="member.role || t('editor.team.noRole')"></td>
                                   <td class="team-table__action">
-                                    <button type="button" class="team-edit-button" @click.stop.prevent="openTeamMember(member._rowId)">Edit</button>
+                                    <button type="button" class="team-edit-button" @click.stop.prevent="openTeamMember(member._rowId)" x-text="t('common.edit')"></button>
                                   </td>
                                 </tr>
                               </template>
@@ -530,7 +524,7 @@
                           </table>
                         </div>
                         <div class="schema-add-row">
-                          <button type="button" class="schema-add-btn" @click="addTeamMember()">Add member</button>
+                          <button type="button" class="schema-add-btn" @click="addTeamMember()" x-text="t('editor.team.add')"></button>
                         </div>
                       </div>
 
@@ -542,31 +536,31 @@
                           <div class="entity-modal" x-data="{ member: teamEditorMember() }" @click.outside="closeTeamMember()">
                             <div class="entity-modal__header">
                               <div>
-                                <div class="entity-modal__kicker">Team member</div>
-                                <div class="entity-modal__title" x-text="member.name || 'Unnamed member'"></div>
+                                <div class="entity-modal__kicker" x-text="t('editor.team.details')"></div>
+                                <div class="entity-modal__title" x-text="member.name || t('editor.team.unnamed')"></div>
                               </div>
                             </div>
 
                             <div class="entity-modal__body">
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Name</span>
-                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Jane Doe" />
+                                <span class="entity-modal__label" x-text="t('editor.team.memberName')"></span>
+                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" :placeholder="t('editor.team.namePlaceholder')" />
                               </label>
 
                               <label class="entity-modal__field">
-                                <span class="entity-modal__label">Role</span>
-                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="Data owner" />
+                                <span class="entity-modal__label" x-text="t('editor.team.role')"></span>
+                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" :placeholder="t('editor.team.rolePlaceholder')" />
                               </label>
 
                               <label class="entity-modal__field entity-modal__field--wide">
-                                <span class="entity-modal__label">Email</span>
+                                <span class="entity-modal__label" x-text="t('editor.team.email')"></span>
                                 <input type="email" x-model="member.email" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="jane.doe@example.org" />
                               </label>
                             </div>
 
                             <div class="entity-modal__footer">
-                              <button type="button" class="entity-modal__remove" @click="removeTeamMember(member._rowId)">Remove member</button>
-                              <button type="button" class="pine-btn pine-btn--primary" @click="closeTeamMember()">Done</button>
+                              <button type="button" class="entity-modal__remove" @click="removeTeamMember(member._rowId)" x-text="t('editor.team.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeTeamMember()" x-text="t('common.done')"></button>
                             </div>
                           </div>
                         </div>
@@ -583,14 +577,14 @@
                     <table class="results-table">
                       <thead>
                         <tr>
-                          <th>Field</th>
-                          <th>Status</th>
-                          <th>Value</th>
+                          <th x-text="t('editor.validation.field')"></th>
+                          <th x-text="t('editor.validation.status')"></th>
+                          <th x-text="t('editor.validation.value')"></th>
                         </tr>
                       </thead>
                       <tbody>
                         <template x-if="validateRows.length === 0">
-                          <tr><td colspan="3" class="empty-row">No validation result yet. Run Validate to inspect the contract structure.</td></tr>
+                          <tr><td colspan="3" class="empty-row" x-text="t('editor.validation.empty')"></td></tr>
                         </template>
                         <template x-for="row in validateRows" :key="row.field">
                           <tr>
@@ -598,7 +592,7 @@
                             <td>
                               <span class="status-chip" :class="statusChipClass(row.status)">
                                 <span class="status-dot" :class="statusDotClass(row.status)"></span>
-                                <span x-text="row.status"></span>
+                                <span x-text="resultStatusLabel(row.status)"></span>
                               </span>
                             </td>
                             <td x-text="row.value"></td>
@@ -624,16 +618,16 @@
                   <div class="template-modal" @click.stop>
                     <div class="template-modal__header">
                       <div>
-                        <div class="entity-modal__kicker">Contract templates</div>
-                        <div id="contract-template-title" class="template-modal__title">Choose a starting point</div>
+                        <div class="entity-modal__kicker" x-text="t('editor.templates.contracts')"></div>
+                        <div id="contract-template-title" class="template-modal__title" x-text="t('editor.templates.contractChoice')"></div>
                       </div>
-                      <button type="button" class="entity-modal__close" @click="closeContractTemplateModal()">Close</button>
+                      <button type="button" class="entity-modal__close" @click="closeContractTemplateModal()" x-text="t('common.close')"></button>
                     </div>
                     <div class="template-modal__list">
                       <template x-for="template in contractTemplates" :key="template.id">
                         <button type="button" class="template-option" @click="loadContractTemplate(template)">
                           <span class="template-option__title" x-text="template.name"></span>
-                          <span class="template-option__description" x-text="template.description"></span>
+                          <span class="template-option__description" x-text="t('editor.templates.contractDescription')"></span>
                           <span class="template-option__file" x-text="template.fileName"></span>
                         </button>
                       </template>
@@ -654,18 +648,18 @@
                   <div class="reset-modal" @click.stop>
                     <div class="reset-modal__header">
                       <div>
-                        <div class="entity-modal__kicker">Reset contract</div>
-                        <div id="reset-contract-title" class="reset-modal__title">Delete the current draft?</div>
+                        <div class="entity-modal__kicker" x-text="t('editor.reset.title')"></div>
+                        <div id="reset-contract-title" class="reset-modal__title" x-text="t('editor.reset.question')"></div>
                       </div>
                     </div>
                     <div class="reset-modal__body">
-                      <p>This removes only the contract being edited. A loaded data file remains available in the checker.</p>
+                      <p x-text="t('editor.reset.body')"></p>
                     </div>
                     <div class="reset-modal__footer">
-                      <button type="button" class="pine-btn" @click="downloadYaml()" :disabled="!yamlText.trim()">Download draft</button>
+                      <button type="button" class="pine-btn" @click="downloadYaml()" :disabled="!yamlText.trim()" x-text="t('editor.reset.download')"></button>
                       <div class="reset-modal__actions">
-                        <button type="button" class="pine-btn" @click="closeResetContractModal()">Cancel</button>
-                        <button type="button" class="reset-modal__danger" @click="resetContractDraft()">Reset contract</button>
+                        <button type="button" class="pine-btn" @click="closeResetContractModal()" x-text="t('common.cancel')"></button>
+                        <button type="button" class="reset-modal__danger" @click="resetContractDraft()" x-text="t('editor.reset.confirm')"></button>
                       </div>
                     </div>
                   </div>

@@ -202,7 +202,7 @@ window.ClinicalModules.schema = {
     }
     if (row?.logicalType) return row.logicalType;
     if (row?.physicalType) return row.physicalType;
-    return 'No type constraint';
+    return this.t('editor.columns.noConstraint');
   },
 
   addQualityRule() {
@@ -283,7 +283,7 @@ window.ClinicalModules.schema = {
 
   startBlankContract() {
     if (!this.pythonReady) {
-      this.schemaParseWarning = 'Python runtime is still loading. Please wait before starting a contract.';
+      this.schemaParseWarning = this.t('editor.messages.runtimeStart');
       return;
     }
 
@@ -324,8 +324,7 @@ window.ClinicalModules.schema = {
     try {
       parsed = this.ensureYamlLibrary().load(this.yamlText);
     } catch (error) {
-      this.schemaParseWarning =
-        `YAML parse warning: ${error.message}. You can still edit in Schema mode; saving fields will rewrite YAML.`;
+      this.schemaParseWarning = this.t('editor.messages.yamlParse', { message: error.message });
       this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
@@ -334,8 +333,7 @@ window.ClinicalModules.schema = {
     }
 
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      this.schemaParseWarning =
-        'YAML root is not an object. Schema mode will use a clean template and rewrite YAML from form values.';
+      this.schemaParseWarning = this.t('editor.messages.yamlRoot');
       this.schemaStarted = true;
       if (!preserveCurrentOnError || !this.schemaDraft.properties.length) {
         this.seedSchemaDraft();
@@ -378,7 +376,7 @@ window.ClinicalModules.schema = {
       this.schemaParseWarning = '';
       this.clearResults();
     } catch (error) {
-      this.schemaParseWarning = `Schema sync error: ${error.message}`;
+      this.schemaParseWarning = this.t('editor.messages.schemaSync', { message: error.message });
     }
   },
 };
