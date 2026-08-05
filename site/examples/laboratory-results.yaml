@@ -66,10 +66,31 @@ schema:
         required: true
         quality:
           - type: sql
-            description: The average result must remain positive
-            query: SELECT AVG(result_value) FROM laboratory_results
+            description: CRP results must use mg/L and remain between 0 and 500
+            query: |
+              SELECT COUNT(*)
+              FROM laboratory_results
+              WHERE analyte_code = 'CRP'
+                AND (
+                  result_unit IS DISTINCT FROM 'mg/L'
+                  OR result_value IS NULL
+                  OR result_value NOT BETWEEN 0 AND 500
+                )
             expected:
-              greaterThan: 0
+              equal: 0
+          - type: sql
+            description: Hemoglobin results must use g/dL and remain between 5 and 25
+            query: |
+              SELECT COUNT(*)
+              FROM laboratory_results
+              WHERE analyte_code = 'HB'
+                AND (
+                  result_unit IS DISTINCT FROM 'g/dL'
+                  OR result_value IS NULL
+                  OR result_value NOT BETWEEN 5 AND 25
+                )
+            expected:
+              equal: 0
 
       - name: result_unit
         logicalType: string

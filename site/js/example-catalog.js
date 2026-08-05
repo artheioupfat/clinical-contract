@@ -11,11 +11,11 @@ const catalog = {
       "fileName": "clinical-template.yaml"
     },
     {
-      "id": "contract-epidemiology-survey-yaml",
-      "name": "Epidemiology Survey",
+      "id": "contract-covid-diagnosis-cohort-yaml",
+      "name": "COVID-19 Diagnosis Cohort",
       "description": "Bundled YAML data contract.",
-      "path": "./examples/epidemiology-survey.yaml",
-      "fileName": "epidemiology-survey.yaml"
+      "path": "./examples/covid-diagnosis-cohort.yaml",
+      "fileName": "covid-diagnosis-cohort.yaml"
     },
     {
       "id": "contract-laboratory-results-yaml",
@@ -42,11 +42,11 @@ const catalog = {
       "mimeType": "application/octet-stream"
     },
     {
-      "id": "data-epidemiology-survey-csv",
-      "name": "Epidemiology survey dataset",
+      "id": "data-covid-diagnosis-cohort-csv",
+      "name": "Covid diagnosis cohort dataset",
       "description": "Bundled CSV dataset.",
-      "path": "./examples/epidemiology-survey.csv",
-      "fileName": "epidemiology-survey.csv",
+      "path": "./examples/covid-diagnosis-cohort.csv",
+      "fileName": "covid-diagnosis-cohort.csv",
       "mimeType": "text/csv"
     },
     {

@@ -181,7 +181,7 @@ window.ClinicalModules.editor = {
     if (!this.pythonReady || !template?.path) return;
 
     try {
-      const contractResponse = await fetch(template.path);
+      const contractResponse = await fetch(template.path, { cache: 'no-cache' });
       if (!contractResponse.ok) {
         throw new Error(this.t('editor.messages.templateContractStatus', { status: contractResponse.status }));
       }

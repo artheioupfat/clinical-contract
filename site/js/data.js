@@ -220,7 +220,7 @@ window.ClinicalModules.data = {
   async loadDataTemplate(template) {
     if (!this.pythonReady || !template?.path) return;
     try {
-      const response = await fetch(template.path);
+      const response = await fetch(template.path, { cache: 'no-cache' });
       if (!response.ok) {
         throw new Error(this.t('editor.messages.templateDataStatus', { status: response.status }));
       }

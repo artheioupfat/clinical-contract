@@ -118,7 +118,7 @@ Each YAML contract has exactly one homonymous dataset:
 | `clinical-template` | Parquet | Common scalar types and equality checks |
 | `laboratory-results` | Parquet | UUID, DECIMAL, TIME, INTERVAL, and timezone-aware timestamps |
 | `medication-administration` | Parquet | ARRAY, float32, optional unconstrained text, and comparison operators |
-| `epidemiology-survey` | CSV | CSV inference, broad logical families, and aggregate checks |
+| `covid-diagnosis-cohort` | CSV | CIM-10 codes, conditional dates, and ICU consistency |
 
 The datasets are synthetic fixtures prepared outside the public source tree. Only the final YAML, CSV, and Parquet files are committed. `tests/test_site_examples.py` verifies pairing and executes structure, schema, and quality checks for every example.
 

@@ -198,10 +198,14 @@ test('data module derives status bar stats from preview preparation', async () =
 test('data module loads the selected sample without modifying the contract', async () => {
   const { data } = loadResultsAndDataModules();
   const originalFetch = global.fetch;
-  global.fetch = async () => ({
-    ok: true,
-    async arrayBuffer() { return new TextEncoder().encode('sample').buffer; },
-  });
+  let fetchOptions = null;
+  global.fetch = async (_path, options) => {
+    fetchOptions = options;
+    return {
+      ok: true,
+      async arrayBuffer() { return new TextEncoder().encode('sample').buffer; },
+    };
+  };
   let loadedFile = null;
   const context = {
     t,
@@ -224,6 +228,7 @@ test('data module loads the selected sample without modifying the contract', asy
   assert.equal(loadedFile.name, 'template.parquet');
   assert.equal(context.yamlText, 'name: Existing contract');
   assert.equal(context.dataTemplateModalOpen, false);
+  assert.deepEqual(fetchOptions, { cache: 'no-cache' });
 });
 
 test('data module reconstructs the persisted browser file after reload', async () => {
