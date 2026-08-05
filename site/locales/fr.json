@@ -108,7 +108,7 @@
     "schemaResults": {
       "schema": "Schéma", "column": "Colonne", "required": "Obligatoire", "expected": "Attendu", "detected": "Détecté", "status": "Statut", "empty": "Aucun résultat de schéma.", "missing": "absent"
     },
-    "qualityResults": { "schema": "Schéma", "column": "Colonne", "rule": "Règle", "obtained": "Obtenu", "expected": "Attendu", "result": "Résultat", "log": "Journal", "empty": "Aucun résultat qualité." },
+    "qualityResults": { "schema": "Schéma", "column": "Colonne", "rule": "Règle", "obtained": "Obtenu", "expected": "Attendu", "result": "Résultat", "log": "Log", "empty": "Aucun résultat qualité." },
     "status": { "passed": "Réussi", "failed": "Échec", "error": "Erreur", "warning": "Avertissement", "idle": "Non exécuté" },
     "templates": {
       "contracts": "Modèles de contrats", "datasets": "Jeux de données d’exemple", "contractChoice": "Choisissez un point de départ", "dataChoice": "Choisissez un exemple local",
