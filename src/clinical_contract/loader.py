@@ -21,28 +21,29 @@ def _read_yaml_source(source: str | Path | bytes):
 
 def load_contract(source: str | Path | bytes) -> tuple[DataContract, dict]:
     """
-    Charge et parse un DataContract depuis un fichier YAML.
+    Load and parse a DataContract from YAML.
 
     Parameters
     ----------
     source : str | Path | bytes
-        - Path ou str avec '\\n' → parsé directement comme YAML inline
-        - str sans '\\n'         → chemin vers un fichier
-        - bytes                  → parsé directement (PyScript)
+        - Path: read as a UTF-8 YAML file.
+        - str containing a newline: parsed as inline YAML.
+        - str without a newline: interpreted as a file path.
+        - bytes: parsed directly, including from the PyScript bridge.
 
     Returns
     -------
     (DataContract, raw_dict)
-        Le modèle validé ET le dict brut (utile pour validate_structure).
+        The validated model and raw mapping used by structural validation.
 
     Raises
     ------
     FileNotFoundError
-        Si le fichier n'existe pas.
+        If the source path does not exist.
     ValueError
-        Si le YAML est vide ou si la racine n'est pas un objet.
+        If the YAML is empty or its root is not a mapping.
     pydantic.ValidationError
-        Si la structure ne correspond pas au schéma attendu.
+        If the document cannot be represented by the DataContract model.
     """
     raw = _read_yaml_source(source)
     if raw is None:
@@ -57,9 +58,10 @@ def load_contract(source: str | Path | bytes) -> tuple[DataContract, dict]:
 
 def load_raw(source: str | Path | bytes) -> dict:
     """
-    Charge uniquement le dict brut YAML sans valider avec Pydantic.
-    Utilisé par la commande 'validate' pour afficher les champs manquants
-    même si le YAML est incomplet.
+    Load a raw YAML mapping without Pydantic model validation.
+
+    The validate command uses this representation to report missing fields
+    even when the document is incomplete.
     """
     raw = _read_yaml_source(source)
     if raw is None:
