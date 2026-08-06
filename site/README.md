@@ -24,9 +24,10 @@ Then open `http://localhost:8000`.
 
 - `index.html`: lightweight landing page. It must not load PyScript.
 - `editor.html`: interactive editor shell. It loads HTML partials before Alpine starts.
-- `docs.html`: localized documentation page rendered from Markdown.
-- `docs/documentation.en.md`: English documentation source.
-- `docs/documentation.fr.md`: French documentation source.
+- `docs.html`: localized documentation shell with an allowlisted page router.
+- `docs/documentation.*.md`: project introduction and editor workflow.
+- `docs/python-api.*.md`: Python library and integration reference.
+- `docs/contract-reference.*.md`: block-by-block YAML contract reference.
 - `app.js`: Alpine root state and composition of the editor feature modules.
 - `partials/header.html`: brand header and theme switch.
 - `partials/editor-panel.html`: contract input, YAML/schema editor, and validation results.
@@ -39,7 +40,8 @@ Then open `http://localhost:8000`.
 - `css/build-input.mjs`: expands the manifest into a temporary Tailwind input.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
 - `js/landing.js`: Alpine state for landing-page locale, theme, metadata, and version.
-- `js/docs.js`: localized Markdown loader and table-of-contents state.
+- `js/docs-routing.js`: closed documentation page registry and safe URL routing.
+- `js/docs.js`: localized Markdown loader, guide navigation, and table-of-contents state.
 - `js/i18n.js`: locale resolution, catalog loading, persistence, and translation lookup.
 - `js/include-html.js`: loads static partials, then starts Alpine.
 - `js/constants.js`: shared UI constants and runtime messages.
@@ -128,7 +130,7 @@ The datasets are synthetic fixtures prepared outside the public source tree. Onl
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
 - Add user-facing interface text to both locale catalogs and keep their key sets identical.
-- Edit documentation in both localized Markdown files; do not add hardcoded prose to `docs.html`.
+- Edit every documentation page in both locales; register new pages in `js/docs-routing.js` and never load a Markdown path directly from the URL.
 - Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
 - Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.

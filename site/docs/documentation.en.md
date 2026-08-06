@@ -36,78 +36,23 @@ Use the description and examples to explain the meaning of the field and clarify
 
 ## Understand data types
 
-Columns can use two complementary types:
+A column may define a **Logical Type**, which describes its semantic family,
+and a **Physical Type**, which specifies its technical representation. The
+physical type takes priority; when it is absent, Clinical-Contract uses the
+logical family. When neither type is provided, only column presence is checked.
 
-- **Logical type** describes the semantic family of the information.
-- **Physical type** describes how the value is represented in the source file.
-
-| Logical type | Meaning | Compatible physical types |
-| :----------: | :------ | :------------------------ |
-| `string` | Text values | `varchar`, `text`, `string`, `char`, `uuid` |
-| `integer` | Integer values | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` |
-| `float` | Floating-point values | `float32`, `float64` |
-| `decimal` | Exact decimal values | `decimal` |
-| `boolean` | Boolean values | `boolean`, `binary` |
-| `date` | Dates and date-times | `datetime`, `timestamp`, `timestamp with timezone` |
-| `time` | Time without a date | `time` |
-| `interval` | Time intervals | `interval` |
-| `array` | Collections of values | `array` |
-
-Explicit integer widths are matched strictly. For example, `uint32` matches a DuckDB `UINTEGER`, but not a `UBIGINT`. Generic types such as `integer` use broader family matching.
-
-The `array` type accepts variable-size and fixed-size DuckDB collections. Element types are not constrained yet.
-
-The `decimal` type checks the DuckDB `DECIMAL` family. Precision and scale, such as `DECIMAL(18, 4)`, are not compared yet.
-
-Both types are optional. If neither is provided, Clinical-Contract checks that the column exists without enforcing a type constraint.
-
-Column names are matched case-insensitively (`ID`, `id`, and `Id` are equivalent). The Preview preserves the exact spelling found in the data file. Files containing multiple columns that differ only by case are reported as ambiguous.
+The complete type catalog, DuckDB mappings, and matching rules are documented
+in the [contract reference](./docs.html?page=contract-reference&lang=en).
 
 ## Add quality rules
 
-Quality rules execute read-only SQL queries against the loaded dataset. Each rule contains a query, an expected comparison and an optional description.
+A quality rule combines a read-only SQL query with an expected comparison. The
+query must return one numeric value and may use one or several contract tables
+within the same DuckDB session.
 
-The query must return one numeric value: one row and one column. The result can be checked with `equal`, `notEqual`, `greaterThan`, `greaterThanOrEqual`, `lessThan`, `lessThanOrEqual`, or an inclusive `between` range.
-
-Use the table name defined in the contract in every SQL rule.
-
-### Examples
-
-Check that `STAY` contains no null values:
-
-```sql
-SELECT COUNT(*)
-FROM export
-WHERE STAY IS NULL;
-```
-
-```yaml
-expected:
-  equal: 0
-```
-
-Check that the dataset contains exactly 1,000 rows:
-
-```sql
-SELECT COUNT(*)
-FROM export;
-```
-
-```yaml
-expected:
-  equal: 1000
-```
-
-Accept a value within a range:
-
-```yaml
-expected:
-  between:
-    min: 90000
-    max: 110000
-```
-
-The legacy `mustBe` field remains supported as an alias for `expected.equal`.
+Available operators, `expected` syntax, SQL examples, and `mustBe`
+compatibility are documented in the
+[contract reference](./docs.html?page=contract-reference&lang=en).
 
 ### SQL rule security
 
@@ -125,7 +70,7 @@ The Validation tab lists valid, missing and invalid fields. Required fields are 
 
 ## Load a data file
 
-Load one **CSV** or **Parquet** file per contract table in the Checker panel. The filename, without its extension, identifies the matching schema. A paginated preview lets you inspect the active dataset without rendering every row at once.
+Load one **CSV** or **Parquet** file per contract table in the Checker panel. **The filename, without its extension, identifies the matching schema.** A paginated preview lets you inspect the active dataset without rendering every row at once.
 
 All processing happens locally in the browser. The file is not uploaded to Clinical-Contract or another server.
 
@@ -139,73 +84,26 @@ If the schemas are compatible, quality rules run through one shared **DuckDB** s
 
 ## Use the command-line interface
 
-Clinical-Contract can validate contracts and check files from a terminal.
-
-### Install the CLI
-
-```bash
-uv tool install --python python3.11 clinical-contract
-```
-
-### Validate a contract
-
-```bash
-clinical-contract validate site/examples/clinical-template.yaml
-```
-
-### Check a data file
-
-```bash
-clinical-contract check site/examples/clinical-template.yaml site/examples/clinical_template.parquet
-```
-
-For a multi-table contract, provide one homonymous file per schema:
-
-```bash
-clinical-contract check contract.yaml orders.parquet line_items.csv
-```
-
-Use `clinical-contract --help` to list the available commands and
-`clinical-contract --version` to display the installed version.
-
-## Python API
-
-Install the library from PyPI:
-
+The CLI runs the same validations from a terminal, shell script, or CI job.
 Python 3.11 or newer is required.
 
 ```bash
-pip install clinical-contract
+uv tool install --python python3.11 clinical-contract
+clinical-contract validate contract.yaml
+clinical-contract check contract.yaml patients.csv diagnoses.parquet
 ```
 
-### Validate a contract structure
+CLI options, multi-source inputs, and application integration are covered in
+the [Python API documentation](./docs.html?page=python-api&lang=en).
 
-```python
-from clinical_contract import DataContract, load_raw
+## Go further
 
-raw_contract = load_raw("contract.yaml")
-report = DataContract.validate_structure(raw_contract)
+Two focused guides extend this introduction:
 
-print(report.success)
-```
-
-### Check a data file
-
-```python
-from clinical_contract import load_contract
-
-contract, _ = load_contract("contract.yaml")
-report = contract.check("data.parquet")
-
-print(report.success)
-```
-
-For several tables, pass file paths or an explicit schema-to-source mapping:
-
-```python
-report = contract.check(["orders.parquet", "line_items.csv"])
-report = contract.check({"orders": orders_bytes, "line_items": lines_bytes})
-```
+- the [Python API documentation](./docs.html?page=python-api&lang=en) covers
+  installation, reports, multi-table inputs, and application integration;
+- the [YAML contract reference](./docs.html?page=contract-reference&lang=en)
+  explains every block, supported type, and quality operator.
 
 ## Current limitations
 

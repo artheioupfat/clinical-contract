@@ -115,9 +115,22 @@ test('all pages load i18n before their Alpine page module and expose the locale 
   assert.match(read('partials/header.html'), /setLocale\('fr'\)/);
 });
 
-test('documentation has a source file for every supported locale', () => {
-  assert.ok(fs.existsSync(path.join(siteRoot, 'docs/documentation.fr.md')));
-  assert.ok(fs.existsSync(path.join(siteRoot, 'docs/documentation.en.md')));
+test('documentation page metadata exists in both catalogs', () => {
+  const english = JSON.parse(read('locales/en.json'));
+  const french = JSON.parse(read('locales/fr.json'));
+  const pageKeys = ['overview', 'pythonApi', 'contractReference'];
+
+  for (const pageKey of pageKeys) {
+    assert.equal(typeof english.docs.pages[pageKey], 'string');
+    assert.equal(typeof french.docs.pages[pageKey], 'string');
+  }
+
+  for (const suffix of ['Title', 'Body']) {
+    for (const pageKey of pageKeys) {
+      assert.equal(typeof english.docs.pageMeta[`${pageKey}${suffix}`], 'string');
+      assert.equal(typeof french.docs.pageMeta[`${pageKey}${suffix}`], 'string');
+    }
+  }
 });
 
 test('locale URL override, persistence, switching, and interpolation work together', async () => {

@@ -1,5 +1,6 @@
 document.addEventListener('alpine:init', () => {
   const pageShell = window.ClinicalPageShell;
+  const docsRouting = window.ClinicalDocsRouting;
 
   Alpine.data('docsPage', () => ({
     switchOn: false,
@@ -8,11 +9,14 @@ document.addEventListener('alpine:init', () => {
     loading: true,
     error: '',
     content: '',
+    docPages: docsRouting.pages,
+    currentPageId: docsRouting.defaultPage.id,
     toc: [],
     activeTocId: '',
     tocScrollHandler: null,
 
     async init() {
+      this.currentPageId = docsRouting.resolvePage(window.location.search).id;
       this.initThemeSwitch();
       await this.initLocale();
       await this.loadMarkdown();
@@ -22,7 +26,23 @@ document.addEventListener('alpine:init', () => {
     ...pageShell.localeMethods,
 
     applyPageMetadata() {
-      pageShell.setPageMetadata(this.t('docs.meta.title'), this.t('docs.meta.description'));
+      const page = docsRouting.pageById(this.currentPageId);
+      pageShell.setPageMetadata(
+        `${this.t(page.titleKey)} | clinical-contract`,
+        this.t(page.bodyKey),
+      );
+    },
+
+    pageTitle() {
+      return this.t(docsRouting.pageById(this.currentPageId).titleKey);
+    },
+
+    pageBody() {
+      return this.t(docsRouting.pageById(this.currentPageId).bodyKey);
+    },
+
+    pageHref(pageId) {
+      return docsRouting.pageHref(pageId, this.locale);
     },
 
     async onLocaleChanged() {
@@ -33,7 +53,8 @@ document.addEventListener('alpine:init', () => {
       this.loading = true;
       this.error = '';
       try {
-        const response = await fetch(`./docs/documentation.${this.locale}.md`, { cache: 'no-cache' });
+        const page = docsRouting.pageById(this.currentPageId);
+        const response = await fetch(`./docs/${page.fileBase}.${this.locale}.md`, { cache: 'no-cache' });
         if (!response.ok) throw new Error(this.t('docs.loadError', { status: response.status }));
         const markdown = await response.text();
         this.content = marked.parse(markdown);

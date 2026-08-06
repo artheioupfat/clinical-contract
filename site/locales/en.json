@@ -44,11 +44,18 @@
     "closingLink": "Read the documentation"
   },
   "docs": {
-    "meta": { "title": "Documentation | clinical-contract", "description": "Clinical-contract documentation: contracts, schemas, data types, quality rules, CLI and Python API." },
     "nav": "Documentation navigation",
-    "heroTitle": "Documentation",
-    "heroBody": "Learn how to write and validate a data contract, then use it to check the compliance of exchanged data.",
-    "toc": "Contents",
+    "onThisPage": "On this page",
+    "pagesAria": "Documentation pages",
+    "pages": { "overview": "Introduction", "pythonApi": "Python API", "contractReference": "Contract reference" },
+    "pageMeta": {
+      "overviewTitle": "Documentation",
+      "overviewBody": "Learn how to write and validate a data contract, then use it to check the compliance of exchanged data.",
+      "pythonApiTitle": "Python API",
+      "pythonApiBody": "Install Clinical-Contract, use its public Python API, and integrate single-table or multi-table checks into your applications.",
+      "contractReferenceTitle": "Data contract reference",
+      "contractReferenceBody": "Build a Clinical-Contract YAML document block by block and understand every supported field, type, and quality operator."
+    },
     "tocAria": "Documentation contents",
     "loading": "Loading documentation...",
     "loadError": "Unable to load the documentation ({status})."

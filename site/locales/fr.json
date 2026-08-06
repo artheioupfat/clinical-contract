@@ -44,11 +44,18 @@
     "closingLink": "Consultez la documentation"
   },
   "docs": {
-    "meta": { "title": "Documentation | clinical-contract", "description": "Documentation clinical-contract : contrats, schémas, types, règles qualité, CLI et API Python." },
     "nav": "Navigation de la documentation",
-    "heroTitle": "Documentation",
-    "heroBody": "Cette documentation présente les principes des contrats de données et accompagne leur rédaction, leur validation et leur utilisation pour vérifier la conformité des données échangées.",
-    "toc": "Sommaire",
+    "onThisPage": "Sur cette page",
+    "pagesAria": "Pages de documentation",
+    "pages": { "overview": "Introduction", "pythonApi": "API Python", "contractReference": "Référence du contrat" },
+    "pageMeta": {
+      "overviewTitle": "Documentation",
+      "overviewBody": "Cette documentation présente les principes des contrats de données et accompagne leur rédaction, leur validation et leur utilisation pour vérifier la conformité des données échangées.",
+      "pythonApiTitle": "API Python",
+      "pythonApiBody": "Installez Clinical-Contract, utilisez son API Python publique et intégrez les contrôles mono-table ou multi-table dans vos applications.",
+      "contractReferenceTitle": "Référence du contrat de données",
+      "contractReferenceBody": "Construisez un contrat YAML bloc par bloc et comprenez chaque champ, chaque type et chaque opérateur qualité pris en charge."
+    },
     "tocAria": "Sommaire de la documentation",
     "loading": "Chargement de la documentation...",
     "loadError": "Impossible de charger la documentation ({status})."
