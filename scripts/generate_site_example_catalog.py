@@ -50,7 +50,6 @@ def example_url(relative_path: Path) -> str:
 def build_catalog() -> dict[str, list[dict[str, str]]]:
     contracts: list[dict[str, str]] = []
     datasets: list[dict[str, str]] = []
-
     for path in sorted(EXAMPLES_DIR.rglob("*"), key=lambda item: item.as_posix().lower()):
         if not path.is_file():
             continue

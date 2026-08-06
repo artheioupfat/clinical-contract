@@ -2,12 +2,12 @@ apiVersion: v3.1.0
 kind: DataContract
 id: covid-diagnosis-cohort
 name: COVID-19 Diagnosis Cohort
-version: 1.0.0
+version: 1.1.0
 status: active
 description:
-  purpose: Define the expected patient-level dataset for a retrospective COVID-19 diagnosis cohort
-  usage: Exchange diagnosed patient characteristics, prior infections, and ICU admissions between care organizations
-  limitations: Synthetic demonstration data only; patient identifiers are fictional and must not be linked to real individuals
+  purpose: Define the patient and diagnosis datasets required for a retrospective COVID-19 cohort
+  usage: Exchange patient characteristics and COVID-19 care events between healthcare organizations
+  limitations: Synthetic demonstration data only; all patient identifiers are fictional
 
 study:
   startDate: "2022-01-01"
@@ -17,26 +17,89 @@ study:
   healthDomain: infectious diseases
 
 schema:
-  - name: covid_diagnosis_cohort
+  - name: patients
     physicalType: TABLE
-    description: One row per patient with a documented COVID-19 diagnosis
+    description: One row per patient included in the COVID-19 cohort
     properties:
       - name: patient_id
         logicalType: string
         physicalType: varchar
-        description: Unique fictional identifier of the patient
+        description: Unique fictional patient identifier shared with the COVID table
         examples:
           - PAT-COVID-000001
         required: true
         quality:
           - type: sql
             description: Patient identifiers must not be null
-            query: SELECT COUNT(*) FROM covid_diagnosis_cohort WHERE patient_id IS NULL
+            query: SELECT COUNT(*) FROM patients WHERE patient_id IS NULL
             expected:
               equal: 0
           - type: sql
-            description: Each patient must appear only once
-            query: SELECT COUNT(*) - COUNT(DISTINCT patient_id) FROM covid_diagnosis_cohort
+            description: Patient identifiers must be unique
+            query: SELECT COUNT(*) - COUNT(DISTINCT patient_id) FROM patients
+            expected:
+              equal: 0
+          - type: sql
+            description: Every cohort patient must have a COVID-19 diagnosis record
+            query: |
+              SELECT COUNT(*)
+              FROM patients AS p
+              LEFT JOIN covid AS c ON c.patient_id = p.patient_id
+              WHERE c.patient_id IS NULL
+            expected:
+              equal: 0
+
+      - name: age
+        logicalType: integer
+        description: Patient age in completed years at cohort diagnosis
+        examples:
+          - 67
+        required: true
+        quality:
+          - type: sql
+            description: Patient age must remain between 0 and 110 years
+            query: SELECT COUNT(*) FROM patients WHERE age IS NULL OR age NOT BETWEEN 0 AND 110
+            expected:
+              equal: 0
+
+      - name: sex
+        logicalType: string
+        physicalType: varchar
+        description: Patient sex encoded as M, F, or O
+        examples:
+          - F
+        required: true
+        quality:
+          - type: sql
+            description: Sex must use one of the permitted categories
+            query: SELECT COUNT(*) FROM patients WHERE sex IS NULL OR sex NOT IN ('M', 'F', 'O')
+            expected:
+              equal: 0
+
+  - name: covid
+    physicalType: TABLE
+    description: One row per patient with a documented COVID-19 diagnosis and related ICU history
+    properties:
+      - name: patient_id
+        logicalType: string
+        physicalType: varchar
+        description: Patient identifier referencing patients.patient_id
+        examples:
+          - PAT-COVID-000001
+        required: true
+        quality:
+          - type: sql
+            description: COVID records must reference an existing patient
+            query: |
+              SELECT COUNT(*)
+              FROM covid AS c
+              LEFT JOIN patients AS p ON p.patient_id = c.patient_id
+              WHERE p.patient_id IS NULL
+            expected:
+              equal: 0
+          - type: sql
+            description: Each patient must have only one cohort diagnosis record
+            query: SELECT COUNT(*) - COUNT(DISTINCT patient_id) FROM covid
             expected:
               equal: 0
 
@@ -50,7 +113,7 @@ schema:
         quality:
           - type: sql
             description: The diagnostic classification must always be CIM-10
-            query: SELECT COUNT(*) FROM covid_diagnosis_cohort WHERE classification_name IS DISTINCT FROM 'CIM-10'
+            query: SELECT COUNT(*) FROM covid WHERE classification_name IS DISTINCT FROM 'CIM-10'
             expected:
               equal: 0
 
@@ -67,7 +130,7 @@ schema:
             description: Diagnosis codes must belong to the permitted COVID-19 CIM-10 subset
             query: |
               SELECT COUNT(*)
-              FROM covid_diagnosis_cohort
+              FROM covid
               WHERE diagnosis_code IS NULL
                 OR diagnosis_code NOT IN ('U07.10', 'U07.11', 'U07.12', 'U07.13', 'U07.14', 'U07.15')
             expected:
@@ -85,43 +148,16 @@ schema:
             description: Diagnosis dates must remain inside the study period
             query: |
               SELECT COUNT(*)
-              FROM covid_diagnosis_cohort
+              FROM covid
               WHERE diagnosis_date IS NULL
                 OR diagnosis_date NOT BETWEEN DATE '2022-01-01' AND DATE '2024-12-31'
-            expected:
-              equal: 0
-
-      - name: age_at_diagnosis
-        logicalType: integer
-        description: Patient age in completed years at the diagnosis date
-        examples:
-          - 67
-        required: true
-        quality:
-          - type: sql
-            description: Age at diagnosis must remain between 0 and 110 years
-            query: SELECT COUNT(*) FROM covid_diagnosis_cohort WHERE age_at_diagnosis IS NULL OR age_at_diagnosis NOT BETWEEN 0 AND 110
-            expected:
-              equal: 0
-
-      - name: sex
-        logicalType: string
-        physicalType: varchar
-        description: Patient sex encoded as M, F, or O
-        examples:
-          - F
-        required: true
-        quality:
-          - type: sql
-            description: Sex must use one of the permitted categories
-            query: SELECT COUNT(*) FROM covid_diagnosis_cohort WHERE sex IS NULL OR sex NOT IN ('M', 'F', 'O')
             expected:
               equal: 0
 
       - name: previous_covid
         logicalType: boolean
         physicalType: boolean
-        description: Whether the patient had a documented COVID-19 diagnosis before the cohort diagnosis
+        description: Whether the patient had a documented COVID-19 diagnosis before cohort inclusion
         examples:
           - false
         required: true
@@ -138,7 +174,7 @@ schema:
             description: Previous COVID-19 status and date must be consistent
             query: |
               SELECT COUNT(*)
-              FROM covid_diagnosis_cohort
+              FROM covid
               WHERE previous_covid IS NULL
                  OR (previous_covid AND previous_covid_date IS NULL)
                  OR (NOT previous_covid AND previous_covid_date IS NOT NULL)
@@ -174,7 +210,7 @@ schema:
             description: ICU status and admission date must be consistent
             query: |
               SELECT COUNT(*)
-              FROM covid_diagnosis_cohort
+              FROM covid
               WHERE icu_admission IS NULL
                  OR (icu_admission AND icu_admission_date IS NULL)
                  OR (NOT icu_admission AND (icu_admission_date IS NOT NULL OR icu_discharge_date IS NOT NULL))
@@ -185,13 +221,13 @@ schema:
             description: ICU discharge must not precede ICU admission
             query: |
               SELECT COUNT(*)
-              FROM covid_diagnosis_cohort
+              FROM covid
               WHERE icu_discharge_date IS NOT NULL
                 AND icu_discharge_date < icu_admission_date
             expected:
               equal: 0
           - type: sql
-            description: Fewer than five percent of patients may still be in ICU
+            description: Fewer than five percent of ICU patients may still be admitted
             query: |
               SELECT COALESCE(
                 100.0
@@ -199,7 +235,7 @@ schema:
                   / NULLIF(COUNT(*) FILTER (WHERE icu_admission), 0),
                 0
               )
-              FROM covid_diagnosis_cohort
+              FROM covid
             expected:
               lessThan: 5
 
