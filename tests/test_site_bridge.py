@@ -142,6 +142,35 @@ schema:
     assert payload["schema_rows"][0]["schema_name"] == "export"
 
 
+def test_browser_bridge_previews_and_releases_paginated_csv(monkeypatch):
+    bridge = _load_bridge(monkeypatch)
+    csv_bytes = b"patient_id,age\nP-001,34\nP-002,52\nP-003,41\n"
+
+    prepared = json.loads(
+        bridge.py_prepare_data_preview(csv_bytes, "patients.csv")
+    )
+
+    assert prepared["error"] == ""
+    assert prepared["columns"] == ["patient_id", "age"]
+    assert prepared["total_rows"] == 3
+
+    page = json.loads(
+        bridge.py_fetch_data_preview_page(prepared["handle"], page=2, page_size=2)
+    )
+
+    assert page["page"] == 2
+    assert page["page_size"] == 2
+    assert page["total_pages"] == 2
+    assert page["rows"] == [["P-003", "41"]]
+    assert json.loads(bridge.py_release_data_preview(prepared["handle"])) == {
+        "released": True
+    }
+    missing = json.loads(
+        bridge.py_fetch_data_preview_page(prepared["handle"], page=1, page_size=2)
+    )
+    assert "Preview session not found" in missing["error"]
+
+
 def test_browser_bridge_reports_duplicate_schema_file_names(tmp_path, monkeypatch):
     bridge = _load_bridge(monkeypatch)
     orders, lines = _data_bytes(tmp_path)

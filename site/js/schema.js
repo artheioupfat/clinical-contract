@@ -1,5 +1,13 @@
 window.ClinicalModules = window.ClinicalModules || {};
 
+function dumpContractYaml(yamlLibrary, contract) {
+  return yamlLibrary.dump(contract, {
+    noRefs: true,
+    lineWidth: 110,
+    sortKeys: false,
+  });
+}
+
 window.ClinicalModules.schema = {
   ensureYamlLibrary() {
     const yamlLib = window.jsyaml;
@@ -398,11 +406,7 @@ window.ClinicalModules.schema = {
         this.schemaActiveIndex
       );
       this.schemaCollection = Array.isArray(contract.schema) ? contract.schema : [];
-      this.yamlText = this.ensureYamlLibrary().dump(contract, {
-        noRefs: true,
-        lineWidth: 110,
-        sortKeys: false,
-      });
+      this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), contract);
       this.yamlName = this.yamlNameGenerated
         ? this.ensureContractCodec().contractFileName(this.schemaDraft?.name)
         : this.yamlName || 'contract.yaml';
@@ -427,11 +431,7 @@ window.ClinicalModules.schema = {
     const schemas = Array.isArray(parsed.schema) ? parsed.schema : [];
     schemas.push({ name: '', physicalType: 'TABLE', properties: [] });
     parsed.schema = schemas;
-    this.yamlText = this.ensureYamlLibrary().dump(parsed, {
-      noRefs: true,
-      lineWidth: 110,
-      sortKeys: false,
-    });
+    this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), parsed);
     this.schemaActiveIndex = schemas.length - 1;
     this.syncSchemaFromYaml({ preserveCurrentOnError: false });
     this.setSchemaSection('schema');
@@ -449,11 +449,7 @@ window.ClinicalModules.schema = {
       schemas.splice(this.schemaActiveIndex, 1);
     }
     parsed.schema = schemas;
-    this.yamlText = this.ensureYamlLibrary().dump(parsed, {
-      noRefs: true,
-      lineWidth: 110,
-      sortKeys: false,
-    });
+    this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), parsed);
     this.schemaActiveIndex = Math.min(this.schemaActiveIndex, schemas.length - 1);
     this.syncSchemaFromYaml({ preserveCurrentOnError: false });
     this.persistEditorSession();

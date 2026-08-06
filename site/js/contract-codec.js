@@ -120,6 +120,25 @@
     'between',
   ];
 
+  const ROOT_KEYS = new Set([
+    'apiVersion', 'kind', 'id', 'name', 'version', 'status', 'description', 'study', 'schema', 'team',
+  ]);
+  const STUDY_KEYS = new Set([
+    'startDate', 'start_date', 'start-date', 'endDate', 'end_date', 'end-date',
+    'type', 'studyType', 'study_type', 'study-type',
+    'objective', 'studyObjective', 'study_objective', 'study-objective',
+    'healthDomain', 'health_domain', 'health-domain', 'domain',
+  ]);
+  const TABLE_KEYS = new Set(['name', 'physicalType', 'description', 'properties']);
+  const PROPERTY_KEYS = new Set([
+    'name', 'logicalType', 'logical_type', 'logical-type',
+    'physicalType', 'physical_type', 'physical-type',
+    'required', 'description', 'examples', 'quality',
+  ]);
+  const QUALITY_KEYS = new Set(['type', 'description', 'query', 'mustBe', 'expected']);
+  const TEAM_KEYS = new Set(['name', 'description', 'members']);
+  const TEAM_MEMBER_KEYS = new Set(['name', 'role', 'email']);
+
   function decodeQualityExpectation(quality = {}) {
     const expected = quality.expected;
     if (expected && typeof expected === 'object' && !Array.isArray(expected)) {
@@ -235,126 +254,93 @@
     return `${slugifyContractId(value) || 'contract'}.yaml`;
   }
 
+  function contractStudyToDraft(study) {
+    return {
+      studyStartDate: readFirstDefined(study, ['startDate', 'start_date', 'start-date']),
+      studyEndDate: readFirstDefined(study, ['endDate', 'end_date', 'end-date']),
+      studyType: readFirstDefined(study, ['type', 'studyType', 'study_type', 'study-type']),
+      studyObjective: readFirstDefined(study, ['objective', 'studyObjective', 'study_objective', 'study-objective']),
+      healthDomain: readFirstDefined(study, ['healthDomain', 'health_domain', 'health-domain', 'domain']),
+      studyExtras: collectExtras(study, STUDY_KEYS),
+    };
+  }
+
+  function qualityRuleToDraft(quality, propertyName, nextRowId) {
+    const source = quality && typeof quality === 'object' ? quality : {};
+    return createQualityRule({
+      propertyName,
+      type: source.type || 'sql',
+      description: source.description || '',
+      query: source.query || '',
+      ...decodeQualityExpectation(source),
+      extras: collectExtras(source, QUALITY_KEYS),
+    }, { nextRowId });
+  }
+
+  function contractPropertyToDraft(property, nextRowId) {
+    const source = property && typeof property === 'object' ? property : {};
+    const logicalType = normalizeTypeToken(
+      readFirstDefined(source, ['logicalType', 'logicaltype', 'logical_type', 'logical-type'])
+    );
+    const physicalType = normalizeTypeToken(
+      readFirstDefined(source, ['physicalType', 'physicaltype', 'physical_type', 'physical-type'])
+    );
+    return {
+      property: createSchemaProperty({
+        name: source.name || '',
+        logicalType,
+        physicalType,
+        required: Boolean(source.required),
+        description: source.description || '',
+        examplesText: examplesToText(source.examples),
+        extras: collectExtras(source, PROPERTY_KEYS),
+      }, { nextRowId }),
+      qualityRules: (Array.isArray(source.quality) ? source.quality : [])
+        .map((quality) => qualityRuleToDraft(quality, source.name || '', nextRowId)),
+    };
+  }
+
+  function contractTeamToDraft(team, nextRowId) {
+    const members = Array.isArray(team.members)
+      ? team.members.map((member) => {
+          const source = member && typeof member === 'object' ? member : {};
+          return createTeamMember({
+            name: source.name || '',
+            role: source.role || '',
+            email: source.email || '',
+            extras: collectExtras(source, TEAM_MEMBER_KEYS),
+          }, { nextRowId });
+        })
+      : [];
+    return {
+      teamName: team.name || '',
+      teamDescription: team.description || '',
+      teamMembers: members,
+      teamExtras: collectExtras(team, TEAM_KEYS),
+    };
+  }
+
   function contractObjectToDraft(contract, options = {}) {
     const parsed = contract && typeof contract === 'object' && !Array.isArray(contract) ? contract : {};
     const nextRowId = createIdFactory(options);
-    const handledRoot = new Set(['apiVersion', 'kind', 'id', 'name', 'version', 'status', 'description', 'study', 'schema', 'team']);
-    const rootExtras = collectExtras(parsed, handledRoot);
-
-    const study = parsed.study && typeof parsed.study === 'object' && !Array.isArray(parsed.study) ? parsed.study : {};
-    const handledStudy = new Set([
-      'startDate',
-      'start_date',
-      'start-date',
-      'endDate',
-      'end_date',
-      'end-date',
-      'type',
-      'studyType',
-      'study_type',
-      'study-type',
-      'objective',
-      'studyObjective',
-      'study_objective',
-      'study-objective',
-      'healthDomain',
-      'health_domain',
-      'health-domain',
-      'domain',
-    ]);
-    const studyExtras = collectExtras(study, handledStudy);
-
     const schemaArray = Array.isArray(parsed.schema) ? parsed.schema : [];
-    const requestedSchemaIndex = Number(options.activeSchemaIndex) || 0;
+    const requestedIndex = Number(options.activeSchemaIndex) || 0;
     const activeSchemaIndex = schemaArray.length
-      ? Math.max(0, Math.min(requestedSchemaIndex, schemaArray.length - 1))
+      ? Math.max(0, Math.min(requestedIndex, schemaArray.length - 1))
       : 0;
-    const firstSchema = schemaArray[activeSchemaIndex]
-      && typeof schemaArray[activeSchemaIndex] === 'object'
+    const table = schemaArray[activeSchemaIndex] && typeof schemaArray[activeSchemaIndex] === 'object'
       ? schemaArray[activeSchemaIndex]
       : {};
-    const handledTable = new Set(['name', 'physicalType', 'description', 'properties']);
-    const tableExtras = collectExtras(firstSchema, handledTable);
-
-    const qualityRules = [];
-    const properties = Array.isArray(firstSchema.properties) ? firstSchema.properties : [];
-    const normalizedProperties = properties.map((prop) => {
-      const source = prop && typeof prop === 'object' ? prop : {};
-      const handledProp = new Set([
-        'name',
-        'logicalType',
-        'logical_type',
-        'logical-type',
-        'physicalType',
-        'physical_type',
-        'physical-type',
-        'required',
-        'description',
-        'examples',
-        'quality',
-      ]);
-      const propExtras = collectExtras(source, handledProp);
-      const logicalType = normalizeTypeToken(
-        readFirstDefined(source, ['logicalType', 'logicaltype', 'logical_type', 'logical-type'])
-      );
-      const physicalType = normalizeTypeToken(
-        readFirstDefined(source, ['physicalType', 'physicaltype', 'physical_type', 'physical-type'])
-      );
-      const rules = Array.isArray(source.quality) ? source.quality : [];
-
-      for (const rule of rules) {
-        const quality = rule && typeof rule === 'object' ? rule : {};
-        const handledRule = new Set(['type', 'description', 'query', 'mustBe', 'expected']);
-        const expectation = decodeQualityExpectation(quality);
-        qualityRules.push(
-          createQualityRule(
-            {
-              propertyName: source.name || '',
-              type: quality.type || 'sql',
-              description: quality.description || '',
-              query: quality.query || '',
-              ...expectation,
-              extras: collectExtras(quality, handledRule),
-            },
-            { nextRowId }
-          )
-        );
-      }
-
-      return createSchemaProperty(
-        {
-          name: source.name || '',
-          logicalType,
-          physicalType,
-          required: Boolean(source.required),
-          description: source.description || '',
-          examplesText: examplesToText(source.examples),
-          extras: propExtras,
-        },
-        { nextRowId }
-      );
-    });
-
-    const team = parsed.team && typeof parsed.team === 'object' && !Array.isArray(parsed.team) ? parsed.team : {};
-    const handledTeam = new Set(['name', 'description', 'members']);
-    const teamExtras = collectExtras(team, handledTeam);
-    const teamMembers = Array.isArray(team.members)
-      ? team.members.map((member) => {
-          const source = member && typeof member === 'object' ? member : {};
-          const handledMember = new Set(['name', 'role', 'email']);
-          return createTeamMember(
-            {
-              name: source.name || '',
-              role: source.role || '',
-              email: source.email || '',
-              extras: collectExtras(source, handledMember),
-            },
-            { nextRowId }
-          );
-        })
-      : [];
-
+    const study = parsed.study && typeof parsed.study === 'object' && !Array.isArray(parsed.study)
+      ? parsed.study
+      : {};
+    const team = parsed.team && typeof parsed.team === 'object' && !Array.isArray(parsed.team)
+      ? parsed.team
+      : {};
+    const decodedProperties = (Array.isArray(table.properties) ? table.properties : [])
+      .map((property) => contractPropertyToDraft(property, nextRowId));
     const description = normalizeContractDescription(parsed.description);
+
     return {
       draft: {
         apiVersion: parsed.apiVersion || 'v3.1.0',
@@ -366,37 +352,100 @@
         descriptionPurpose: description.purpose,
         descriptionUsage: description.usage,
         descriptionLimitations: description.limitations,
-        studyStartDate: readFirstDefined(study, ['startDate', 'start_date', 'start-date']),
-        studyEndDate: readFirstDefined(study, ['endDate', 'end_date', 'end-date']),
-        studyType: readFirstDefined(study, ['type', 'studyType', 'study_type', 'study-type']),
-        studyObjective: readFirstDefined(study, ['objective', 'studyObjective', 'study_objective', 'study-objective']),
-        healthDomain: readFirstDefined(study, ['healthDomain', 'health_domain', 'health-domain', 'domain']),
-        tableName: firstSchema.name || '',
-        tableDescription: firstSchema.description || '',
-        properties: normalizedProperties,
-        qualityRules,
-        teamName: team.name || '',
-        teamDescription: team.description || '',
-        teamMembers,
-        teamExtras,
-        tableExtras,
-        studyExtras,
+        ...contractStudyToDraft(study),
+        tableName: table.name || '',
+        tableDescription: table.description || '',
+        properties: decodedProperties.map((item) => item.property),
+        qualityRules: decodedProperties.flatMap((item) => item.qualityRules),
+        ...contractTeamToDraft(team, nextRowId),
+        tableExtras: collectExtras(table, TABLE_KEYS),
       },
-      rootExtras,
+      rootExtras: collectExtras(parsed, ROOT_KEYS),
       schemas: deepClone(schemaArray),
       activeSchemaIndex,
     };
   }
 
-  function draftToContractObject(
-    draft = {},
-    rootExtras = {},
-    schemaCollection = null,
-    activeSchemaIndex = 0
-  ) {
+  function draftStudyToContract(draft) {
+    const study = deepClone(draft.studyExtras || {});
+    const fields = [
+      ['studyStartDate', 'startDate'], ['studyEndDate', 'endDate'],
+      ['studyType', 'type'], ['studyObjective', 'objective'],
+      ['healthDomain', 'healthDomain'],
+    ];
+    for (const [draftKey, contractKey] of fields) {
+      const value = String(draft[draftKey] || '').trim();
+      if (value) study[contractKey] = value;
+    }
+    return study;
+  }
+
+  function qualityRuleToContract(rule) {
+    const quality = deepClone(rule.extras || {});
+    quality.type = rule.type || 'sql';
+    if (String(rule.description || '').trim()) quality.description = rule.description.trim();
+    else delete quality.description;
+    quality.query = rule.query || '';
+    const operator = QUALITY_COMPARISON_OPERATORS.includes(rule.comparisonOperator)
+      ? rule.comparisonOperator
+      : 'equal';
+    quality.expected = operator === 'between'
+      ? { between: { min: Number(rule.expectedMin ?? 0), max: Number(rule.expectedMax ?? 0) } }
+      : { [operator]: Number(rule.expectedValue ?? 0) };
+    return quality;
+  }
+
+  function draftPropertyToContract(property, qualityRules) {
+    if (!String(property.name || '').trim()) return null;
+    const row = deepClone(property.extras || {});
+    row.name = property.name.trim();
+    if (String(property.logicalType || '').trim()) row.logicalType = property.logicalType.trim();
+    if (String(property.physicalType || '').trim()) row.physicalType = property.physicalType.trim();
+    if (String(property.description || '').trim()) row.description = property.description.trim();
+    const examples = textToExamples(property.examplesText);
+    if (examples.length) row.examples = examples;
+    row.required = Boolean(property.required);
+    const quality = qualityRules
+      .filter((rule) => rule.propertyName === property.name)
+      .map(qualityRuleToContract)
+      .filter((rule) => rule.query || rule.description);
+    if (quality.length) row.quality = quality;
+    return row;
+  }
+
+  function draftTableToContract(draft) {
+    const table = deepClone(draft.tableExtras || {});
+    table.name = draft.tableName || '';
+    table.physicalType = 'TABLE';
+    if (draft.tableDescription) table.description = draft.tableDescription;
+    else delete table.description;
+    table.properties = (draft.properties || [])
+      .map((property) => draftPropertyToContract(property, draft.qualityRules || []))
+      .filter(Boolean);
+    return table;
+  }
+
+  function draftTeamToContract(draft) {
+    const team = deepClone(draft.teamExtras || {});
+    if (String(draft.teamName || '').trim()) team.name = draft.teamName.trim();
+    if (String(draft.teamDescription || '').trim()) team.description = draft.teamDescription.trim();
+    const members = (draft.teamMembers || [])
+      .map((member) => {
+        if (!String(member.name || '').trim()) return null;
+        const row = deepClone(member.extras || {});
+        row.name = member.name.trim();
+        if (String(member.role || '').trim()) row.role = member.role.trim();
+        if (String(member.email || '').trim()) row.email = member.email.trim();
+        return row;
+      })
+      .filter(Boolean);
+    if (members.length) team.members = members;
+    return team;
+  }
+
+  function draftToContractObject(draft = {}, rootExtras = {}, schemaCollection = null, activeSchemaIndex = 0) {
     const top = deepClone(rootExtras || {});
     const contractId = String(draft.id || '').trim() || slugifyContractId(draft.name);
-
     top.apiVersion = draft.apiVersion || 'v3.1.0';
     top.kind = draft.kind || 'DataContract';
     if (contractId) top.id = contractId;
@@ -409,70 +458,11 @@
       limitations: draft.descriptionLimitations || '',
     };
 
-    const study = deepClone(draft.studyExtras || {});
-    if (draft.studyStartDate && String(draft.studyStartDate).trim()) study.startDate = String(draft.studyStartDate).trim();
-    if (draft.studyEndDate && String(draft.studyEndDate).trim()) study.endDate = String(draft.studyEndDate).trim();
-    if (draft.studyType && String(draft.studyType).trim()) study.type = String(draft.studyType).trim();
-    if (draft.studyObjective && String(draft.studyObjective).trim()) study.objective = String(draft.studyObjective).trim();
-    if (draft.healthDomain && String(draft.healthDomain).trim()) study.healthDomain = String(draft.healthDomain).trim();
+    const study = draftStudyToContract(draft);
     if (Object.keys(study).length) top.study = study;
     else delete top.study;
 
-    const table = deepClone(draft.tableExtras || {});
-    table.name = draft.tableName || '';
-    table.physicalType = 'TABLE';
-    if (draft.tableDescription) table.description = draft.tableDescription;
-    else delete table.description;
-
-    table.properties = (draft.properties || [])
-      .map((prop) => {
-        if (!prop.name || !prop.name.trim()) return null;
-        const row = {};
-        row.name = prop.name.trim();
-        if (prop.logicalType && prop.logicalType.trim()) row.logicalType = prop.logicalType.trim();
-        if (prop.physicalType && prop.physicalType.trim()) row.physicalType = prop.physicalType.trim();
-        if (prop.description && prop.description.trim()) row.description = prop.description.trim();
-        const examples = textToExamples(prop.examplesText);
-        if (examples.length) row.examples = examples;
-        row.required = Boolean(prop.required);
-
-        const quality = (draft.qualityRules || [])
-          .filter((rule) => rule.propertyName === prop.name)
-          .map((rule) => {
-            const qualityRow = deepClone(rule.extras || {});
-            qualityRow.type = rule.type || 'sql';
-            if (rule.description && rule.description.trim()) qualityRow.description = rule.description.trim();
-            else delete qualityRow.description;
-            qualityRow.query = rule.query || '';
-            const operator = QUALITY_COMPARISON_OPERATORS.includes(rule.comparisonOperator)
-              ? rule.comparisonOperator
-              : 'equal';
-            if (operator === 'between') {
-              qualityRow.expected = {
-                between: {
-                  min: Number(rule.expectedMin ?? 0),
-                  max: Number(rule.expectedMax ?? 0),
-                },
-              };
-            } else {
-              qualityRow.expected = {
-                [operator]: Number(rule.expectedValue ?? 0),
-              };
-            }
-            return qualityRow;
-          })
-          .filter((rule) => rule.query || rule.description);
-        if (quality.length) row.quality = quality;
-
-        for (const [key, value] of Object.entries(deepClone(prop.extras || {}))) {
-          if (!Object.prototype.hasOwnProperty.call(row, key)) {
-            row[key] = value;
-          }
-        }
-        return row;
-      })
-      .filter(Boolean);
-
+    const table = draftTableToContract(draft);
     if (Array.isArray(schemaCollection) && schemaCollection.length) {
       const schemas = deepClone(schemaCollection);
       const index = Math.max(0, Math.min(Number(activeSchemaIndex) || 0, schemas.length - 1));
@@ -482,24 +472,9 @@
       top.schema = [table];
     }
 
-    const team = deepClone(draft.teamExtras || {});
-    if (draft.teamName && draft.teamName.trim()) team.name = draft.teamName.trim();
-    if (draft.teamDescription && draft.teamDescription.trim()) team.description = draft.teamDescription.trim();
-
-    const members = (draft.teamMembers || [])
-      .map((member) => {
-        const row = deepClone(member.extras || {});
-        if (!member.name || !member.name.trim()) return null;
-        row.name = member.name.trim();
-        if (member.role && member.role.trim()) row.role = member.role.trim();
-        if (member.email && member.email.trim()) row.email = member.email.trim();
-        return row;
-      })
-      .filter(Boolean);
-    if (members.length) team.members = members;
+    const team = draftTeamToContract(draft);
     if (Object.keys(team).length) top.team = team;
     else delete top.team;
-
     return top;
   }
 

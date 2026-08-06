@@ -30,7 +30,9 @@ Then open `http://localhost:8000`.
 - `docs/contract-reference.*.md`: block-by-block YAML contract reference.
 - `app.js`: Alpine root state and composition of the editor feature modules.
 - `partials/header.html`: brand header and theme switch.
-- `partials/editor-panel.html`: contract input, YAML/schema editor, and validation results.
+- `partials/editor-panel.html`: lightweight contract-panel shell.
+- `partials/editor-*.html`: contract empty state, YAML view, builder shell, validation results, and dialogs.
+- `partials/schema-*.html`: independent Fundamentals, Schema, Quality, and Team builder steps.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
 - `partials/data-panel.html`: independent data input, preview, schema, and quality results.
 - `partials/runtime-footer.html`: runtime progress bar and compact footer.

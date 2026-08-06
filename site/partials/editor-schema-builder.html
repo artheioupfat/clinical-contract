@@ -1,0 +1,39 @@
+              <!-- Schema mode: guided builder that keeps the YAML as the source of truth. -->
+              <template x-if="schemaStarted && editorView === 'schema'">
+                <div class="schema-editor">
+                  <div
+                    x-show="schemaParseWarning"
+                    x-cloak
+                    class="schema-warning"
+                    x-text="schemaParseWarning"
+                  ></div>
+
+                  <div class="schema-workflow">
+                    <!-- Builder navigation: high-level contract sections. -->
+                    <aside class="schema-nav">
+                      <div class="schema-nav-head">
+                        <div class="schema-nav-title" x-text="t('editor.builder.title')"></div>
+                      </div>
+
+                      <nav class="schema-nav-list">
+                        <template x-for="section in schemaSections" :key="`schema-section-${section.id}`">
+                          <button type="button" :class="schemaSectionClass(section.id)" @click="setSchemaSection(section.id)">
+                            <span class="schema-nav-copy">
+                              <span class="schema-nav-item-title" x-text="t(section.titleKey)"></span>
+                            </span>
+                          </button>
+                        </template>
+                      </nav>
+
+                   </aside>
+
+                    <section class="schema-workspace">
+                      <div data-include="./partials/schema-fundamentals.html"></div>
+                      <div data-include="./partials/schema-columns.html"></div>
+                      <div data-include="./partials/schema-quality.html"></div>
+                      <div data-include="./partials/schema-team.html"></div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+

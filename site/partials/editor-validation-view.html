@@ -1,0 +1,34 @@
+              <!-- Validation mode: contract-only structure validation results. -->
+              <template x-if="schemaStarted && editorView === 'validation'">
+                <div class="results-shell results-shell--standalone">
+                  <div class="results-table-wrap">
+                    <table class="results-table">
+                      <thead>
+                        <tr>
+                          <th x-text="t('editor.validation.field')"></th>
+                          <th x-text="t('editor.validation.status')"></th>
+                          <th x-text="t('editor.validation.value')"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <template x-if="validateRows.length === 0">
+                          <tr><td colspan="3" class="empty-row" x-text="t('editor.validation.empty')"></td></tr>
+                        </template>
+                        <template x-for="row in validateRows" :key="row.field">
+                          <tr>
+                            <td x-text="row.field"></td>
+                            <td>
+                              <span class="status-chip" :class="statusChipClass(row.status)">
+                                <span class="status-dot" :class="statusDotClass(row.status)"></span>
+                                <span x-text="resultStatusLabel(row.status)"></span>
+                              </span>
+                            </td>
+                            <td x-text="row.value"></td>
+                          </tr>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </template>
+

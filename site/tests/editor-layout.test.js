@@ -5,8 +5,24 @@ const path = require('node:path');
 
 const siteRoot = path.resolve(__dirname, '..');
 
+function readPartialTree(relativePath, visited = new Set()) {
+  const fullPath = path.join(siteRoot, relativePath);
+  if (visited.has(fullPath)) throw new Error(`Circular partial include: ${relativePath}`);
+  visited.add(fullPath);
+  const source = fs.readFileSync(fullPath, 'utf8');
+  const hydrated = source.replace(
+    /<div\s+data-include="\.\/partials\/([^"]+)"\s*><\/div>/g,
+    (_match, childName) => readPartialTree(`partials/${childName}`, new Set(visited))
+  );
+  return hydrated;
+}
+
+function readEditorPanel() {
+  return readPartialTree('partials/editor-panel.html');
+}
+
 test('editor separates contract validation from dataset checks', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
   assert.match(editorPanel, /editorModeButtonClass\('validation'\)/);
@@ -64,7 +80,7 @@ test('quality results expose per-rule execution logs', () => {
 });
 
 test('template selectors use persistent accessible dialogs', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
   assert.match(editorPanel, /x-show="contractTemplateModalOpen"/);
@@ -86,7 +102,7 @@ test('dataset examples use explicit multi-selection before loading', () => {
 });
 
 test('contract reset uses accessible dialog semantics', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
 
   assert.match(editorPanel, /aria-labelledby="reset-contract-title"/);
   assert.match(editorPanel, /id="reset-contract-title"/);
@@ -96,7 +112,7 @@ test('contract reset uses accessible dialog semantics', () => {
 });
 
 test('table removal uses an accessible confirmation dialog', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
   const modalCss = fs.readFileSync(path.join(siteRoot, 'css/src/components/modals.css'), 'utf8');
 
   assert.doesNotMatch(editorPanel, /schema-remove-table-row/);
@@ -111,7 +127,7 @@ test('table removal uses an accessible confirmation dialog', () => {
 });
 
 test('quality editor exposes every supported comparison operator', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
 
   for (const operator of [
     'equal',
@@ -131,7 +147,7 @@ test('quality editor exposes every supported comparison operator', () => {
 });
 
 test('schema and quality sections share the active table selector', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
 
   const tableSelectorCalls = editorPanel.match(/@change="selectSchemaTable\(\$event\.target\.value\)"/g) || [];
   assert.equal(tableSelectorCalls.length, 2);
@@ -142,7 +158,7 @@ test('schema and quality sections share the active table selector', () => {
 });
 
 test('schema heading, table selector, and add action share one axis', () => {
-  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const editorPanel = readEditorPanel();
   const schemaCss = fs.readFileSync(
     path.join(siteRoot, 'css/src/components/schema-builder.css'),
     'utf8'

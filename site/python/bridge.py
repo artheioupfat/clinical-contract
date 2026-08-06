@@ -67,6 +67,7 @@ def _browser_data_sources(contract, data_names_or_buffer, data_buffers=None):
 def _safe_path_literal(source_path: str) -> str:
     return source_path.replace("'", "''")
 
+
 def _quote_identifier(identifier: str) -> str:
     escaped = str(identifier).replace('"', '""')
     return f'"{escaped}"'
@@ -139,6 +140,78 @@ def _serialize_check_response(validate, validate_duration_ms: float, **payload) 
     )
 
 
+def _serialize_check_failure(
+    validate,
+    validate_duration_ms: float,
+    summary: str,
+    error: str,
+) -> str:
+    return _serialize_check_response(
+        validate,
+        validate_duration_ms,
+        schema_rows=[],
+        quality_rows=[],
+        schema_success=False,
+        report_summary=summary,
+        error=error,
+    )
+
+
+def _schema_report_rows(schema_reports) -> tuple[list[dict], bool, set[str]]:
+    rows: list[dict] = []
+    success = True
+    valid_schema_names: set[str] = set()
+
+    for report in schema_reports:
+        if report.success:
+            valid_schema_names.add(report.schema_name)
+        else:
+            success = False
+        if report.error_message:
+            rows.append(
+                {
+                    "schema_name": report.schema_name,
+                    "column": "—",
+                    "required": True,
+                    "yaml_type": "—",
+                    "parquet_type": report.error_message,
+                    "status": "missing",
+                }
+            )
+        rows.extend(
+            {
+                "schema_name": report.schema_name,
+                "column": column.column,
+                "required": column.required,
+                "yaml_type": column.yaml_type,
+                "parquet_type": column.parquet_type,
+                "status": column.status.value,
+            }
+            for column in report.columns
+        )
+    return rows, success, valid_schema_names
+
+
+def _quality_report_rows(report) -> list[dict]:
+    return [
+        {
+            "schema_name": result.schema_name,
+            "property_name": result.property_name,
+            "description": result.description,
+            "status": result.status.value,
+            "obtained": (
+                _to_jsonable(result.obtained)
+                if result.obtained is not None
+                else "error"
+            ),
+            "operator": result.operator.value,
+            "expected": result.expected_display,
+            "log": result.error_message or "",
+        }
+        for result in report.results
+    ]
+
+
 def py_run_contract_check(
     yaml_text: str,
     data_names_or_buffer,
@@ -149,27 +222,21 @@ def py_run_contract_check(
     validate_duration_ms = (perf_counter() - validate_started_at) * 1000
 
     if not validate["success"]:
-        return _serialize_check_response(
+        return _serialize_check_failure(
             validate,
             validate_duration_ms,
-            schema_rows=[],
-            quality_rows=[],
-            schema_success=False,
-            report_summary="Validation failed.",
-            error="YAML structure is invalid.",
+            "Validation failed.",
+            "YAML structure is invalid.",
         )
 
     try:
         contract, _ = load_contract(yaml_text)
     except Exception as exc:
-        return _serialize_check_response(
+        return _serialize_check_failure(
             validate,
             validate_duration_ms,
-            schema_rows=[],
-            quality_rows=[],
-            schema_success=False,
-            report_summary="Contract loading failed.",
-            error=str(exc),
+            "Contract loading failed.",
+            str(exc),
         )
 
     try:
@@ -179,89 +246,37 @@ def py_run_contract_check(
             data_buffers,
         )
     except Exception as exc:
-        return _serialize_check_response(
+        return _serialize_check_failure(
             validate,
             validate_duration_ms,
-            schema_rows=[],
-            quality_rows=[],
-            schema_success=False,
-            report_summary="Data file mapping failed.",
-            error=str(exc),
+            "Data file mapping failed.",
+            str(exc),
         )
 
     try:
         schema_reports = contract.check_schema(data_sources)
     except Exception as exc:
-        return _serialize_check_response(
+        return _serialize_check_failure(
             validate,
             validate_duration_ms,
-            schema_rows=[],
-            quality_rows=[],
-            schema_success=False,
-            report_summary="Schema validation failed.",
-            error=str(exc),
+            "Schema validation failed.",
+            str(exc),
         )
 
-    schema_rows = []
-    schema_success = True
-    valid_schema_names: set[str] = set()
-    for schema_report in schema_reports:
-        if not schema_report.success:
-            schema_success = False
-        else:
-            valid_schema_names.add(schema_report.schema_name)
-        if schema_report.error_message:
-            schema_rows.append(
-                {
-                    "schema_name": schema_report.schema_name,
-                    "column": "—",
-                    "required": True,
-                    "yaml_type": "—",
-                    "parquet_type": schema_report.error_message,
-                    "status": "missing",
-                }
-            )
-        for column in schema_report.columns:
-            schema_rows.append(
-                {
-                    "schema_name": schema_report.schema_name,
-                    "column": column.column,
-                    "required": column.required,
-                    "yaml_type": column.yaml_type,
-                    "parquet_type": column.parquet_type,
-                    "status": column.status.value,
-                }
-            )
+    schema_rows, schema_success, valid_schema_names = _schema_report_rows(
+        schema_reports
+    )
 
     report = contract.check(
         data_sources,
         backend="duckdb",
         include_schemas=valid_schema_names,
     )
-    quality_rows = []
-    for result in report.results:
-        quality_rows.append(
-            {
-                "schema_name": result.schema_name,
-                "property_name": result.property_name,
-                "description": result.description,
-                "status": result.status.value,
-                "obtained": (
-                    _to_jsonable(result.obtained)
-                    if result.obtained is not None
-                    else "error"
-                ),
-                "operator": result.operator.value,
-                "expected": result.expected_display,
-                "log": result.error_message or "",
-            }
-        )
-
     return _serialize_check_response(
         validate,
         validate_duration_ms,
         schema_rows=schema_rows,
-        quality_rows=quality_rows,
+        quality_rows=_quality_report_rows(report),
         schema_success=schema_success,
         report_summary=(
             report.summary
@@ -273,11 +288,57 @@ def py_run_contract_check(
         error="",
     )
 
+
 def _get_query_columns(conn, relation_sql: str) -> list[str]:
     cursor = conn.execute(f"SELECT * FROM {relation_sql} LIMIT 0")
     if not cursor.description:
         return []
     return [str(desc[0]) for desc in cursor.description]
+
+
+def _preview_payload(
+    *,
+    handle: str = "",
+    columns: list[str] | None = None,
+    rows: list[list] | None = None,
+    page: int = 1,
+    page_size: int = 50,
+    total_rows: int = 0,
+    error: str = "",
+) -> str:
+    total_pages = (
+        (total_rows + page_size - 1) // page_size if total_rows else 0
+    )
+    return json.dumps(
+        {
+            "handle": handle,
+            "columns": columns or [],
+            "rows": rows or [],
+            "page": page,
+            "page_size": page_size,
+            "total_rows": total_rows,
+            "total_pages": total_pages,
+            "error": error,
+        }
+    )
+
+
+def _preview_page_bounds(
+    page: int,
+    page_size: int,
+    total_rows: int,
+) -> tuple[int, int, int]:
+    safe_page_size = int(page_size)
+    if safe_page_size <= 0:
+        safe_page_size = 50
+    safe_page_size = min(safe_page_size, _PREVIEW_MAX_PAGE_SIZE)
+    total_pages = (
+        (total_rows + safe_page_size - 1) // safe_page_size
+        if total_rows
+        else 0
+    )
+    safe_page = 1 if total_pages == 0 else max(1, min(int(page), total_pages))
+    return safe_page, safe_page_size, (safe_page - 1) * safe_page_size
 
 
 def py_prepare_data_preview(data_buffer, file_name: str = "") -> str:
@@ -304,44 +365,22 @@ def py_prepare_data_preview(data_buffer, file_name: str = "") -> str:
             "total_rows": total_rows,
         }
 
-        return json.dumps(
-            {
-                "handle": handle,
-                "columns": columns,
-                "total_rows": total_rows,
-                "page_size": 50,
-                "total_pages": ((total_rows + 49) // 50) if total_rows else 0,
-                "error": "",
-            }
+        return _preview_payload(
+            handle=handle,
+            columns=columns,
+            total_rows=total_rows,
         )
     except Exception as exc:
         _cleanup_temp_path(temp_path)
-        return json.dumps(
-            {
-                "handle": "",
-                "columns": [],
-                "total_rows": 0,
-                "page_size": 50,
-                "total_pages": 0,
-                "error": str(exc),
-            }
-        )
+        return _preview_payload(error=str(exc))
 
 
 def py_fetch_data_preview_page(handle: str, page: int = 1, page_size: int = 50) -> str:
     session = _PREVIEW_SESSIONS.get(str(handle))
     if not session:
-        return json.dumps(
-            {
-                "handle": handle,
-                "columns": [],
-                "rows": [],
-                "page": 1,
-                "page_size": 50,
-                "total_rows": 0,
-                "total_pages": 0,
-                "error": "Preview session not found. Load a data file again.",
-            }
+        return _preview_payload(
+            handle=handle,
+            error="Preview session not found. Load a data file again.",
         )
 
     try:
@@ -349,18 +388,11 @@ def py_fetch_data_preview_page(handle: str, page: int = 1, page_size: int = 50) 
         columns = list(session.get("columns") or [])
         total_rows = int(session.get("total_rows") or 0)
 
-        safe_page_size = int(page_size)
-        if safe_page_size <= 0:
-            safe_page_size = 50
-        safe_page_size = min(safe_page_size, _PREVIEW_MAX_PAGE_SIZE)
-
-        total_pages = ((total_rows + safe_page_size - 1) // safe_page_size) if total_rows else 0
-        safe_page = int(page)
-        if total_pages == 0:
-            safe_page = 1
-        else:
-            safe_page = max(1, min(safe_page, total_pages))
-        offset = (safe_page - 1) * safe_page_size
+        safe_page, safe_page_size, offset = _preview_page_bounds(
+            page,
+            page_size,
+            total_rows,
+        )
 
         import duckdb
         with duckdb.connect() as conn:
@@ -379,31 +411,16 @@ def py_fetch_data_preview_page(handle: str, page: int = 1, page_size: int = 50) 
 
         serializable_rows = [[_to_jsonable(value) for value in row] for row in rows]
 
-        return json.dumps(
-            {
-                "handle": handle,
-                "columns": columns,
-                "rows": serializable_rows,
-                "page": safe_page,
-                "page_size": safe_page_size,
-                "total_rows": total_rows,
-                "total_pages": total_pages,
-                "error": "",
-            }
+        return _preview_payload(
+            handle=handle,
+            columns=columns,
+            rows=serializable_rows,
+            page=safe_page,
+            page_size=safe_page_size,
+            total_rows=total_rows,
         )
     except Exception as exc:
-        return json.dumps(
-            {
-                "handle": handle,
-                "columns": [],
-                "rows": [],
-                "page": 1,
-                "page_size": 50,
-                "total_rows": 0,
-                "total_pages": 0,
-                "error": str(exc),
-            }
-        )
+        return _preview_payload(handle=handle, error=str(exc))
 
 
 def py_release_data_preview(handle: str) -> str:

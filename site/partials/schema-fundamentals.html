@@ -1,0 +1,81 @@
+                      <!-- Fundamentals: contract identity and business description. -->
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'fundamentals'" x-cloak>
+                        <div class="schema-stage-bar">
+                          <div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.fundamentals')"></div>
+                          </div>
+                        </div>
+                        <div class="schema-business-stack">
+                          <label class="schema-form-field">
+                            <span class="schema-form-label"><span x-text="t('editor.builder.contractName')"></span> <span class="schema-required" x-show="showRequiredFor('name')" x-cloak x-text="t('common.required')"></span></span>
+                            <input type="text" x-model="schemaDraft.name" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('name')" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label"><span x-text="t('editor.builder.contractVersion')"></span> <span class="schema-required" x-show="showRequiredFor('version')" x-cloak x-text="t('common.required')"></span></span>
+                            <input type="text" x-model="schemaDraft.version" @input.debounce.200ms="pushSchemaToYaml()" :class="requiredInputClass('version')" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field schema-status-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.status')"></span>
+                            <span class="schema-status-toggle">
+                              <input
+                                type="checkbox"
+                                class="column-required-checkbox"
+                                :checked="isContractActive()"
+                                @change="setContractActive($event.target.checked)"
+                              />
+                              <span x-text="t('editor.builder.active')"></span>
+                            </span>
+                          </label>
+                          <label class="schema-form-field schema-wide-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.purpose')"></span>
+                            <textarea x-model="schemaDraft.descriptionPurpose" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.purposePlaceholder')"></textarea>
+                          </label>
+                          <label class="schema-form-field schema-wide-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.usage')"></span>
+                            <textarea x-model="schemaDraft.descriptionUsage" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.usagePlaceholder')"></textarea>
+                          </label>
+                          <label class="schema-form-field schema-wide-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.limitations')"></span>
+                            <textarea x-model="schemaDraft.descriptionLimitations" @input.debounce.250ms="pushSchemaToYaml()" rows="2" class="schema-input schema-form-control" :placeholder="t('editor.builder.limitationsPlaceholder')"></textarea>
+                          </label>
+                          <div class="schema-inline-grid schema-wide-field">
+                            <label class="schema-form-field">
+                              <span class="schema-form-label" x-text="t('editor.builder.studyStart')"></span>
+                              <input type="date" x-model="schemaDraft.studyStartDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                            </label>
+                            <label class="schema-form-field">
+                              <span class="schema-form-label" x-text="t('editor.builder.studyEnd')"></span>
+                              <input type="date" x-model="schemaDraft.studyEndDate" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                            </label>
+                          </div>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.studyType')"></span>
+                            <select x-model="schemaDraft.studyType" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
+                              <option value="" x-text="t('common.notSpecified')"></option>
+                              <option value="cohort" x-text="t('editor.builder.studyTypes.cohort')"></option>
+                              <option value="cross-sectional" x-text="t('editor.builder.studyTypes.crossSectional')"></option>
+                              <option value="case-control" x-text="t('editor.builder.studyTypes.caseControl')"></option>
+                              <option value="registry" x-text="t('editor.builder.studyTypes.registry')"></option>
+                              <option value="clinical-trial" x-text="t('editor.builder.studyTypes.clinicalTrial')"></option>
+                              <option value="retrospective" x-text="t('editor.builder.studyTypes.retrospective')"></option>
+                              <option value="prospective" x-text="t('editor.builder.studyTypes.prospective')"></option>
+                            </select>
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.studyObjective')"></span>
+                            <select x-model="schemaDraft.studyObjective" @change="pushSchemaToYaml()" class="schema-input schema-form-control">
+                              <option value="" x-text="t('common.notSpecified')"></option>
+                              <option value="predictive" x-text="t('editor.builder.objectives.predictive')"></option>
+                              <option value="therapeutic" x-text="t('editor.builder.objectives.therapeutic')"></option>
+                              <option value="diagnostic" x-text="t('editor.builder.objectives.diagnostic')"></option>
+                              <option value="epidemiological" x-text="t('editor.builder.objectives.epidemiological')"></option>
+                              <option value="descriptive" x-text="t('editor.builder.objectives.descriptive')"></option>
+                              <option value="operational" x-text="t('editor.builder.objectives.operational')"></option>
+                            </select>
+                          </label>
+                          <label class="schema-form-field schema-wide-field">
+                            <span class="schema-form-label" x-text="t('editor.builder.healthDomain')"></span>
+                            <input type="text" x-model="schemaDraft.healthDomain" @input.debounce.200ms="pushSchemaToYaml()" class="schema-input schema-form-control" :placeholder="t('editor.builder.healthPlaceholder')" />
+                          </label>
+                        </div>
+                      </div>
