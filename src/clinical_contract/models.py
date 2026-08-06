@@ -105,7 +105,7 @@ class Description(BaseModel):
 
 
 class Quality(BaseModel):
-    type: str
+    type: str = "sql"
     description: str = ""
     query: str = ""
     mustBe: Optional[NumericValue] = None

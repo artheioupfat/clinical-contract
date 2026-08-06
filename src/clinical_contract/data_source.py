@@ -33,7 +33,7 @@ def _materialize_data_source(path_or_bytes: DataSource) -> tuple[str, str | None
     return file_path, None, Path(file_path).suffix.lower()
 
 
-def _read_data_source(path_or_bytes: DataSource):
+def _read_data_source(path_or_bytes: DataSource) -> dict[str, str]:
     """Return the DuckDB column types detected in a CSV or Parquet source."""
     file_path, cleanup, ext = _materialize_data_source(path_or_bytes)
     file_path_literal = file_path.replace("'", "''")
@@ -53,7 +53,7 @@ def _read_data_source(path_or_bytes: DataSource):
                     rows = conn.execute(
                         f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
                     ).fetchall()
-                except Exception as parquet_exc:
+                except Exception:
                     try:
                         rows = conn.execute(
                             f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"

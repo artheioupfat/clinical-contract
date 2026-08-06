@@ -172,6 +172,13 @@ def test_check_backend_inconnu():
         contract.check("fake.parquet", backend="mysql")
 
 
+def test_check_rejects_unknown_include_schema():
+    contract, _ = load_contract(YAML_COMPLET)
+
+    with pytest.raises(ValueError, match="include_schemas contains unknown"):
+        contract.check("unused.parquet", include_schemas={"patient"})
+
+
 def test_check_sans_quality_rules():
     contract, _ = load_contract(YAML_SANS_QUALITY)
     report = contract.check("unused.parquet", backend="duckdb")
@@ -179,6 +186,37 @@ def test_check_sans_quality_rules():
     assert report.code == 0
     assert report.results == []
     assert "No executable SQL quality checks" in report.summary
+
+
+def test_check_ignores_non_sql_quality_rule_even_when_query_is_present():
+    yaml_non_sql_quality = YAML_SANS_QUALITY.replace(
+        "required: true",
+        """required: true
+        quality:
+          - type: library
+            description: Managed by another quality engine
+            query: SELECT 1
+            expected:
+              equal: 1""",
+    )
+    contract, _ = load_contract(yaml_non_sql_quality)
+
+    report = contract.check("unused.parquet", backend="duckdb")
+
+    assert report.success is True
+    assert report.code == 0
+    assert report.results == []
+
+
+def test_check_treats_missing_quality_type_as_sql(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002", "A003"])
+    yaml_implicit_sql = YAML_COMPLET.replace("          - type: sql\n", "          -\n")
+    contract, _ = load_contract(yaml_implicit_sql)
+
+    report = contract.check(parquet_file, backend="duckdb")
+
+    assert report.success is True
+    assert len(report.passed()) == 1
 
 
 def test_check_ignores_non_sql_quality_rules_without_query():

@@ -24,7 +24,10 @@ def data_source_name(source: DataSource) -> str:
 
 def _schema_names(schemas: Sequence[SchemaItem]) -> list[str]:
     names = [schema.name for schema in schemas]
-    duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
+    normalized_counts = Counter(name.casefold() for name in names)
+    duplicates = sorted(
+        name for name in names if normalized_counts[name.casefold()] > 1
+    )
     if duplicates:
         raise ValueError(
             "Schema names must be unique to resolve data sources: "

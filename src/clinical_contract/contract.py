@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .models import (
     ContractReport,
     Description,
-    Property,
-    Quality,
     SchemaCheckReport,
     SchemaItem,
     ValidateReport,
@@ -32,6 +30,17 @@ class DataContract(BaseModel):
     schema_: list[SchemaItem] = Field(alias="schema")
 
     model_config = {"populate_by_name": True}
+
+    @model_validator(mode="after")
+    def enforce_structure(self) -> DataContract:
+        """Reject models that do not satisfy the public contract rules."""
+        report = validate_contract_structure(self.model_dump(by_alias=True))
+        if not report.success:
+            details = "; ".join(
+                f"{field.field}: {field.display_value}" for field in report.missing()
+            )
+            raise ValueError(f"Invalid data contract structure: {details}")
+        return self
 
     @classmethod
     def validate_structure(cls, raw: dict) -> ValidateReport:

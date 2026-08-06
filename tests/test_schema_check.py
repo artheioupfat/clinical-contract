@@ -169,3 +169,38 @@ schema:
     assert reports[0].columns[0].yaml_type == "not specified"
     assert reports[0].columns[0].parquet_type == "uint32"
     assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_whitespace_types_are_treated_as_unspecified(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_without_type = """
+apiVersion: v1.0.0
+kind: DataContract
+id: whitespace-type-contract
+name: Whitespace Type Contract
+version: 1.0.0
+status: active
+description:
+  purpose: Test
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: "  "
+        physicalType: "  "
+        required: true
+"""
+    contract, _ = load_contract(yaml_without_type)
+
+    reports = contract.check_schema(parquet_file)
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "not specified"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok

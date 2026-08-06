@@ -23,6 +23,15 @@ REQUIRED_FIELDS = [
     "schema",
 ]
 REQUIRED_SCHEMA_FIELDS = ["name", "physicalType", "description", "properties"]
+REQUIRED_TEXT_FIELDS = {
+    "apiVersion",
+    "kind",
+    "id",
+    "name",
+    "version",
+    "status",
+}
+DESCRIPTION_FIELDS = {"purpose", "usage", "limitations"}
 
 
 def _non_empty_string(value: Any) -> bool:
@@ -51,16 +60,26 @@ def _validate_property(value: Any, path: str) -> tuple[list[str], bool]:
         return [f"{path} invalid (not an object)"], False
     if "name" not in value:
         return [f"{path} missing name"], False
+    if not _non_empty_string(value.get("name")):
+        return [f"{path}.name empty or invalid"], False
 
     required = value.get("required")
     if required is not None and type(required) is not bool:
         return [f"{path}.required must be true or false"], False
 
+    description = value.get("description")
+    if description is not None and not isinstance(description, str):
+        return [f"{path}.description must be a string"], False
+
     logical_type = value.get("logicalType")
+    if logical_type is not None and not isinstance(logical_type, str):
+        return [f"{path}.logicalType must be a string"], False
     if _non_empty_string(logical_type) and not _is_supported_logical_type(logical_type):
         return [f"{path}.logicalType unsupported: {logical_type!r}"], False
 
     physical_type = value.get("physicalType")
+    if physical_type is not None and not isinstance(physical_type, str):
+        return [f"{path}.physicalType must be a string"], False
     if _non_empty_string(physical_type) and not _is_supported_physical_type(
         physical_type
     ):
@@ -93,16 +112,25 @@ def _validate_schema(value: Any) -> tuple[bool, str]:
         schema_name = schema.get("name")
         if not _non_empty_string(schema_name):
             errors.append(f"{schema_path}.name empty or invalid")
-        elif schema_name in schema_names:
+        elif schema_name.casefold() in schema_names:
             errors.append(f"{schema_path}.name duplicate: {schema_name!r}")
         else:
-            schema_names.add(schema_name)
+            schema_names.add(schema_name.casefold())
+
+        physical_type = schema.get("physicalType")
+        if not _non_empty_string(physical_type):
+            errors.append(f"{schema_path}.physicalType empty or invalid")
+
+        description = schema.get("description")
+        if not isinstance(description, str):
+            errors.append(f"{schema_path}.description must be a string")
 
         properties = schema.get("properties")
         if not isinstance(properties, list) or not properties:
             errors.append(f"{schema_path}.properties empty or invalid")
             continue
 
+        property_names: set[str] = set()
         for property_index, prop in enumerate(properties):
             property_errors, is_column = _validate_property(
                 prop,
@@ -110,6 +138,15 @@ def _validate_schema(value: Any) -> tuple[bool, str]:
             )
             errors.extend(property_errors)
             total_columns += int(is_column)
+            if is_column:
+                property_name = prop["name"].casefold()
+                if property_name in property_names:
+                    errors.append(
+                        f"{schema_path}.properties[{property_index}].name "
+                        f"duplicate: {prop['name']!r}"
+                    )
+                else:
+                    property_names.add(property_name)
 
     if errors:
         return False, f"{len(errors)} error(s): {errors[0]}"
@@ -130,8 +167,23 @@ def validate_contract_structure(raw: dict) -> ValidateReport:
         elif field == "schema":
             present, display = _validate_schema(value)
         elif field == "description":
-            present = isinstance(value, dict)
-            display = "structure valid" if present else "invalid (not an object)"
+            if not isinstance(value, dict):
+                present, display = False, "invalid (not an object)"
+            else:
+                invalid_children = sorted(
+                    child
+                    for child in DESCRIPTION_FIELDS
+                    if child in value and not isinstance(value[child], str)
+                )
+                present = not invalid_children
+                display = (
+                    "structure valid"
+                    if present
+                    else f"invalid string field(s): {', '.join(invalid_children)}"
+                )
+        elif field in REQUIRED_TEXT_FIELDS:
+            present = _non_empty_string(value)
+            display = str(value) if present else "empty or invalid"
         else:
             present, display = True, str(value)
 

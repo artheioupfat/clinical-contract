@@ -205,6 +205,15 @@ def run_quality_checks(
             f"Unknown backend: '{backend}'. Allowed values: ['auto', 'duckdb']"
         )
 
+    schema_names = {schema.name for schema in schemas}
+    if include_schemas is not None:
+        unknown_schemas = sorted(include_schemas - schema_names)
+        if unknown_schemas:
+            raise ValueError(
+                "include_schemas contains unknown schema name(s): "
+                + ", ".join(unknown_schemas)
+            )
+
     quality_jobs: list[_QualityJob] = []
     for schema_item in schemas:
         if include_schemas is not None and schema_item.name not in include_schemas:
@@ -214,6 +223,8 @@ def run_quality_checks(
                 continue
 
             for q in prop.quality:
+                if q.type.strip().casefold() != "sql":
+                    continue
                 if not q.query.strip():
                     continue
 
@@ -251,8 +262,6 @@ def run_quality_checks(
                 error_message=str(exc),
             )
         )
-
-    schema_names = {schema.name for schema in schemas}
 
     resolved_sources = resolve_schema_sources(schemas, data_sources)
     conn = None
