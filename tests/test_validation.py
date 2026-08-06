@@ -184,6 +184,17 @@ schema:
     assert desc_field.display_value == "invalid (not an object)"
 
 
+def test_validate_structure_rejects_duplicate_schema_names():
+    raw = load_raw(YAML_COMPLET)
+    raw["schema"].append(dict(raw["schema"][0]))
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "schema[1].name duplicate" in schema_field.display_value
+
+
 def test_validate_structure_accepts_standard_optional_column_metadata():
     yaml_valid = """
 apiVersion: v3.1.0

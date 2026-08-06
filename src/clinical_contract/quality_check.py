@@ -24,6 +24,7 @@ from .models import (
     QualityResult,
     SchemaItem,
 )
+from .sources import DataSources, resolve_schema_sources
 
 _UNSAFE_QUALITY_SQL_MESSAGE = (
     "Unsafe quality SQL: exactly one read-only SELECT statement is required."
@@ -194,10 +195,11 @@ class _QualityJob:
 
 def run_quality_checks(
     schemas: list[SchemaItem],
-    data_path: str | bytes,
+    data_sources: DataSources,
     backend: str = "auto",
+    include_schemas: set[str] | None = None,
 ) -> ContractReport:
-    """Execute every SQL quality rule through one hardened DuckDB session."""
+    """Execute SQL rules across schema views in one hardened DuckDB session."""
     if backend not in {"auto", "duckdb"}:
         raise ValueError(
             f"Unknown backend: '{backend}'. Allowed values: ['auto', 'duckdb']"
@@ -205,6 +207,8 @@ def run_quality_checks(
 
     quality_jobs: list[_QualityJob] = []
     for schema_item in schemas:
+        if include_schemas is not None and schema_item.name not in include_schemas:
+            continue
         for prop in schema_item.properties:
             if not prop.quality:
                 continue
@@ -248,44 +252,58 @@ def run_quality_checks(
             )
         )
 
-    schema_names = {job.schema_name for job in quality_jobs}
-    source_table_name = "__clinical_contract_quality_source"
-    while source_table_name in schema_names:
-        source_table_name += "_"
+    schema_names = {schema.name for schema in schemas}
 
+    resolved_sources = resolve_schema_sources(schemas, data_sources)
     conn = None
-    temp_path = None
+    temp_paths: list[str] = []
     try:
-        source_path, temp_path, ext = _materialize_data_source(data_path)
         conn = duckdb.connect()
         _configure_quality_connection(conn)
-        _materialize_data_source_table(
-            conn,
-            source_table_name,
-            source_path,
-            ext,
-        )
+        source_errors: dict[str, Exception] = {}
+        prepared_views: set[str] = set()
+        for index, schema_item in enumerate(schemas):
+            source = resolved_sources.get(schema_item.name)
+            if source is None:
+                source_errors[schema_item.name] = ValueError(
+                    f"No data file is mapped to schema '{schema_item.name}'."
+                )
+                continue
+
+            table_name = f"__clinical_contract_quality_source_{index}"
+            while table_name in schema_names:
+                table_name += "_"
+            try:
+                source_path, temp_path, ext = _materialize_data_source(source)
+                if temp_path:
+                    temp_paths.append(temp_path)
+                _materialize_data_source_table(
+                    conn,
+                    table_name,
+                    source_path,
+                    ext,
+                )
+                _create_data_source_view(conn, schema_item.name, table_name)
+                prepared_views.add(schema_item.name)
+            except Exception as exc:
+                source_errors[schema_item.name] = exc
         _lock_quality_connection(conn)
     except Exception as exc:
         for job in quality_jobs:
             append_error(job, exc)
     else:
-        prepared_views: dict[str, Exception | None] = {}
         for job in quality_jobs:
+            source_error = source_errors.get(job.schema_name)
+            if source_error is not None:
+                append_error(job, source_error)
+                continue
             if job.schema_name not in prepared_views:
-                try:
-                    _create_data_source_view(
-                        conn,
-                        job.schema_name,
-                        source_table_name,
-                    )
-                    prepared_views[job.schema_name] = None
-                except Exception as exc:
-                    prepared_views[job.schema_name] = exc
-
-            view_error = prepared_views[job.schema_name]
-            if view_error is not None:
-                append_error(job, view_error)
+                append_error(
+                    job,
+                    ValueError(
+                        f"Data view for schema '{job.schema_name}' is unavailable."
+                    ),
+                )
                 continue
 
             try:
@@ -320,9 +338,10 @@ def run_quality_checks(
     finally:
         if conn is not None:
             conn.close()
-        _cleanup_temp_path(temp_path)
+        for temp_path in temp_paths:
+            _cleanup_temp_path(temp_path)
 
-    # Code de retour
+    # Return code
     has_error = any(r.status == CheckStatus.error for r in results)
     has_failed = any(r.status == CheckStatus.failed for r in results)
     all_ok = not has_error and not has_failed

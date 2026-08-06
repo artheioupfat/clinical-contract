@@ -15,6 +15,7 @@ from .models import (
 )
 from .quality_check import run_quality_checks
 from .schema_check import check_contract_schema
+from .sources import DataSources
 from .validation import validate_contract_structure
 
 
@@ -37,14 +38,20 @@ class DataContract(BaseModel):
         """Validate the required structure of a raw contract mapping."""
         return validate_contract_structure(raw)
 
-    def check_schema(self, data_path: str | bytes) -> list[SchemaCheckReport]:
-        """Compare contract columns and types with a CSV or Parquet source."""
-        return check_contract_schema(self.schema_, data_path)
+    def check_schema(self, data_sources: DataSources) -> list[SchemaCheckReport]:
+        """Compare each contract schema with its CSV or Parquet source."""
+        return check_contract_schema(self.schema_, data_sources)
 
     def check(
         self,
-        data_path: str | bytes,
+        data_sources: DataSources,
         backend: str = "auto",
+        include_schemas: set[str] | None = None,
     ) -> ContractReport:
-        """Execute SQL quality rules against a CSV or Parquet source."""
-        return run_quality_checks(self.schema_, data_path, backend=backend)
+        """Execute SQL quality rules across resolved CSV or Parquet tables."""
+        return run_quality_checks(
+            self.schema_,
+            data_sources,
+            backend=backend,
+            include_schemas=include_schemas,
+        )

@@ -78,6 +78,7 @@ def _validate_schema(value: Any) -> tuple[bool, str]:
 
     errors = []
     total_columns = 0
+    schema_names: set[str] = set()
     for schema_index, schema in enumerate(value):
         schema_path = f"schema[{schema_index}]"
         if not isinstance(schema, dict):
@@ -88,6 +89,14 @@ def _validate_schema(value: Any) -> tuple[bool, str]:
         if missing:
             errors.append(f"{schema_path} missing {', '.join(missing)}")
             continue
+
+        schema_name = schema.get("name")
+        if not _non_empty_string(schema_name):
+            errors.append(f"{schema_path}.name empty or invalid")
+        elif schema_name in schema_names:
+            errors.append(f"{schema_path}.name duplicate: {schema_name!r}")
+        else:
+            schema_names.add(schema_name)
 
         properties = schema.get("properties")
         if not isinstance(properties, list) or not properties:
