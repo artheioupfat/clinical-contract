@@ -74,7 +74,7 @@
   }
 
   .schema-stage-bar {
-    @apply mb-4 flex items-start justify-between gap-3 border-b pb-3;
+    @apply mb-4 flex items-center justify-between gap-3 border-b pb-3;
     border-color: var(--cc-border);
   }
 

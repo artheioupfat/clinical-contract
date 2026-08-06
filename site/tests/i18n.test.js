@@ -65,6 +65,16 @@ test('French and English catalogs expose exactly the same translation keys', () 
   assert.deepEqual(flattenKeys(french).sort(), flattenKeys(english).sort());
 });
 
+test('execution time labels use the same colon spacing in both locales', () => {
+  const english = JSON.parse(read('locales/en.json'));
+  const french = JSON.parse(read('locales/fr.json'));
+
+  for (const catalog of [english, french]) {
+    assert.match(catalog.editor.footer.validate, / :$/);
+    assert.match(catalog.editor.footer.check, / :$/);
+  }
+});
+
 test('every literal translation key used by the site exists in both catalogs', () => {
   const english = JSON.parse(read('locales/en.json'));
   const french = JSON.parse(read('locales/fr.json'));

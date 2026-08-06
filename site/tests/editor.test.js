@@ -172,7 +172,7 @@ test('editor module loads only the selected contract template', async () => {
     syncSchemaFromYaml() {},
     setSchemaSection() {},
     persistEditorSession() {},
-    loadDataFile() { dataLoads += 1; },
+    loadDataFiles() { dataLoads += 1; },
   };
 
   try {

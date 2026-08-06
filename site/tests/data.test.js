@@ -79,21 +79,70 @@ test('data module persists each loaded file before refreshing insights', async (
     schemaRunState: 'passed',
     qualityRunState: 'passed',
     resetDataCheckState: results.resetDataCheckState,
-    async persistDataFileSession(value) {
-      persisted = value;
+    async persistDataFilesSession(value) {
+      persisted = [...value];
     },
     async refreshDataInsights() {
       refreshed += 1;
     },
   };
 
-  await data.loadDataFile.call(context, file);
+  await data.loadDataFiles.call(context, [file]);
 
-  assert.equal(persisted, file);
+  assert.deepEqual(persisted, [file]);
   assert.equal(refreshed, 1);
   assert.equal(context.dataFileName, 'dataset.csv');
   assert.equal(context.schemaRunState, 'idle');
   assert.equal(context.qualityRunState, 'idle');
+});
+
+test('data module keeps one file per schema name and selects the latest file', async () => {
+  const { data, results } = loadResultsAndDataModules();
+  const orders = new File(['orders'], 'orders.parquet');
+  const lines = new File(['lines'], 'line_items.csv');
+  let persisted = [];
+  const context = {
+    t,
+    pythonReady: true,
+    dataFiles: [],
+    schemaRows: [],
+    qualityRows: [],
+    resetDataCheckState: results.resetDataCheckState,
+    async persistDataFilesSession(files) { persisted = [...files]; },
+    async refreshDataInsights() {},
+  };
+
+  await data.loadDataFiles.call(context, [orders, lines]);
+
+  assert.deepEqual(context.dataFiles.map((file) => file.name), [
+    'orders.parquet',
+    'line_items.csv',
+  ]);
+  assert.equal(context.dataFileName, 'line_items.csv');
+  assert.deepEqual(persisted.map((file) => file.name), [
+    'orders.parquet',
+    'line_items.csv',
+  ]);
+});
+
+test('data module replaces duplicate schema sources instead of appending them', async () => {
+  const { data, results } = loadResultsAndDataModules();
+  const oldOrders = new File(['old'], 'orders.csv');
+  const newOrders = new File(['new'], 'orders.parquet');
+  const context = {
+    t,
+    pythonReady: true,
+    dataFiles: [oldOrders],
+    schemaRows: [],
+    qualityRows: [],
+    resetDataCheckState: results.resetDataCheckState,
+    async persistDataFilesSession() {},
+    async refreshDataInsights() {},
+  };
+
+  await data.loadDataFiles.call(context, [newOrders]);
+
+  assert.deepEqual(context.dataFiles.map((file) => file.name), ['orders.parquet']);
 });
 
 test('data module exposes browser storage failures to the UI state', async () => {
@@ -108,14 +157,14 @@ test('data module exposes browser storage failures to the UI state', async () =>
     qualityRows: [],
     dataStorageWarning: '',
     resetDataCheckState: results.resetDataCheckState,
-    async persistDataFileSession() {
+    async persistDataFilesSession() {
       throw new Error('Quota exceeded');
     },
     async refreshDataInsights() {},
   };
 
   try {
-    await data.loadDataFile.call(context, file);
+    await data.loadDataFiles.call(context, [file]);
 
     assert.equal(context.dataFile, file);
     assert.match(context.dataStorageWarning, /browser storage failed: Quota exceeded/);
@@ -132,12 +181,12 @@ test('data module rejects new files until the Python runtime is ready', async ()
     t,
     pythonReady: false,
     dataStorageWarning: '',
-    async persistDataFileSession() {
+    async persistDataFilesSession() {
       persisted += 1;
     },
   };
 
-  const loaded = await data.loadDataFile.call(context, file);
+  const loaded = await data.loadDataFiles.call(context, [file]);
 
   assert.equal(loaded, false);
   assert.equal(persisted, 0);
@@ -176,6 +225,7 @@ test('data module derives status bar stats from preview preparation', async () =
   const context = {
     t,
     pythonReady: true,
+    busy: false,
     previewHandle: null,
     previewPageSizeDefault: 50,
     dataColumns: null,
@@ -195,7 +245,7 @@ test('data module derives status bar stats from preview preparation', async () =
   assert.equal(context.previewTotalRows, 5000);
 });
 
-test('data module loads the selected sample without modifying the contract', async () => {
+test('data module loads one selected sample without modifying the contract', async () => {
   const { data } = loadResultsAndDataModules();
   const originalFetch = global.fetch;
   let fetchOptions = null;
@@ -206,29 +256,91 @@ test('data module loads the selected sample without modifying the contract', asy
       async arrayBuffer() { return new TextEncoder().encode('sample').buffer; },
     };
   };
-  let loadedFile = null;
+  let loadedFiles = [];
   const context = {
     t,
     pythonReady: true,
+    busy: false,
     yamlText: 'name: Existing contract',
     dataTemplateModalOpen: true,
-    async loadDataFile(file) { loadedFile = file; },
+    async loadDataFiles(files) { loadedFiles = files; },
   };
 
   try {
-    await data.loadDataTemplate.call(context, {
+    await data.loadDataTemplates.call(context, [{
       path: './examples/template.parquet',
       fileName: 'template.parquet',
       mimeType: 'application/octet-stream',
-    });
+    }]);
   } finally {
     global.fetch = originalFetch;
   }
 
-  assert.equal(loadedFile.name, 'template.parquet');
+  assert.equal(loadedFiles.length, 1);
+  assert.equal(loadedFiles[0].name, 'template.parquet');
   assert.equal(context.yamlText, 'name: Existing contract');
   assert.equal(context.dataTemplateModalOpen, false);
   assert.deepEqual(fetchOptions, { cache: 'no-cache' });
+});
+
+test('data template modal toggles selections without loading files', () => {
+  const { data } = loadResultsAndDataModules();
+  const context = {
+    t,
+    pythonReady: true,
+    dataStorageWarning: '',
+    dataTemplateModalOpen: false,
+    selectedDataTemplateIds: ['stale-template'],
+  };
+
+  data.openDataTemplateModal.call(context);
+  assert.equal(context.dataTemplateModalOpen, true);
+  assert.deepEqual(context.selectedDataTemplateIds, []);
+
+  data.toggleDataTemplateSelection.call(context, 'patients');
+  data.toggleDataTemplateSelection.call(context, 'covid');
+  assert.deepEqual(context.selectedDataTemplateIds, ['patients', 'covid']);
+  assert.equal(data.isDataTemplateSelected.call(context, 'patients'), true);
+
+  data.toggleDataTemplateSelection.call(context, 'patients');
+  assert.deepEqual(context.selectedDataTemplateIds, ['covid']);
+});
+
+test('data template modal loads all selected samples after confirmation', async () => {
+  const { data } = loadResultsAndDataModules();
+  const originalFetch = global.fetch;
+  const fetchedPaths = [];
+  global.fetch = async (path) => {
+    fetchedPaths.push(path);
+    return {
+      ok: true,
+      async arrayBuffer() { return new TextEncoder().encode(path).buffer; },
+    };
+  };
+  let loadedFiles = [];
+  const context = {
+    t,
+    pythonReady: true,
+    dataTemplateModalOpen: true,
+    selectedDataTemplateIds: ['patients', 'covid'],
+    dataTemplates: [
+      { id: 'patients', path: './examples/patients.csv', fileName: 'patients.csv', mimeType: 'text/csv' },
+      { id: 'covid', path: './examples/covid.csv', fileName: 'covid.csv', mimeType: 'text/csv' },
+      { id: 'other', path: './examples/other.csv', fileName: 'other.csv', mimeType: 'text/csv' },
+    ],
+    async loadDataFiles(files) { loadedFiles = files; },
+  };
+
+  try {
+    await data.confirmDataTemplateSelection.call(context);
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  assert.deepEqual(fetchedPaths, ['./examples/patients.csv', './examples/covid.csv']);
+  assert.deepEqual(loadedFiles.map((file) => file.name), ['patients.csv', 'covid.csv']);
+  assert.equal(context.dataTemplateModalOpen, false);
+  assert.deepEqual(context.selectedDataTemplateIds, []);
 });
 
 test('data module reconstructs the persisted browser file after reload', async () => {
@@ -243,13 +355,13 @@ test('data module reconstructs the persisted browser file after reload', async (
     async pruneExpiredDataFileSessions() {
       pruned += 1;
     },
-    async readPersistedDataFile() {
-      return {
+    async readPersistedDataFiles() {
+      return [{
         name: 'dataset.parquet',
         type: 'application/octet-stream',
         lastModified: 1234,
         data: new Blob(['parquet-bytes']),
-      };
+      }];
     },
   };
 

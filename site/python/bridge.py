@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from pathlib import Path
 from time import perf_counter
 
 from pyscript import ffi, window
@@ -21,6 +22,46 @@ def _buffer_to_bytes(buffer_proxy):
         converted = buffer_proxy.to_py()
         return bytes(converted)
     return bytes(buffer_proxy)
+
+
+def _proxy_to_list(proxy) -> list:
+    if hasattr(proxy, "to_py"):
+        try:
+            converted = proxy.to_py()
+            return list(converted)
+        except (TypeError, ValueError):
+            pass
+    try:
+        return list(proxy)
+    except TypeError:
+        return [proxy]
+
+
+def _browser_data_sources(contract, data_names_or_buffer, data_buffers=None):
+    """Convert browser buffers into the public DataSources input shape."""
+    if data_buffers is None:
+        return _buffer_to_bytes(data_names_or_buffer)
+
+    file_names = json.loads(str(data_names_or_buffer))
+    if not isinstance(file_names, list):
+        raise ValueError("Data file names must be provided as a JSON list.")
+
+    buffers = _proxy_to_list(data_buffers)
+    if len(file_names) != len(buffers):
+        raise ValueError("Data file names and buffers must have the same length.")
+    if len(contract.schema_) == 1 and len(buffers) == 1:
+        return _buffer_to_bytes(buffers[0])
+
+    data_sources = {}
+    for file_name, buffer in zip(file_names, buffers):
+        schema_name = Path(str(file_name)).stem
+        if schema_name in data_sources:
+            raise ValueError(
+                f"Multiple data files resolve to schema '{schema_name}'. "
+                "Each schema accepts exactly one file."
+            )
+        data_sources[schema_name] = _buffer_to_bytes(buffer)
+    return data_sources
 
 
 def _safe_path_literal(source_path: str) -> str:
@@ -98,7 +139,11 @@ def _serialize_check_response(validate, validate_duration_ms: float, **payload) 
     )
 
 
-def py_run_contract_check(yaml_text: str, data_buffer) -> str:
+def py_run_contract_check(
+    yaml_text: str,
+    data_names_or_buffer,
+    data_buffers=None,
+) -> str:
     validate_started_at = perf_counter()
     validate = _validate_payload(yaml_text)
     validate_duration_ms = (perf_counter() - validate_started_at) * 1000
@@ -127,10 +172,25 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
             error=str(exc),
         )
 
-    data_bytes = _buffer_to_bytes(data_buffer)
+    try:
+        data_sources = _browser_data_sources(
+            contract,
+            data_names_or_buffer,
+            data_buffers,
+        )
+    except Exception as exc:
+        return _serialize_check_response(
+            validate,
+            validate_duration_ms,
+            schema_rows=[],
+            quality_rows=[],
+            schema_success=False,
+            report_summary="Data file mapping failed.",
+            error=str(exc),
+        )
 
     try:
-        schema_reports = contract.check_schema(data_bytes)
+        schema_reports = contract.check_schema(data_sources)
     except Exception as exc:
         return _serialize_check_response(
             validate,
@@ -144,9 +204,23 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
 
     schema_rows = []
     schema_success = True
+    valid_schema_names: set[str] = set()
     for schema_report in schema_reports:
         if not schema_report.success:
             schema_success = False
+        else:
+            valid_schema_names.add(schema_report.schema_name)
+        if schema_report.error_message:
+            schema_rows.append(
+                {
+                    "schema_name": schema_report.schema_name,
+                    "column": "—",
+                    "required": True,
+                    "yaml_type": "—",
+                    "parquet_type": schema_report.error_message,
+                    "status": "missing",
+                }
+            )
         for column in schema_report.columns:
             schema_rows.append(
                 {
@@ -159,18 +233,11 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
                 }
             )
 
-    if not schema_success:
-        return _serialize_check_response(
-            validate,
-            validate_duration_ms,
-            schema_rows=schema_rows,
-            quality_rows=[],
-            schema_success=False,
-            report_summary="Schema invalid — quality checks cancelled.",
-            error="At least one required column is missing or has an incompatible type.",
-        )
-
-    report = contract.check(data_bytes, backend="duckdb")
+    report = contract.check(
+        data_sources,
+        backend="duckdb",
+        include_schemas=valid_schema_names,
+    )
     quality_rows = []
     for result in report.results:
         quality_rows.append(
@@ -195,9 +262,13 @@ def py_run_contract_check(yaml_text: str, data_buffer) -> str:
         validate_duration_ms,
         schema_rows=schema_rows,
         quality_rows=quality_rows,
-        schema_success=True,
-        report_summary=report.summary,
-        report_success=report.success,
+        schema_success=schema_success,
+        report_summary=(
+            report.summary
+            if schema_success
+            else f"One or more schemas failed. {report.summary}"
+        ),
+        report_success=schema_success and report.success,
         report_code=report.code,
         error="",
     )

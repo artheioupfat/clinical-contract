@@ -134,14 +134,34 @@ window.ClinicalModules.results = {
     const startedAt = executionNow();
 
     try {
-      const buffer = await this.dataFile.arrayBuffer();
-      const payload = JSON.parse(window.pyRunContractCheck(this.yamlText, buffer));
+      const files = Array.isArray(this.dataFiles) && this.dataFiles.length
+        ? this.dataFiles
+        : [this.dataFile];
+      const buffers = await Promise.all(files.map((file) => file.arrayBuffer()));
+      const payload = JSON.parse(
+        window.pyRunContractCheck(
+          this.yamlText,
+          JSON.stringify(files.map((file) => file.name)),
+          buffers
+        )
+      );
 
       if (Number.isFinite(payload.validate_duration_ms)) {
         this.validateDurationMs = payload.validate_duration_ms;
       }
       this.validateRows = this.normalizeValidateRows(payload.validate?.fields || []);
-      this.schemaRows = this.normalizeSchemaRows(payload.schema_rows || []);
+      const schemaPayloadRows = Array.from(payload.schema_rows || []);
+      if (!schemaPayloadRows.length && payload.error && payload.validate?.success) {
+        schemaPayloadRows.push({
+          schema_name: '—',
+          column: '—',
+          required: null,
+          yaml_type: '—',
+          parquet_type: payload.error,
+          status: 'error',
+        });
+      }
+      this.schemaRows = this.normalizeSchemaRows(schemaPayloadRows);
       this.qualityRows = payload.quality_rows || [];
       this.validateRunState = payload.validate?.success ? 'passed' : 'failed';
 
@@ -150,6 +170,9 @@ window.ClinicalModules.results = {
         this.setLogoFailure();
       } else if (!payload.schema_success) {
         this.schemaRunState = 'failed';
+        this.qualityRunState = this.qualityRows.length
+          ? (payload.report_success ? 'passed' : 'failed')
+          : 'idle';
         this.showRequiredHints = false;
         this.dataTab = 'schema';
         this.setLogoFailure();

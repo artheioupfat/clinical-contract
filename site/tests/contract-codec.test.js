@@ -106,7 +106,7 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
   assert.equal(draft.tableName, 'orders');
   assert.equal(draft.tableExtras.xTable, 'kept');
   assert.equal(decoded.rootExtras.xRoot, 'kept');
-  assert.equal(decoded.otherSchemas[0].name, 'secondary_schema');
+  assert.equal(decoded.schemas[1].name, 'secondary_schema');
 
   assert.equal(draft.properties.length, 1);
   assert.equal(draft.properties[0].name, 'order_id');
@@ -128,9 +128,31 @@ test('contractObjectToDraft loads column types, quality rows, team and extras', 
   assert.equal(draft.teamMembers[0].extras.xMember, 'kept');
 });
 
+test('contract codec edits a selected schema without reordering other tables', () => {
+  const source = sampleContract();
+  const decoded = codec.contractObjectToDraft(source, {
+    nextRowId: nextIdFactory(),
+    activeSchemaIndex: 1,
+  });
+
+  assert.equal(decoded.activeSchemaIndex, 1);
+  assert.equal(decoded.draft.tableName, 'secondary_schema');
+  decoded.draft.tableName = 'line_items';
+
+  const encoded = codec.draftToContractObject(
+    decoded.draft,
+    decoded.rootExtras,
+    decoded.schemas,
+    decoded.activeSchemaIndex
+  );
+
+  assert.equal(encoded.schema[0].name, 'orders');
+  assert.equal(encoded.schema[1].name, 'line_items');
+});
+
 test('draftToContractObject writes quality under its column and preserves extras', () => {
   const decoded = codec.contractObjectToDraft(sampleContract(), { nextRowId: nextIdFactory() });
-  const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.otherSchemas);
+  const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.schemas);
   const property = contract.schema[0].properties[0];
 
   assert.equal(contract.xRoot, 'kept');
@@ -178,7 +200,7 @@ test('quality comparisons round-trip between expected YAML and editor state', ()
   const encoded = codec.draftToContractObject(
     decoded.draft,
     decoded.rootExtras,
-    decoded.otherSchemas
+    decoded.schemas
   );
   assert.deepEqual(encoded.schema[0].properties[0].quality[0].expected, {
     between: {
@@ -204,7 +226,7 @@ test('draftToContractObject always writes schema physicalType as TABLE without d
 
   assert.equal(Object.prototype.hasOwnProperty.call(decoded.draft, 'tablePhysicalType'), false);
   decoded.draft.tablePhysicalType = 'FILE';
-  const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.otherSchemas);
+  const contract = codec.draftToContractObject(decoded.draft, decoded.rootExtras, decoded.schemas);
 
   assert.equal(contract.schema[0].physicalType, 'TABLE');
 });
@@ -241,7 +263,7 @@ test('yaml helpers delegate parsing and dumping to the injected YAML library', (
   const decoded = codec.yamlTextToDraft('contract-id', yamlLib, { nextRowId: nextIdFactory() });
   const yamlText = codec.draftToYamlText(decoded.draft, yamlLib, {
     rootExtras: decoded.rootExtras,
-    otherSchemas: decoded.otherSchemas,
+    schemas: decoded.schemas,
   });
 
   assert.equal(decoded.draft.id, 'contract-id');

@@ -10,6 +10,7 @@ packages = ["pyyaml", "duckdb", "pydantic"]
 "./python/clinical_contract/models.py?v=20260804-modular-core" = "./clinical_contract/models.py"
 "./python/clinical_contract/quality_check.py?v=20260804-modular-core" = "./clinical_contract/quality_check.py"
 "./python/clinical_contract/schema_check.py?v=20260804-modular-core" = "./clinical_contract/schema_check.py"
+"./python/clinical_contract/sources.py?v=20260804-modular-core" = "./clinical_contract/sources.py"
 "./python/clinical_contract/type_catalog.py?v=20260804-modular-core" = "./clinical_contract/type_catalog.py"
 "./python/clinical_contract/type_system.py?v=20260804-modular-core" = "./clinical_contract/type_system.py"
 "./python/clinical_contract/validation.py?v=20260804-modular-core" = "./clinical_contract/validation.py"

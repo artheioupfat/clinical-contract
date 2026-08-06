@@ -36,6 +36,24 @@ test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
   assert.doesNotMatch(dataPanel, /class="results-shell"/);
 });
 
+test('data file identity is displayed only in the Data preview tab', () => {
+  const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
+
+  assert.match(dataPanel, /x-show="dataTab === 'data' && dataFiles\.length > 1"/);
+  assert.doesNotMatch(dataPanel, /editor\.panel\.allDataFiles/);
+});
+
+test('data preview preserves the source column name casing', () => {
+  const previewCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/preview.css'),
+    'utf8'
+  );
+  const previewHeaderRule = previewCss.match(/\.preview-th\s*\{([^}]*)\}/);
+
+  assert.ok(previewHeaderRule, 'Preview header CSS rule is missing');
+  assert.doesNotMatch(previewHeaderRule[1], /\buppercase\b/);
+});
+
 test('quality results expose per-rule execution logs', () => {
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
@@ -57,6 +75,16 @@ test('template selectors use persistent accessible dialogs', () => {
   assert.doesNotMatch(dataPanel, /class="template-modal" @click\.outside/);
 });
 
+test('dataset examples use explicit multi-selection before loading', () => {
+  const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
+
+  assert.match(dataPanel, /@click="toggleDataTemplateSelection\(template\.id\)"/);
+  assert.match(dataPanel, /:aria-pressed="isDataTemplateSelected\(template\.id\)"/);
+  assert.match(dataPanel, /@click="confirmDataTemplateSelection\(\)"/);
+  assert.match(dataPanel, /selectedDataTemplateIds\.length === 0/);
+  assert.doesNotMatch(dataPanel, /@click="loadDataTemplate\(template\)"/);
+});
+
 test('contract reset uses accessible dialog semantics', () => {
   const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
 
@@ -65,6 +93,21 @@ test('contract reset uses accessible dialog semantics', () => {
   assert.match(editorPanel, /role="dialog"/);
   assert.match(editorPanel, /aria-modal="true"/);
   assert.match(editorPanel, /class="reset-modal" @click\.stop/);
+});
+
+test('table removal uses an accessible confirmation dialog', () => {
+  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const modalCss = fs.readFileSync(path.join(siteRoot, 'css/src/components/modals.css'), 'utf8');
+
+  assert.doesNotMatch(editorPanel, /schema-remove-table-row/);
+  assert.match(editorPanel, /pine-btn--danger pine-btn--icon/);
+  assert.match(editorPanel, /@click="openRemoveTableModal\(\)"/);
+  assert.match(editorPanel, /M4 7h16m-10 4v6m4-6v6/);
+  assert.match(editorPanel, /x-if="removeTableModalOpen"/);
+  assert.match(editorPanel, /aria-labelledby="remove-table-title"/);
+  assert.match(editorPanel, /@click="confirmRemoveTable\(\)"/);
+  assert.doesNotMatch(editorPanel, /@click="removeActiveSchemaTable\(\)"/);
+  assert.doesNotMatch(modalCss, /\.schema-editor \.pine-btn(?:\s|\{)/);
 });
 
 test('quality editor exposes every supported comparison operator', () => {
@@ -87,6 +130,32 @@ test('quality editor exposes every supported comparison operator', () => {
   assert.match(editorPanel, /rule\.expectedMax/);
 });
 
+test('schema and quality sections share the active table selector', () => {
+  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+
+  const tableSelectorCalls = editorPanel.match(/@change="selectSchemaTable\(\$event\.target\.value\)"/g) || [];
+  assert.equal(tableSelectorCalls.length, 2);
+  assert.match(
+    editorPanel,
+    /schemaSection === 'quality'[\s\S]*:value="schemaActiveIndex"[\s\S]*quality-table-/
+  );
+});
+
+test('schema heading, table selector, and add action share one axis', () => {
+  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+  const schemaCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/schema-builder.css'),
+    'utf8'
+  );
+
+  assert.match(
+    editorPanel,
+    /schema-stage-bar[\s\S]*schema-stage-title[\s\S]*schemaActiveIndex[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)/
+  );
+  assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
+  assert.match(schemaCss, /\.schema-stage-bar\s*\{[\s\S]*?items-center/);
+});
+
 test('template catalogs keep bundled assets declarative', () => {
   const constants = fs.readFileSync(path.join(siteRoot, 'js/constants.js'), 'utf8');
   const catalog = fs.readFileSync(path.join(siteRoot, 'js/example-catalog.js'), 'utf8');
@@ -96,5 +165,5 @@ test('template catalogs keep bundled assets declarative', () => {
   assert.match(catalog, /contractTemplates/);
   assert.match(catalog, /dataTemplates/);
   assert.match(catalog, /\.\/examples\/clinical-template\.yaml/);
-  assert.match(catalog, /\.\/examples\/clinical-template\.parquet/);
+  assert.match(catalog, /\.\/examples\/clinical_template\.parquet/);
 });

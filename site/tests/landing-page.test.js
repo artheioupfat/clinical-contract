@@ -25,7 +25,7 @@ test('landing page presents a static product overview without loading the editor
   assert.match(french.landing.pythonBody, /PyPI/);
   assert.match(indexHtml, /uv tool install --python python3\.11 clinical-contract/);
   assert.match(indexHtml, /clinical-contract validate site\/examples\/clinical-template\.yaml/);
-  assert.match(indexHtml, /clinical-contract check site\/examples\/clinical-template\.yaml site\/examples\/clinical-template\.parquet/);
+  assert.match(indexHtml, /clinical-contract check site\/examples\/clinical-template\.yaml site\/examples\/clinical_template\.parquet/);
   assert.match(indexHtml, /landing\.closingLink/);
   assert.match(indexHtml, /\.\/editor\.html/);
   assert.match(indexHtml, /\.\/docs\.html/);

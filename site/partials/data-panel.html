@@ -1,5 +1,5 @@
             <!-- Right panel: independent dataset loading, preview, schema, and quality checks. -->
-            <section class="panel" x-show="!checkerCollapsed" x-cloak>
+            <section class="panel" x-show="!checkerCollapsed" x-cloak @dragover.prevent @drop.prevent="dropData($event)">
               <div class="panel-head">
                 <div class="checker-head-title">
                   <button
@@ -15,7 +15,19 @@
                   </button>
                   <div>
                     <div class="panel-eyebrow" x-text="t('editor.panel.checker')"></div>
-                    <div class="panel-title" x-text="dataFileName || t('editor.panel.noData')"></div>
+                    <div class="panel-title" x-show="dataTab === 'data' && dataFiles.length <= 1" x-text="dataFileName || t('editor.panel.noData')"></div>
+                    <select
+                      class="schema-input schema-form-control"
+                      x-show="dataTab === 'data' && dataFiles.length > 1"
+                      x-cloak
+                      :value="activeDataIndex"
+                      @change="selectDataFile($event.target.value)"
+                      :aria-label="t('editor.panel.dataFiles')"
+                    >
+                      <template x-for="(file, index) in dataFiles" :key="`${file.name}-${index}`">
+                        <option :value="index" x-text="file.name"></option>
+                      </template>
+                    </select>
                   </div>
                 </div>
                 <div class="pine-toolbar">
@@ -34,7 +46,20 @@
                       </span>
                     </button>
                   </div>
-                  <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" @change="pickDataFile($event)" />
+                  <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" multiple @change="pickDataFile($event)" />
+                  <button
+                    type="button"
+                    x-show="dataFile"
+                    x-cloak
+                    @click="$refs.dataInput.click()"
+                    class="pine-btn pine-btn--icon"
+                    :aria-label="t('editor.actions.addData')"
+                    :title="t('editor.actions.addData')"
+                  >
+                    <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
                   <button
                     type="button"
                     x-show="dataFile"
@@ -71,7 +96,7 @@
                         @dragenter.prevent="draggingData = true"
                         @dragover.prevent="draggingData = true"
                         @dragleave.prevent="draggingData = false"
-                        @drop.prevent="dropData($event)"
+                        @drop.prevent.stop="dropData($event)"
                       >
                         <div class="workspace-empty-card">
                           <div class="workspace-empty-icon" aria-hidden="true">
@@ -207,12 +232,38 @@
                     </div>
                     <div class="template-modal__list">
                       <template x-for="template in dataTemplates" :key="template.id">
-                        <button type="button" class="template-option" @click="loadDataTemplate(template)">
-                          <span class="template-option__title" x-text="template.name"></span>
-                          <span class="template-option__description" x-text="t('editor.templates.dataDescription', { format: (template.fileName.split('.').pop() || 'data').toUpperCase() })"></span>
-                          <span class="template-option__file" x-text="template.fileName"></span>
+                        <button
+                          type="button"
+                          class="template-option template-option--selectable"
+                          :class="isDataTemplateSelected(template.id) ? 'template-option--selected' : ''"
+                          :aria-pressed="isDataTemplateSelected(template.id)"
+                          @click="toggleDataTemplateSelection(template.id)"
+                        >
+                          <span class="template-option__content">
+                            <span class="template-option__title" x-text="template.name"></span>
+                            <span class="template-option__description" x-text="t('editor.templates.dataDescription', { format: (template.fileName.split('.').pop() || 'data').toUpperCase() })"></span>
+                            <span class="template-option__file" x-text="template.fileName"></span>
+                          </span>
+                          <span class="template-option__check" :class="isDataTemplateSelected(template.id) ? 'template-option__check--selected' : ''" aria-hidden="true">
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l3 3 7-7" />
+                            </svg>
+                          </span>
                         </button>
                       </template>
+                    </div>
+                    <div class="template-modal__footer">
+                      <span class="template-modal__selection" x-text="t('editor.templates.selected', { count: selectedDataTemplateIds.length })"></span>
+                      <div class="template-modal__actions">
+                        <button type="button" class="pine-btn" @click="closeDataTemplateModal()" x-text="t('common.cancel')"></button>
+                        <button
+                          type="button"
+                          class="pine-btn pine-btn--primary"
+                          :disabled="selectedDataTemplateIds.length === 0 || busy"
+                          @click="confirmDataTemplateSelection()"
+                          x-text="t('editor.templates.select')"
+                        ></button>
+                      </div>
                     </div>
                   </div>
               </div>

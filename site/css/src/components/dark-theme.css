@@ -57,6 +57,25 @@
     color: var(--cc-night-text);
   }
 
+  .theme-dark .template-option--selected {
+    background: var(--cc-night-elevated);
+    border-color: var(--cc-primary-ring);
+  }
+
+  .theme-dark .template-option__check {
+    border-color: var(--cc-night-border-strong);
+  }
+
+  .theme-dark .template-option__check--selected {
+    background: var(--cc-primary);
+    border-color: var(--cc-primary);
+    color: white;
+  }
+
+  .theme-dark .template-modal__footer {
+    border-color: var(--cc-night-border);
+  }
+
   .theme-dark :is(.checker-collapse-btn:hover, .checker-rail-btn:hover, .column-edit-button, .github-link:hover, .pine-btn:hover:not(:disabled), .quality-edit-button, .schema-nav-item--active, .team-edit-button, .view-switch-btn--active) {
     background: var(--cc-night-elevated);
     border-color: var(--cc-primary-ring);

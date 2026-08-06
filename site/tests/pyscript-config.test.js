@@ -15,6 +15,7 @@ test('pyscript config ships every browser-required clinical_contract module', ()
     'models',
     'quality_check',
     'schema_check',
+    'sources',
     'type_catalog',
     'type_system',
     'validation',

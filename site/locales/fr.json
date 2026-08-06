@@ -57,20 +57,20 @@
     "meta": { "title": "Éditeur | clinical-contract", "description": "Rédigez, validez et vérifiez un contrat de données cliniques directement dans votre navigateur." },
     "sections": { "fundamentals": "Fondamentaux", "schema": "Schéma", "quality": "Qualité", "team": "Équipe" },
     "panel": {
-      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé",
+      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé", "dataFiles": "Fichiers de données chargés",
       "unlockContract": "Créez ou chargez un contrat pour déverrouiller", "unlockData": "Chargez un fichier de données pour déverrouiller"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
     "actions": {
       "download": "Télécharger le contrat", "reset": "Réinitialiser le contrat", "resetQuestion": "Réinitialiser le contrat ?", "validate": "Validate",
       "validateTitle": "Valider la structure du contrat", "newContract": "Nouveau contrat", "loadContract": "Charger un contrat", "showExamples": "Voir les exemples",
-      "loadData": "Charger des données", "deleteData": "Supprimer le fichier de données", "deleteDataQuestion": "Supprimer le fichier de données ?", "runChecks": "Run checks",
+      "loadData": "Charger des données", "addData": "Ajouter un fichier de données", "deleteData": "Supprimer le fichier de données", "deleteDataQuestion": "Supprimer le fichier de données ?", "runChecks": "Run checks",
       "runChecksTitle": "Lancer les contrôles de schéma et de qualité", "contractFirst": "Créez ou chargez d’abord un contrat", "dataFirst": "Chargez d’abord un fichier de données"
     },
     "emptyContract": {
       "title": "Déposez ou rédigez un contrat de données", "body": "Construisez votre contrat étape par étape ou chargez un contrat YAML existant.", "placeholder": "Déposez ici un contrat de données YAML."
     },
-    "emptyData": { "title": "Déposez un fichier de données", "body": "Chargez un fichier CSV ou Parquet pour vérifier sa conformité avec un contrat de données." },
+    "emptyData": { "title": "Déposez les fichiers de données", "body": "Chargez un fichier CSV ou Parquet par table. Chaque nom de fichier doit correspondre au nom de son schéma." },
     "builder": {
       "title": "Rédiger le contrat", "contractName": "Nom du contrat", "contractVersion": "Version du contrat", "status": "Statut", "active": "Contrat actif",
       "purpose": "Objectif", "purposePlaceholder": "Pourquoi ce jeu de données existe", "usage": "Usage", "usagePlaceholder": "Comment les consommateurs doivent l’utiliser",
@@ -80,11 +80,19 @@
       "objectives": { "predictive": "Prédictif", "therapeutic": "Thérapeutique", "diagnostic": "Diagnostique", "epidemiological": "Épidémiologique", "descriptive": "Descriptif", "operational": "Opérationnel" }
     },
     "columns": {
+      "table": "Table", "addTable": "Ajouter une table", "removeTable": "Supprimer la table",
       "tableName": "Nom de la table", "description": "Description", "title": "Colonnes", "empty": "Ajoutez une colonne, puis renseignez son type et sa description dans le panneau de détails.",
       "column": "Colonne", "type": "Type", "required": "Obligatoire", "action": "Action", "unnamed": "Colonne sans nom", "noDescription": "Aucune description",
       "details": "Détails de la colonne", "name": "Nom de la colonne", "logicalType": "Type logique", "physicalType": "Type physique", "noConstraint": "Aucune contrainte de type",
       "descriptionPlaceholder": "Exemple : Identifiant patient utilisé pour relier les dossiers entre plusieurs séjours hospitaliers.", "examples": "Exemples", "examplesPlaceholder": "Un exemple par ligne",
       "add": "Ajouter une colonne", "remove": "Supprimer la colonne"
+    },
+    "removeTable": {
+      "kicker": "Supprimer la table", "question": "Êtes-vous sûr de vouloir supprimer cette table ?",
+      "body": "La table « {name} », ses colonnes et ses règles de qualité seront définitivement supprimées du contrat.",
+      "unnamed": "Table sans nom", "confirm": "Supprimer la table", "clearKicker": "Vider la table",
+      "clearQuestion": "Vider la seule table ?", "clearBody": "La table « {name} », ses colonnes et ses règles de qualité seront vidées. Les fondamentaux et l’équipe seront conservés.",
+      "clearConfirm": "Vider la table"
     },
     "quality": {
       "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "column": "Colonne", "description": "Description", "action": "Action",
@@ -112,7 +120,8 @@
     "status": { "passed": "Réussi", "failed": "Échec", "error": "Erreur", "warning": "Avertissement", "idle": "Non exécuté" },
     "templates": {
       "contracts": "Modèles de contrats", "datasets": "Jeux de données d’exemple", "contractChoice": "Choisissez un point de départ", "dataChoice": "Choisissez un exemple local",
-      "contractDescription": "Contrat de données YAML embarqué.", "dataDescription": "Jeu de données {format} embarqué."
+      "contractDescription": "Contrat de données YAML embarqué.", "dataDescription": "Jeu de données {format} embarqué.",
+      "selected": "{count} sélectionné(s)", "select": "Sélectionner"
     },
     "reset": {
       "title": "Réinitialiser le contrat", "question": "Supprimer le brouillon actuel ?", "body": "Seul le contrat en cours d’édition sera supprimé. Le fichier de données chargé restera disponible dans le panneau de vérification.",

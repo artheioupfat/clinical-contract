@@ -265,9 +265,14 @@
     const studyExtras = collectExtras(study, handledStudy);
 
     const schemaArray = Array.isArray(parsed.schema) ? parsed.schema : [];
-    const firstSchema = schemaArray[0] && typeof schemaArray[0] === 'object' ? schemaArray[0] : {};
-    const otherSchemas = schemaArray.slice(1);
-
+    const requestedSchemaIndex = Number(options.activeSchemaIndex) || 0;
+    const activeSchemaIndex = schemaArray.length
+      ? Math.max(0, Math.min(requestedSchemaIndex, schemaArray.length - 1))
+      : 0;
+    const firstSchema = schemaArray[activeSchemaIndex]
+      && typeof schemaArray[activeSchemaIndex] === 'object'
+      ? schemaArray[activeSchemaIndex]
+      : {};
     const handledTable = new Set(['name', 'physicalType', 'description', 'properties']);
     const tableExtras = collectExtras(firstSchema, handledTable);
 
@@ -378,11 +383,17 @@
         studyExtras,
       },
       rootExtras,
-      otherSchemas: deepClone(otherSchemas),
+      schemas: deepClone(schemaArray),
+      activeSchemaIndex,
     };
   }
 
-  function draftToContractObject(draft = {}, rootExtras = {}, otherSchemas = []) {
+  function draftToContractObject(
+    draft = {},
+    rootExtras = {},
+    schemaCollection = null,
+    activeSchemaIndex = 0
+  ) {
     const top = deepClone(rootExtras || {});
     const contractId = String(draft.id || '').trim() || slugifyContractId(draft.name);
 
@@ -462,7 +473,14 @@
       })
       .filter(Boolean);
 
-    top.schema = [table, ...(otherSchemas || [])];
+    if (Array.isArray(schemaCollection) && schemaCollection.length) {
+      const schemas = deepClone(schemaCollection);
+      const index = Math.max(0, Math.min(Number(activeSchemaIndex) || 0, schemas.length - 1));
+      schemas[index] = table;
+      top.schema = schemas;
+    } else {
+      top.schema = [table];
+    }
 
     const team = deepClone(draft.teamExtras || {});
     if (draft.teamName && draft.teamName.trim()) team.name = draft.teamName.trim();
@@ -498,7 +516,12 @@
   }
 
   function draftToYamlText(draft, yamlLib, options = {}) {
-    const contract = draftToContractObject(draft, options.rootExtras, options.otherSchemas);
+    const contract = draftToContractObject(
+      draft,
+      options.rootExtras,
+      options.schemas,
+      options.activeSchemaIndex
+    );
     return ensureYamlLibrary(yamlLib).dump(contract, {
       noRefs: true,
       lineWidth: 110,
