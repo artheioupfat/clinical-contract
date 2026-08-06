@@ -53,7 +53,7 @@ Then open `http://localhost:8000`.
 - `js/contract-codec.js`: pure YAML/draft conversion helpers.
 - `js/schema.js`: visual contract builder actions.
 - `js/data-storage.js`: IndexedDB persistence for the current browser data session.
-- `js/data.js`: CSV/Parquet loading, sample datasets, and paginated preview actions.
+- `js/data.js`: multi-file CSV/Parquet loading, active dataset selection, samples, and paginated preview actions.
 - `js/results.js`: validate/check result presentation.
 - `locales/en.json`: English interface catalog.
 - `locales/fr.json`: French interface catalog.
@@ -111,14 +111,15 @@ GitHub Actions regenerates these assets and fails when the committed output is s
 
 ## Bundled examples
 
-Each YAML contract has exactly one homonymous dataset:
+Each YAML contract has one homonymous dataset per declared schema. Contract and
+data templates remain independent and are loaded separately in the editor.
 
 | Pair | Format | Main coverage |
 |---|---|---|
 | `clinical-template` | Parquet | Common scalar types and equality checks |
 | `laboratory-results` | Parquet | UUID, DECIMAL, TIME, INTERVAL, and timezone-aware timestamps |
 | `medication-administration` | Parquet | ARRAY, float32, optional unconstrained text, and comparison operators |
-| `covid-diagnosis-cohort` | CSV | CIM-10 codes, conditional dates, and ICU consistency |
+| `covid-diagnosis-cohort` | 2 CSV files | Patient/COVID joins, CIM-10 codes, conditional dates, and ICU consistency |
 
 The datasets are synthetic fixtures prepared outside the public source tree. Only the final YAML, CSV, and Parquet files are committed. `tests/test_site_examples.py` verifies pairing and executes structure, schema, and quality checks for every example.
 
@@ -131,7 +132,7 @@ The datasets are synthetic fixtures prepared outside the public source tree. Onl
 - Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
 - Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.
-- Add examples as homonymous contract/dataset pairs under `examples/`, then run `npm run generate:site-examples` and commit the generated catalog.
+- Add contracts under `examples/` and name each dataset after its YAML schema, then run `npm run generate:site-examples` and commit the generated catalog.
 - Do not edit `css/tailwind.css` directly; it is the compiled production bundle.
 - Add or update the test matching the changed module. YAML/draft behavior belongs in `contract-codec.test.js`.
 - Keep the site static: no backend, no hardcoded local paths, and relative assets only.

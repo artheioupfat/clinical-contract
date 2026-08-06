@@ -71,6 +71,8 @@ Le type `decimal` vérifie la famille DuckDB `DECIMAL`. La précision et l'éche
 
 Le **Physical Type** est optionnel. Si aucun type n'est renseigné, Clinical-Contract vérifie uniquement la présence de la colonne dans le fichier, sans imposer de type logique ni de représentation technique.
 
+Les noms de colonnes sont comparés sans tenir compte de la casse (`ID`, `id` et `Id` sont équivalents). L'aperçu conserve l'écriture exacte présente dans le fichier. Un fichier contenant plusieurs colonnes qui ne diffèrent que par la casse est signalé comme ambigu.
+
 ## Ajouter des règles de qualité
 
 Clinical-Contract permet d'ajouter des règles de qualité afin de vérifier automatiquement la conformité des données.
@@ -161,17 +163,17 @@ Les champs concernés sont également mis en évidence dans l'éditeur grâce à
 
 Lorsque un contract est chargé et validé, il peut être utilisé pour vérifier la conformité d'un jeu de données produit.
 
-Ouvrez le panneau **Checker**, puis déposez votre fichier dans la zone de **drag and drop** ou sélectionnez-le depuis votre ordinateur.
+Ouvrez le panneau **Checker**, puis déposez un fichier par table dans la zone de **drag and drop** ou sélectionnez-les depuis votre ordinateur. Le nom du fichier, sans son extension, doit correspondre au nom du schéma associé.
 
 Clinical-Contract accepte actuellement les fichiers aux formats **CSV** et **Parquet** uniquement. 
 
 ## Vérifier la conformité des données avec le contrat
 
-Une fois le fichier chargé, cliquez sur **Run Check** pour lancer la vérification.
+Une fois les fichiers chargés, cliquez sur **Run Check** pour lancer la vérification.
 
 Clinical-Contract compare d'abord le **schéma** du fichier de données avec celui défini dans le contrat. Les colonnes attendues sont vérifiées, ainsi que leurs types de données. Toute différence (colonne manquante ou type incompatible) est signalée dans le rapport de validation.
 
-Si le schéma est conforme, les **règles de qualité** définies dans le contrat sont ensuite exécutées. Ces contrôles sont réalisés à l'aide du moteur **DuckDB**, qui exécute les requêtes SQL et compare leur résultat à la valeur attendue (*Expected Result*).
+Si les schémas sont conformes, les **règles de qualité** définies dans le contrat sont ensuite exécutées dans une session **DuckDB** partagée. Une règle peut ainsi joindre plusieurs tables avant de comparer son résultat à la valeur attendue (*Expected Result*).
 
 À l'issue de l'exécution, le panneau de résultats présente le statut de chaque vérification afin d'identifier rapidement les éventuelles non-conformités.
 
@@ -200,7 +202,13 @@ clinical-contract validate site/examples/clinical-template.yaml
 La commande `check` compare un fichier de données avec un contrat de données. Elle vérifie d'abord le schéma (colonnes et types), puis exécute les règles de qualité définies dans le contrat.
 
 ```bash
-clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
+clinical-contract check site/examples/clinical-template.yaml site/examples/clinical_template.parquet
+```
+
+Pour un contrat multi-table, fournissez un fichier homonyme par schéma :
+
+```bash
+clinical-contract check contract.yaml orders.parquet line_items.csv
 ```
 
 Utilisez `clinical-contract --help` pour afficher les commandes disponibles et
@@ -238,12 +246,19 @@ report = contract.check("data.parquet")
 print(report.success)
 ```
 
+Pour plusieurs tables, utilisez une liste de chemins ou un mapping explicite :
+
+```python
+report = contract.check(["orders.parquet", "line_items.csv"])
+report = contract.check({"orders": orders_bytes, "line_items": lines_bytes})
+```
+
 
 ## Limites actuelles
 
 Clinical-Contract est en développement actif. La version actuelle présente les limitations suivantes :
 
-- Un contrat de données décrit **une seule table**.
+- Un contrat peut décrire plusieurs tables ; chaque table correspond exactement à un fichier CSV ou Parquet.
 - Seuls les fichiers **CSV** et **Parquet** sont pris en charge pour la validation.
 - Les règles de qualité doivent être exprimées sous forme de requêtes **SQL**.
 - Les types logiques et physiques disponibles sont limités à ceux proposés par l'application.

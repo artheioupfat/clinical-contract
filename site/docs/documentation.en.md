@@ -61,6 +61,8 @@ The `decimal` type checks the DuckDB `DECIMAL` family. Precision and scale, such
 
 Both types are optional. If neither is provided, Clinical-Contract checks that the column exists without enforcing a type constraint.
 
+Column names are matched case-insensitively (`ID`, `id`, and `Id` are equivalent). The Preview preserves the exact spelling found in the data file. Files containing multiple columns that differ only by case are reported as ambiguous.
+
 ## Add quality rules
 
 Quality rules execute read-only SQL queries against the loaded dataset. Each rule contains a query, an expected comparison and an optional description.
@@ -123,17 +125,17 @@ The Validation tab lists valid, missing and invalid fields. Required fields are 
 
 ## Load a data file
 
-Load a **CSV** or **Parquet** file in the Checker panel. A paginated preview lets you inspect the dataset without rendering every row at once.
+Load one **CSV** or **Parquet** file per contract table in the Checker panel. The filename, without its extension, identifies the matching schema. A paginated preview lets you inspect the active dataset without rendering every row at once.
 
 All processing happens locally in the browser. The file is not uploaded to Clinical-Contract or another server.
 
 ## Check data compliance
 
-Select **Run checks** to compare the loaded data with the current contract.
+Select **Run checks** to compare the loaded files with the current contract.
 
 Clinical-Contract first validates the contract, then checks the dataset schema. Expected columns, required columns and configured data types are compared with the detected file schema.
 
-If the schema is compatible, quality rules run through **DuckDB**. The Schema and Quality tabs display each result and any technical SQL error returned by the engine.
+If the schemas are compatible, quality rules run through one shared **DuckDB** session. A rule may therefore join several contract tables. The Schema and Quality tabs display each result and any technical SQL error returned by the engine.
 
 ## Use the command-line interface
 
@@ -154,7 +156,13 @@ clinical-contract validate site/examples/clinical-template.yaml
 ### Check a data file
 
 ```bash
-clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
+clinical-contract check site/examples/clinical-template.yaml site/examples/clinical_template.parquet
+```
+
+For a multi-table contract, provide one homonymous file per schema:
+
+```bash
+clinical-contract check contract.yaml orders.parquet line_items.csv
 ```
 
 Use `clinical-contract --help` to list the available commands and
@@ -192,9 +200,16 @@ report = contract.check("data.parquet")
 print(report.success)
 ```
 
+For several tables, pass file paths or an explicit schema-to-source mapping:
+
+```python
+report = contract.check(["orders.parquet", "line_items.csv"])
+report = contract.check({"orders": orders_bytes, "line_items": lines_bytes})
+```
+
 ## Current limitations
 
-- A contract describes one table.
+- A contract may describe several tables; each table maps to exactly one CSV or Parquet file.
 - Dataset checks currently support CSV and Parquet files.
 - Quality rules are expressed as SQL queries.
 - Logical and physical types are limited to the types exposed by Clinical-Contract.
