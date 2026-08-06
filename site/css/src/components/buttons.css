@@ -1,7 +1,7 @@
 @layer components {
   /* Buttons */
   .pine-btn {
-    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border bg-white px-3 py-2 text-[13px] font-medium transition;
+    @apply inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border bg-white px-3 py-0 text-[13px] font-medium transition;
     border-color: var(--cc-border);
     color: var(--cc-text);
   }

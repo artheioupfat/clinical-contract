@@ -44,6 +44,10 @@
     color: var(--cc-muted);
   }
 
+  .results-table-wrap--checker-results .results-table thead th {
+    height: 51px;
+  }
+
   .results-table tbody td {
     @apply border-b px-3.5 py-3.5 align-top;
     border-color: #e5eef5;

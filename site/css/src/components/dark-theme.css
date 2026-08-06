@@ -33,7 +33,7 @@
   .theme-dark .pine-logo-box { background: white; }
   .theme-dark .app-footer { background: var(--cc-night-panel); color: var(--cc-night-muted); }
 
-  .theme-dark :is(.app-footer, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .schema-nav, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar, .template-modal, .template-modal__header, .workspace-empty-card) {
+  .theme-dark :is(.app-footer, .data-file-toolbar, .entity-modal__footer, .entity-modal__header, .panel--editor, .panel-head, .reset-modal__footer, .reset-modal__header, .results-shell, .schema-nav, .schema-nav-head, .schema-stage-bar, .schema-subsection-bar, .template-modal, .template-modal__header, .workspace-empty-card) {
     border-color: var(--cc-night-border);
   }
 
@@ -108,6 +108,9 @@
   .theme-dark .schema-nav { background: var(--cc-dark-nav); }
   .theme-dark :is(.column-table__row:hover, .quality-table__row:hover, .results-table tbody tr:hover, .schema-nav-item:hover, .team-table__row:hover) { background: #1b222b; }
   .theme-dark .schema-nav-item--active .schema-nav-item-title { color: white; }
+  .theme-dark .entity-tab { background: var(--cc-dark-control); border-color: var(--cc-night-border-strong); color: var(--cc-night-text); }
+  .theme-dark .entity-tab:hover { background: var(--cc-dark-hover); border-color: var(--cc-primary-ring); color: white; }
+  .theme-dark :is(.entity-tab--active, .entity-tab--active:hover) { background: #005ca9; border-color: #005ca9; color: white; }
 
   /* Builder controls */
   .theme-dark :is(.column-required-checkbox, .schema-editor .schema-input, .schema-form-control) { background: var(--cc-dark-control); border-color: #3f4b59; color: #f1f5f9; }

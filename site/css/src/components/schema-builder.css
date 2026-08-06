@@ -78,6 +78,10 @@
     border-color: var(--cc-border);
   }
 
+  .schema-stage-bar--primary {
+    @apply -mx-4 -mt-4 min-h-[51px] min-w-0 px-4 py-2.5;
+  }
+
   .schema-subsection-bar {
     @apply mt-5 flex items-center justify-between border-t pt-4;
     border-color: var(--cc-border);
@@ -86,6 +90,10 @@
   .schema-stage-title {
     @apply text-[15px] font-semibold;
     color: var(--cc-text);
+  }
+
+  .schema-table-toolbar {
+    @apply min-w-0 flex-1;
   }
 
   .schema-form-grid {

@@ -186,12 +186,12 @@
   }
 
   .panel-eyebrow {
-    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    @apply text-[11px] font-bold uppercase leading-none tracking-[0.18em];
     color: var(--cc-primary);
   }
 
   .panel-title {
-    @apply mt-0.5 text-[14px] font-semibold;
+    @apply mt-0.5 text-[14px] font-semibold leading-4;
     color: var(--cc-text);
   }
 
@@ -199,8 +199,63 @@
     @apply flex flex-wrap items-center justify-end gap-1.5;
   }
 
+  /* Shared navigation for contract tables and loaded data files. */
+  .entity-tabs-toolbar {
+    @apply flex min-w-0 flex-col gap-2;
+  }
+
+  .entity-tabs-toolbar--inline {
+    @apply flex-row items-center gap-3;
+  }
+
+  .entity-tabs-toolbar--inline .entity-tabs-controls {
+    @apply flex-1;
+  }
+
+  .entity-tabs-controls {
+    @apply flex min-w-0 items-center gap-2;
+  }
+
+  .entity-tabs-list {
+    @apply flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto;
+    scrollbar-width: thin;
+  }
+
+  .entity-tab {
+    @apply inline-flex h-[30px] shrink-0 items-center rounded-md border px-3 py-0 text-[12px] font-semibold transition;
+    background: white;
+    border-color: var(--cc-border);
+    color: var(--cc-text);
+  }
+
+  .entity-tab:hover {
+    background: var(--cc-primary-soft);
+    border-color: var(--cc-primary-ring);
+    color: var(--cc-primary-strong);
+  }
+
+  .entity-tab--active,
+  .entity-tab--active:hover {
+    background: #005ca9;
+    border-color: #005ca9;
+    color: white;
+  }
+
+  .entity-tabs-actions {
+    @apply flex shrink-0 items-center gap-1.5;
+  }
+
+  .entity-tabs-actions .pine-btn {
+    @apply h-[30px] w-[30px];
+  }
+
+  .data-file-toolbar {
+    @apply min-h-[51px] border-b px-4 py-2.5;
+    border-color: var(--cc-border);
+  }
+
   .view-switch {
-    @apply inline-flex items-center rounded-lg border p-0.5;
+    @apply inline-flex h-9 items-center rounded-lg border p-0.5;
     background: var(--cc-surface-muted);
     border-color: var(--cc-border);
   }

@@ -52,11 +52,28 @@ test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
   assert.doesNotMatch(dataPanel, /class="results-shell"/);
 });
 
-test('data file identity is displayed only in the Data preview tab', () => {
+test('data files use tabs only in the Data preview tab', () => {
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
-  assert.match(dataPanel, /x-show="dataTab === 'data' && dataFiles\.length > 1"/);
+  assert.match(dataPanel, /class="entity-tabs-toolbar data-file-toolbar" x-show="dataTab === 'data' && dataFile"/);
+  assert.match(dataPanel, /@click="selectDataFile\(index\)"/);
+  assert.match(dataPanel, /x-text="file\.name"/);
   assert.doesNotMatch(dataPanel, /editor\.panel\.allDataFiles/);
+});
+
+test('schema and quality checker headers occupy the data toolbar height', () => {
+  const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
+  const resultsCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/results.css'),
+    'utf8'
+  );
+  const checkerResultWraps = dataPanel.match(/results-table-wrap results-table-wrap--checker-results/g) || [];
+
+  assert.equal(checkerResultWraps.length, 2);
+  assert.match(
+    resultsCss,
+    /\.results-table-wrap--checker-results \.results-table thead th\s*\{[\s\S]*?height: 51px/
+  );
 });
 
 test('data preview preserves the source column name casing', () => {
@@ -146,19 +163,42 @@ test('quality editor exposes every supported comparison operator', () => {
   assert.match(editorPanel, /rule\.expectedMax/);
 });
 
-test('schema and quality sections share the active table selector', () => {
+test('schema and quality use the same table tabs and active table state', () => {
   const editorPanel = readEditorPanel();
 
-  const tableSelectorCalls = editorPanel.match(/@change="selectSchemaTable\(\$event\.target\.value\)"/g) || [];
-  assert.equal(tableSelectorCalls.length, 2);
+  const tableTabGroups = editorPanel.match(/class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"/g) || [];
+  const tableSelectionCalls = editorPanel.match(/@click="selectSchemaTable\(index\)"/g) || [];
+
+  assert.equal(tableTabGroups.length, 2);
+  assert.equal(tableSelectionCalls.length, 2);
+  assert.doesNotMatch(editorPanel, /@change="selectSchemaTable\(\$event\.target\.value\)"/);
   assert.match(
     editorPanel,
-    /schemaSection === 'quality'[\s\S]*:value="schemaActiveIndex"[\s\S]*quality-table-/
+    /schemaSection === 'schema'[\s\S]*entity-tabs-list[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
+  );
+  assert.match(
+    editorPanel,
+    /schemaSection === 'quality'[\s\S]*entity-tabs-list[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
 });
 
-test('schema heading, table selector, and add action share one axis', () => {
+test('every builder section uses the aligned primary stage bar', () => {
   const editorPanel = readEditorPanel();
+  const primaryBars = editorPanel.match(/schema-stage-bar schema-stage-bar--primary/g) || [];
+
+  assert.equal(primaryBars.length, 4);
+});
+
+test('shared entity tabs keep actions visible outside the scroll area', () => {
+  const editorPanel = readEditorPanel();
+  const buttonCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/buttons.css'),
+    'utf8'
+  );
+  const shellCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/shell.css'),
+    'utf8'
+  );
   const schemaCss = fs.readFileSync(
     path.join(siteRoot, 'css/src/components/schema-builder.css'),
     'utf8'
@@ -166,10 +206,17 @@ test('schema heading, table selector, and add action share one axis', () => {
 
   assert.match(
     editorPanel,
-    /schema-stage-bar[\s\S]*schema-stage-title[\s\S]*schemaActiveIndex[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*entity-tabs-toolbar--inline schema-table-toolbar[\s\S]*entity-tabs-list[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
-  assert.match(schemaCss, /\.schema-stage-bar\s*\{[\s\S]*?items-center/);
+  assert.match(shellCss, /\.entity-tabs-list\s*\{[\s\S]*?overflow-x-auto/);
+  assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
+  assert.match(shellCss, /\.entity-tabs-actions \.pine-btn\s*\{[\s\S]*?h-\[30px\][\s\S]*?w-\[30px\]/);
+  assert.match(shellCss, /\.entity-tabs-toolbar--inline \.entity-tabs-controls\s*\{[\s\S]*?flex-1/);
+  assert.match(buttonCss, /\.pine-btn\s*\{[\s\S]*?h-9/);
+  assert.match(shellCss, /\.entity-tab\s*\{[\s\S]*?h-\[30px\]/);
+  assert.match(shellCss, /\.view-switch\s*\{[\s\S]*?h-9/);
+  assert.match(schemaCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?-mx-4[\s\S]*?min-h-\[51px\][\s\S]*?py-2\.5/);
 });
 
 test('template catalogs keep bundled assets declarative', () => {

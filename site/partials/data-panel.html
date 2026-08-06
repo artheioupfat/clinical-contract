@@ -13,22 +13,7 @@
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 6l6 6-6 6" />
                     </svg>
                   </button>
-                  <div>
-                    <div class="panel-eyebrow" x-text="t('editor.panel.checker')"></div>
-                    <div class="panel-title" x-show="dataTab === 'data' && dataFiles.length <= 1" x-text="dataFileName || t('editor.panel.noData')"></div>
-                    <select
-                      class="schema-input schema-form-control"
-                      x-show="dataTab === 'data' && dataFiles.length > 1"
-                      x-cloak
-                      :value="activeDataIndex"
-                      @change="selectDataFile($event.target.value)"
-                      :aria-label="t('editor.panel.dataFiles')"
-                    >
-                      <template x-for="(file, index) in dataFiles" :key="`${file.name}-${index}`">
-                        <option :value="index" x-text="file.name"></option>
-                      </template>
-                    </select>
-                  </div>
+                  <div class="panel-eyebrow" x-text="t('editor.panel.checker')"></div>
                 </div>
                 <div class="pine-toolbar">
                   <div class="view-switch" :class="!dataFile ? 'view-switch--locked' : ''" :title="!dataFile ? t('editor.panel.unlockData') : ''">
@@ -46,34 +31,6 @@
                       </span>
                     </button>
                   </div>
-                  <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" multiple @change="pickDataFile($event)" />
-                  <button
-                    type="button"
-                    x-show="dataFile"
-                    x-cloak
-                    @click="$refs.dataInput.click()"
-                    class="pine-btn pine-btn--icon"
-                    :aria-label="t('editor.actions.addData')"
-                    :title="t('editor.actions.addData')"
-                  >
-                    <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                      <path stroke-linecap="round" d="M12 5v14M5 12h14" />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    x-show="dataFile"
-                    x-cloak
-                    @click="deleteDataFile()"
-                    :disabled="busy || previewLoading"
-                    class="pine-btn pine-btn--danger pine-btn--icon"
-                    :aria-label="t('editor.actions.deleteData')"
-                    :title="t('editor.actions.deleteDataQuestion')"
-                  >
-                    <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
-                    </svg>
-                  </button>
                   <button
                     type="button"
                     @click="runCheck()"
@@ -82,6 +39,51 @@
                     :title="!schemaStarted ? t('editor.actions.contractFirst') : !dataFile ? t('editor.actions.dataFirst') : t('editor.actions.runChecksTitle')"
                     x-text="t('editor.actions.runChecks')"
                   ></button>
+                </div>
+              </div>
+
+              <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" multiple @change="pickDataFile($event)" />
+
+              <div class="entity-tabs-toolbar data-file-toolbar" x-show="dataTab === 'data' && dataFile" x-cloak>
+                <div class="entity-tabs-controls">
+                  <div class="entity-tabs-list" role="group" :aria-label="t('editor.panel.dataFiles')">
+                    <template x-for="(file, index) in dataFiles" :key="`${file.name}-${index}`">
+                      <button
+                        type="button"
+                        class="entity-tab"
+                        :class="{ 'entity-tab--active': index === activeDataIndex }"
+                        :aria-pressed="index === activeDataIndex"
+                        :title="file.name"
+                        @click="selectDataFile(index)"
+                        x-text="file.name"
+                      ></button>
+                    </template>
+                  </div>
+                  <div class="entity-tabs-actions">
+                    <button
+                      type="button"
+                      @click="$refs.dataInput.click()"
+                      class="pine-btn pine-btn--icon"
+                      :aria-label="t('editor.actions.addData')"
+                      :title="t('editor.actions.addData')"
+                    >
+                      <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      @click="deleteDataFile()"
+                      :disabled="busy || previewLoading"
+                      class="pine-btn pine-btn--danger pine-btn--icon"
+                      :aria-label="t('editor.actions.deleteData')"
+                      :title="t('editor.actions.deleteDataQuestion')"
+                    >
+                      <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -172,7 +174,7 @@
                     </template>
               </div>
 
-              <div class="results-table-wrap" x-show="dataTab === 'schema'" x-cloak>
+              <div class="results-table-wrap results-table-wrap--checker-results" x-show="dataTab === 'schema'" x-cloak>
                     <table class="results-table">
                       <thead><tr><th x-text="t('editor.schemaResults.schema')"></th><th x-text="t('editor.schemaResults.column')"></th><th x-text="t('editor.schemaResults.required')"></th><th x-text="t('editor.schemaResults.expected')"></th><th x-text="t('editor.schemaResults.detected')"></th><th x-text="t('editor.schemaResults.status')"></th></tr></thead>
                       <tbody>
@@ -191,7 +193,7 @@
                     </table>
               </div>
 
-              <div class="results-table-wrap" x-show="dataTab === 'quality'" x-cloak>
+              <div class="results-table-wrap results-table-wrap--checker-results" x-show="dataTab === 'quality'" x-cloak>
                     <table class="results-table">
                       <thead><tr><th x-text="t('editor.qualityResults.schema')"></th><th x-text="t('editor.qualityResults.column')"></th><th x-text="t('editor.qualityResults.rule')"></th><th x-text="t('editor.qualityResults.obtained')"></th><th x-text="t('editor.qualityResults.expected')"></th><th x-text="t('editor.qualityResults.result')"></th><th x-text="t('editor.qualityResults.log')"></th></tr></thead>
                       <tbody>

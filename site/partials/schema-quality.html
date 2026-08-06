@@ -1,17 +1,8 @@
                       <!-- Quality: SQL checks attached to contract columns. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
-                        <div class="schema-stage-bar">
-                          <div>
-                            <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
-                          </div>
-                          <label class="schema-form-field">
-                            <span class="sr-only" x-text="t('editor.columns.table')"></span>
-                            <select class="schema-input schema-form-control" :value="schemaActiveIndex" @change="selectSchemaTable($event.target.value)">
-                              <template x-for="(table, index) in schemaCollection" :key="`quality-table-${index}`">
-                                <option :value="index" x-text="table.name || `${t('editor.columns.table')} ${index + 1}`"></option>
-                              </template>
-                            </select>
-                          </label>
+                        <div class="schema-stage-bar schema-stage-bar--primary">
+                          <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
+                          <div data-include="./partials/schema-table-tabs.html"></div>
                         </div>
                         <div class="quality-list-shell">
                           <template x-if="schemaDraft.qualityRules.length === 0">
@@ -137,4 +128,3 @@
                           </div>
                         </div>
                       </template>
-

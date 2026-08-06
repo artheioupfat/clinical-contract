@@ -1,0 +1,41 @@
+                          <!-- Shared table navigation for schema-scoped builder sections. -->
+                          <div class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar">
+                            <div class="entity-tabs-controls">
+                              <div class="entity-tabs-list" role="group" :aria-label="t('editor.columns.table')">
+                                <template x-for="(table, index) in schemaCollection" :key="`schema-table-${schemaSection}-${index}`">
+                                  <button
+                                    type="button"
+                                    class="entity-tab"
+                                    :class="{ 'entity-tab--active': index === schemaActiveIndex }"
+                                    :aria-pressed="index === schemaActiveIndex"
+                                    @click="selectSchemaTable(index)"
+                                    x-text="table.name || `${t('editor.columns.table')} ${index + 1}`"
+                                  ></button>
+                                </template>
+                              </div>
+                              <div class="entity-tabs-actions">
+                                <button
+                                  type="button"
+                                  class="pine-btn pine-btn--icon"
+                                  @click="addSchemaTable()"
+                                  :aria-label="t('editor.columns.addTable')"
+                                  :title="t('editor.columns.addTable')"
+                                >
+                                  <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                    <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="pine-btn pine-btn--danger pine-btn--icon"
+                                  @click="openRemoveTableModal()"
+                                  :aria-label="t('editor.columns.removeTable')"
+                                  :title="t('editor.columns.removeTable')"
+                                >
+                                  <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>

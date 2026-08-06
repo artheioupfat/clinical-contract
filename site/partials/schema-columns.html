@@ -1,41 +1,8 @@
                       <!-- Schema: table metadata and column definitions. -->
                       <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
-                        <div class="schema-stage-bar">
-                          <div>
-                            <div class="schema-stage-title" x-text="t('editor.sections.schema')"></div>
-                          </div>
-                          <div class="pine-toolbar">
-                            <label class="schema-form-field">
-                              <span class="sr-only" x-text="t('editor.columns.table')"></span>
-                              <select class="schema-input schema-form-control" :value="schemaActiveIndex" @change="selectSchemaTable($event.target.value)">
-                                <template x-for="(table, index) in schemaCollection" :key="`schema-table-${index}`">
-                                  <option :value="index" x-text="table.name || `${t('editor.columns.table')} ${index + 1}`"></option>
-                                </template>
-                              </select>
-                            </label>
-                            <button
-                              type="button"
-                              class="pine-btn pine-btn--icon"
-                              @click="addSchemaTable()"
-                              :aria-label="t('editor.columns.addTable')"
-                              :title="t('editor.columns.addTable')"
-                            >
-                              <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                <path stroke-linecap="round" d="M12 5v14M5 12h14" />
-                              </svg>
-                            </button>
-                            <button
-                              type="button"
-                              class="pine-btn pine-btn--danger pine-btn--icon"
-                              @click="openRemoveTableModal()"
-                              :aria-label="t('editor.columns.removeTable')"
-                              :title="t('editor.columns.removeTable')"
-                            >
-                              <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16m-10 4v6m4-6v6M9 7l1-3h4l1 3m3 0-1 13H7L6 7" />
-                              </svg>
-                            </button>
-                          </div>
+                        <div class="schema-stage-bar schema-stage-bar--primary">
+                          <div class="schema-stage-title" x-text="t('editor.sections.schema')"></div>
+                          <div data-include="./partials/schema-table-tabs.html"></div>
                         </div>
                         <div class="schema-form-grid schema-form-grid--schema">
                           <label class="schema-form-field">
@@ -163,4 +130,3 @@
                           </div>
                         </div>
                       </template>
-
