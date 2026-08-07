@@ -64,7 +64,7 @@
     "meta": { "title": "Editor | clinical-contract", "description": "Write, validate and check a clinical data contract directly in your browser." },
     "sections": { "fundamentals": "Fundamentals", "schema": "Schema", "quality": "Quality", "team": "Team" },
     "panel": {
-      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded", "dataFile": "Data file", "dataFiles": "Loaded data files",
+      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded", "dataFile": "Data files", "dataFiles": "Loaded data files",
       "unlockContract": "Create or load a contract to unlock", "unlockData": "Load a data file to unlock"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
