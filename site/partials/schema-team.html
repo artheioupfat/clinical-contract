@@ -1,0 +1,87 @@
+                      <!-- Team: ownership metadata and members. -->
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'team'" x-cloak>
+                        <div class="schema-stage-bar schema-stage-bar--primary">
+                          <div>
+                            <div class="schema-stage-title" x-text="t('editor.sections.team')"></div>
+                          </div>
+                        </div>
+                        <div class="schema-form-grid schema-form-grid--two">
+                          <label class="schema-form-field">
+                            <span class="schema-form-label" x-text="t('editor.team.name')"></span>
+                            <input type="text" x-model="schemaDraft.teamName" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label" x-text="t('editor.team.description')"></span>
+                            <input type="text" x-model="schemaDraft.teamDescription" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input schema-form-control" />
+                          </label>
+                        </div>
+                        <div class="schema-subsection-bar">
+                          <div class="schema-stage-title" x-text="t('editor.team.members')"></div>
+                        </div>
+                        <div class="team-list-shell mt-3">
+                          <template x-if="schemaDraft.teamMembers.length === 0">
+                            <div class="team-empty" x-text="t('editor.team.empty')"></div>
+                          </template>
+                          <table x-show="schemaDraft.teamMembers.length > 0" x-cloak class="team-table">
+                            <thead>
+                              <tr>
+                                <th x-text="t('editor.team.memberName')"></th>
+                                <th x-text="t('editor.team.role')"></th>
+                                <th class="text-right" x-text="t('editor.team.action')"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="member in schemaDraft.teamMembers" :key="member._rowId">
+                                <tr class="team-table__row" @click="openTeamMember(member._rowId)" tabindex="0" @keydown.enter.prevent="openTeamMember(member._rowId)">
+                                  <td class="team-table__name" x-text="member.name || t('editor.team.unnamed')"></td>
+                                  <td class="team-table__role" x-text="member.role || t('editor.team.noRole')"></td>
+                                  <td class="team-table__action">
+                                    <button type="button" class="team-edit-button" @click.stop.prevent="openTeamMember(member._rowId)" x-text="t('common.edit')"></button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addTeamMember()" x-text="t('editor.team.add')"></button>
+                        </div>
+                      </div>
+
+                      <template x-if="teamEditorMember()">
+                        <div
+                          class="entity-modal-backdrop"
+                          @keydown.escape.window="closeTeamMember()"
+                        >
+                          <div class="entity-modal" x-data="{ member: teamEditorMember() }" @click.outside="closeTeamMember()">
+                            <div class="entity-modal__header">
+                              <div>
+                                <div class="entity-modal__kicker" x-text="t('editor.team.details')"></div>
+                                <div class="entity-modal__title" x-text="member.name || t('editor.team.unnamed')"></div>
+                              </div>
+                            </div>
+
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label" x-text="t('editor.team.memberName')"></span>
+                                <input type="text" x-model="member.name" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" :placeholder="t('editor.team.namePlaceholder')" />
+                              </label>
+
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label" x-text="t('editor.team.role')"></span>
+                                <input type="text" x-model="member.role" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" :placeholder="t('editor.team.rolePlaceholder')" />
+                              </label>
+
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label" x-text="t('editor.team.email')"></span>
+                                <input type="email" x-model="member.email" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input team-member-input" placeholder="jane.doe@example.org" />
+                              </label>
+                            </div>
+
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeTeamMember(member._rowId)" x-text="t('editor.team.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeTeamMember()" x-text="t('common.done')"></button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>

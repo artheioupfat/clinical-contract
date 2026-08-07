@@ -44,11 +44,18 @@
     "closingLink": "Read the documentation"
   },
   "docs": {
-    "meta": { "title": "Documentation | clinical-contract", "description": "Clinical-contract documentation: contracts, schemas, data types, quality rules, CLI and Python API." },
     "nav": "Documentation navigation",
-    "heroTitle": "Documentation",
-    "heroBody": "Learn how to write and validate a data contract, then use it to check the compliance of exchanged data.",
-    "toc": "Contents",
+    "onThisPage": "On this page",
+    "pagesAria": "Documentation pages",
+    "pages": { "overview": "Introduction", "pythonApi": "Python API", "contractReference": "Contract reference" },
+    "pageMeta": {
+      "overviewTitle": "Documentation",
+      "overviewBody": "Learn how to write and validate a data contract, then use it to check the compliance of exchanged data.",
+      "pythonApiTitle": "Python API",
+      "pythonApiBody": "Install Clinical-Contract, use its public Python API, and integrate single-table or multi-table checks into your applications.",
+      "contractReferenceTitle": "Data contract reference",
+      "contractReferenceBody": "Build a Clinical-Contract YAML document block by block and understand every supported field, type, and quality operator."
+    },
     "tocAria": "Documentation contents",
     "loading": "Loading documentation...",
     "loadError": "Unable to load the documentation ({status})."
@@ -57,20 +64,20 @@
     "meta": { "title": "Editor | clinical-contract", "description": "Write, validate and check a clinical data contract directly in your browser." },
     "sections": { "fundamentals": "Fundamentals", "schema": "Schema", "quality": "Quality", "team": "Team" },
     "panel": {
-      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded",
+      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded", "dataFiles": "Loaded data files",
       "unlockContract": "Create or load a contract to unlock", "unlockData": "Load a data file to unlock"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
     "actions": {
       "download": "Download contract", "reset": "Reset contract", "resetQuestion": "Reset contract?", "validate": "Validate",
       "validateTitle": "Validate contract structure", "newContract": "New contract", "loadContract": "Load contract", "showExamples": "Show examples",
-      "loadData": "Load data", "deleteData": "Delete data file", "deleteDataQuestion": "Delete data file?", "runChecks": "Run checks",
+      "loadData": "Load data", "addData": "Add data file", "deleteData": "Delete data file", "deleteDataQuestion": "Delete data file?", "runChecks": "Run checks",
       "runChecksTitle": "Run schema and quality checks", "contractFirst": "Create or load a contract first", "dataFirst": "Load a data file first"
     },
     "emptyContract": {
       "title": "Drop or write a data contract", "body": "Build your contract step by step, or load an existing YAML contract.", "placeholder": "Drop a YAML data contract here."
     },
-    "emptyData": { "title": "Drop a data file", "body": "Load a CSV or Parquet file to check its compliance with a data contract." },
+    "emptyData": { "title": "Drop data files", "body": "Load one CSV or Parquet file per table. Each filename must match its schema name." },
     "builder": {
       "title": "Write contract", "contractName": "Contract name", "contractVersion": "Contract version", "status": "Status", "active": "Active contract",
       "purpose": "Purpose", "purposePlaceholder": "Why this dataset exists", "usage": "Usage", "usagePlaceholder": "How consumers should use it",
@@ -80,11 +87,19 @@
       "objectives": { "predictive": "Predictive", "therapeutic": "Therapeutic", "diagnostic": "Diagnostic", "epidemiological": "Epidemiological", "descriptive": "Descriptive", "operational": "Operational" }
     },
     "columns": {
+      "table": "Table", "addTable": "Add table", "removeTable": "Remove table",
       "tableName": "Table name", "description": "Description", "title": "Columns", "empty": "Add a column, then edit its type and description from the details panel.",
       "column": "Column", "type": "Type", "required": "Required", "action": "Action", "unnamed": "Unnamed column", "noDescription": "No description yet",
       "details": "Column details", "name": "Column name", "logicalType": "Logical type", "physicalType": "Physical type", "noConstraint": "No type constraint",
       "descriptionPlaceholder": "Example: Patient identifier used to link healthcare records across hospital stays.", "examples": "Examples", "examplesPlaceholder": "One example per line",
       "add": "Add column", "remove": "Remove column"
+    },
+    "removeTable": {
+      "kicker": "Remove table", "question": "Are you sure you want to remove this table?",
+      "body": "The table “{name}”, its columns, and its quality rules will be permanently removed from the contract.",
+      "unnamed": "Unnamed table", "confirm": "Remove table", "clearKicker": "Clear table",
+      "clearQuestion": "Clear the only table?", "clearBody": "The table “{name}”, its columns, and its quality rules will be cleared. Fundamentals and Team will be preserved.",
+      "clearConfirm": "Clear table"
     },
     "quality": {
       "empty": "Add at least one named column, then create SQL quality checks here.", "column": "Column", "description": "Description", "action": "Action",
@@ -112,14 +127,15 @@
     "status": { "passed": "Passed", "failed": "Failed", "error": "Error", "warning": "Warning", "idle": "Not run" },
     "templates": {
       "contracts": "Contract templates", "datasets": "Sample datasets", "contractChoice": "Choose a starting point", "dataChoice": "Choose a local example",
-      "contractDescription": "Bundled YAML data contract.", "dataDescription": "Bundled {format} dataset."
+      "contractDescription": "Bundled YAML data contract.", "dataDescription": "Bundled {format} dataset.",
+      "selected": "{count} selected", "select": "Select"
     },
     "reset": {
       "title": "Reset contract", "question": "Delete the current draft?", "body": "This removes only the contract being edited. A loaded data file remains available in the checker.",
       "download": "Download draft", "confirm": "Reset contract"
     },
     "footer": {
-      "runtimeLoading": "Python runtime loading", "contract": "Contract", "lines": "{count} lines", "times": "Execution times", "validate": "Validate:", "check": "Check:",
+      "runtimeLoading": "Python runtime loading", "contract": "Contract", "lines": "{count} lines", "times": "Execution times", "validate": "Validate :", "check": "Check :",
       "dataFile": "Data file", "columns": "Cols:", "rows": "Rows:", "size": "Size:"
     },
     "resize": { "show": "Show checker panel", "hide": "Hide checker panel", "panels": "Resize editor and checker panels" },

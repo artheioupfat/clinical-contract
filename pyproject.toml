@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "clinical-contract"
-version = "0.2.2"
+version = "0.3.0"
 description = "Validate clinical YAML data contracts against Parquet and CSV files"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,7 +26,7 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",
-    "duckdb>=0.10",
+    "duckdb>=1.0",
 ]
 
 # CLI entry point
@@ -58,6 +58,10 @@ line-length = 88
 [tool.ruff.lint]
 select = ["E9", "F63", "F7", "F82"]
 
+# E9: Fatal syntax and I/O errors detected by pycodestyle.
+# F63: Invalid comparison and print syntax detected by Pyflakes.
+# F7: Invalid control-flow and annotation syntax detected by Pyflakes.
+# F82: Undefined or invalidly scoped names detected by Pyflakes.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

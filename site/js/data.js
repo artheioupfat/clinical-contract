@@ -1,21 +1,22 @@
 (function registerDataModule() {
 window.ClinicalModules = window.ClinicalModules || {};
 
-window.ClinicalModules.data = {
+const dataModule = {
   async restoreDataFileSession() {
     try {
       if (typeof this.pruneExpiredDataFileSessions === 'function') {
         await this.pruneExpiredDataFileSessions();
       }
-      const stored = await this.readPersistedDataFile();
-      if (!stored?.data) return false;
-
-      this.dataFile = new File([stored.data], stored.name, {
-        type: stored.type || 'application/octet-stream',
-        lastModified: stored.lastModified || Date.now(),
-      });
-      this.dataFileName = this.dataFile.name;
-      this.dataFileSize = this.dataFile.size;
+      const storedFiles = await this.readPersistedDataFiles();
+      this.dataFiles = storedFiles
+        .filter((stored) => stored?.data)
+        .map((stored) => new File([stored.data], stored.name, {
+          type: stored.type || 'application/octet-stream',
+          lastModified: stored.lastModified || Date.now(),
+        }));
+      if (!this.dataFiles.length) return false;
+      this.activeDataIndex = 0;
+      dataModule.syncActiveDataFile.call(this);
       this.dataColumns = null;
       this.dataRows = null;
       this.dataTab = 'data';
@@ -142,33 +143,66 @@ window.ClinicalModules.data = {
   },
 
   async pickDataFile(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    await this.loadDataFile(file);
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    await this.loadDataFiles(files);
     event.target.value = '';
   },
 
   async dropData(event) {
     this.draggingData = false;
-    const file = [...event.dataTransfer.files].find((f) => /\.(parquet|csv)$/i.test(f.name));
-    if (!file) return;
-    await this.loadDataFile(file);
+    const files = [...event.dataTransfer.files].filter((file) => /\.(parquet|csv)$/i.test(file.name));
+    if (!files.length) return;
+    await this.loadDataFiles(files);
   },
 
-  async loadDataFile(file) {
+  dataFileKey(file) {
+    return String(file?.name || '').replace(/\.(parquet|csv)$/i, '');
+  },
+
+  syncActiveDataFile() {
+    if (!Array.isArray(this.dataFiles)) this.dataFiles = [];
+    if (!this.dataFiles.length) {
+      this.activeDataIndex = 0;
+      this.dataFile = null;
+      this.dataFileName = '';
+      this.dataFileSize = 0;
+      return;
+    }
+    this.activeDataIndex = Math.max(0, Math.min(this.activeDataIndex, this.dataFiles.length - 1));
+    this.dataFile = this.dataFiles[this.activeDataIndex];
+    this.dataFileName = this.dataFile.name;
+    this.dataFileSize = this.dataFile.size || 0;
+  },
+
+  async loadDataFiles(files) {
     if (!this.pythonReady) {
       this.dataStorageWarning = this.t('editor.messages.runtimeData');
       return false;
     }
+    const acceptedFiles = Array.from(files || []).filter((file) => /\.(parquet|csv)$/i.test(file?.name || ''));
+    if (!acceptedFiles.length) return false;
 
-    this.dataFile = file;
-    this.dataFileName = file.name;
-    this.dataFileSize = file.size || 0;
+    const merged = Array.from(this.dataFiles || []);
+    for (const file of acceptedFiles) {
+      const key = dataModule.dataFileKey(file);
+      const existingIndex = merged.findIndex((candidate) => dataModule.dataFileKey(candidate) === key);
+      if (existingIndex >= 0) merged[existingIndex] = file;
+      else merged.push(file);
+    }
+    this.dataFiles = merged;
+    this.activeDataIndex = this.dataFiles.indexOf(acceptedFiles.at(-1));
+    if (this.activeDataIndex < 0) {
+      this.activeDataIndex = this.dataFiles.findIndex(
+        (file) => dataModule.dataFileKey(file) === dataModule.dataFileKey(acceptedFiles.at(-1))
+      );
+    }
+    dataModule.syncActiveDataFile.call(this);
     this.dataStorageWarning = '';
     this.dataTab = 'data';
     this.resetDataCheckState();
     try {
-      await this.persistDataFileSession(file);
+      await this.persistDataFilesSession(this.dataFiles);
     } catch (error) {
       console.warn(`Unable to persist the data file: ${error.message}`);
       this.dataStorageWarning = this.t('editor.messages.dataStorage', { message: error.message });
@@ -177,8 +211,22 @@ window.ClinicalModules.data = {
     return true;
   },
 
+  async selectDataFile(index) {
+    const nextIndex = Number(index);
+    if (!Number.isInteger(nextIndex) || nextIndex === this.activeDataIndex) return;
+    this.releasePreviewSession();
+    this.activeDataIndex = nextIndex;
+    dataModule.syncActiveDataFile.call(this);
+    this.dataTab = 'data';
+    await this.refreshDataInsights();
+  },
+
   deleteDataFile() {
-    const cleanup = this.clearPersistedDataFile();
+    this.dataFiles = Array.from(this.dataFiles || []);
+    if (this.dataFiles.length) this.dataFiles.splice(this.activeDataIndex, 1);
+    const cleanup = this.dataFiles.length
+      ? this.persistDataFilesSession(this.dataFiles)
+      : this.clearPersistedDataFile();
     if (cleanup?.catch) {
       cleanup.catch((error) => {
         console.warn(`Unable to clear the stored data file: ${error.message}`);
@@ -188,15 +236,15 @@ window.ClinicalModules.data = {
     this.releasePreviewSession();
     this.clearPreviewData();
 
-    this.dataFile = null;
-    this.dataFileName = '';
-    this.dataFileSize = 0;
+    this.activeDataIndex = Math.min(this.activeDataIndex, Math.max(0, this.dataFiles.length - 1));
+    dataModule.syncActiveDataFile.call(this);
     this.dataColumns = null;
     this.dataRows = null;
     this.dataStorageWarning = '';
     this.draggingData = false;
     this.resetDataCheckState();
     this.dataTab = 'data';
+    if (this.dataFile && this.pythonReady) this.refreshDataInsights();
     if (this.validateRunState === 'passed') this.logoVariant = 'green';
     else if (this.validateRunState === 'failed') this.logoVariant = 'red';
     else this.logoVariant = 'neutral';
@@ -210,28 +258,54 @@ window.ClinicalModules.data = {
       this.dataStorageWarning = this.t('editor.messages.runtimeSample');
       return;
     }
+    this.selectedDataTemplateIds = [];
     this.dataTemplateModalOpen = true;
   },
 
   closeDataTemplateModal() {
     this.dataTemplateModalOpen = false;
+    this.selectedDataTemplateIds = [];
   },
 
-  async loadDataTemplate(template) {
-    if (!this.pythonReady || !template?.path) return;
+  isDataTemplateSelected(templateId) {
+    return Array.from(this.selectedDataTemplateIds || []).includes(templateId);
+  },
+
+  toggleDataTemplateSelection(templateId) {
+    const selectedIds = new Set(this.selectedDataTemplateIds || []);
+    if (selectedIds.has(templateId)) selectedIds.delete(templateId);
+    else selectedIds.add(templateId);
+    this.selectedDataTemplateIds = [...selectedIds];
+  },
+
+  async confirmDataTemplateSelection() {
+    const selectedIds = new Set(this.selectedDataTemplateIds || []);
+    const templates = (this.dataTemplates || []).filter((template) => selectedIds.has(template.id));
+    await dataModule.loadDataTemplates.call(this, templates);
+  },
+
+  async loadDataTemplates(templates) {
+    const selectedTemplates = Array.from(templates || []).filter((template) => template?.path);
+    if (!this.pythonReady || !selectedTemplates.length) return;
+    this.busy = true;
     try {
-      const response = await fetch(template.path);
-      if (!response.ok) {
-        throw new Error(this.t('editor.messages.templateDataStatus', { status: response.status }));
-      }
-      const buffer = await response.arrayBuffer();
-      const file = new File([buffer], template.fileName || 'template.parquet', {
-        type: template.mimeType || 'application/octet-stream',
-      });
+      const files = await Promise.all(selectedTemplates.map(async (template) => {
+        const response = await fetch(template.path, { cache: 'no-cache' });
+        if (!response.ok) {
+          throw new Error(this.t('editor.messages.templateDataStatus', { status: response.status }));
+        }
+        const buffer = await response.arrayBuffer();
+        return new File([buffer], template.fileName || 'template.parquet', {
+          type: template.mimeType || 'application/octet-stream',
+        });
+      }));
       this.dataTemplateModalOpen = false;
-      await this.loadDataFile(file);
+      this.selectedDataTemplateIds = [];
+      await this.loadDataFiles(files);
     } catch (error) {
       this.dataStorageWarning = this.t('editor.messages.templateDataFailed', { message: error.message });
+    } finally {
+      this.busy = false;
     }
   },
 
@@ -255,4 +329,6 @@ window.ClinicalModules.data = {
     console.error(this.previewError);
   },
 };
+
+window.ClinicalModules.data = dataModule;
 })();

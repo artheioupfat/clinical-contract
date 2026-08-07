@@ -55,6 +55,29 @@
     color: var(--cc-muted);
   }
 
+  .docs-guide-tabs {
+    @apply mt-6 flex flex-wrap items-center gap-2;
+  }
+
+  .docs-guide-link {
+    @apply inline-flex items-center rounded-md border px-4 py-2 text-sm font-semibold no-underline transition;
+    background: var(--cc-surface);
+    border-color: var(--cc-border);
+    color: var(--cc-text);
+  }
+
+  .docs-guide-link:hover,
+  .docs-guide-link:focus-visible {
+    border-color: var(--cc-primary);
+    color: var(--cc-primary-strong);
+  }
+
+  .docs-guide-link--active {
+    background: var(--cc-primary);
+    border-color: var(--cc-primary);
+    color: white;
+  }
+
   .docs-layout {
     @apply grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)];
   }
@@ -62,6 +85,10 @@
   .docs-toc {
     @apply h-fit border-l bg-transparent py-1 pl-4 lg:sticky lg:top-24;
     border-color: var(--cc-border);
+  }
+
+  .docs-page-toc {
+    @apply min-w-0;
   }
 
   .docs-toc-title {
@@ -122,6 +149,10 @@
     @apply mt-7 text-lg font-semibold;
   }
 
+  .docs-prose h4 {
+    @apply mt-6 text-base font-semibold;
+  }
+
   .docs-prose p {
     @apply mt-4;
     color: var(--cc-text);
@@ -155,6 +186,32 @@
 
   .docs-prose pre code {
     @apply bg-transparent p-0 text-slate-100;
+  }
+
+  .docs-prose a {
+    @apply font-semibold underline decoration-1 underline-offset-4;
+    color: var(--cc-primary-strong);
+  }
+
+  .docs-prose blockquote {
+    @apply mt-5 border-l-4 py-1 pl-4 italic;
+    border-color: var(--cc-primary);
+    color: var(--cc-muted);
+  }
+
+  .docs-prose table {
+    @apply mt-5 w-full border-collapse text-left text-sm;
+  }
+
+  .docs-prose th,
+  .docs-prose td {
+    @apply border px-3 py-2 align-top;
+    border-color: var(--cc-border);
+  }
+
+  .docs-prose th {
+    @apply font-semibold;
+    background: var(--cc-surface-soft);
   }
 
   .theme-dark .docs-root,
@@ -200,6 +257,33 @@
 
   .theme-dark .docs-toc-link {
     color: var(--cc-night-muted);
+  }
+
+  .theme-dark .docs-prose th,
+  .theme-dark .docs-prose td {
+    border-color: var(--cc-night-border);
+  }
+
+  .theme-dark .docs-guide-link {
+    background: var(--cc-night-raised);
+    border-color: var(--cc-night-border);
+    color: var(--cc-night-text);
+  }
+
+  .theme-dark .docs-guide-link:hover,
+  .theme-dark .docs-guide-link:focus-visible {
+    border-color: var(--cc-primary);
+    color: var(--cc-primary-strong);
+  }
+
+  .theme-dark .docs-guide-link--active {
+    background: #005ca9;
+    border-color: #005ca9;
+    color: white;
+  }
+
+  .theme-dark .docs-prose th {
+    background: var(--cc-night-elevated);
   }
 
   .theme-dark .docs-prose h2 {

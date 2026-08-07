@@ -243,6 +243,8 @@ def _physical_types_compatible(contract_type: str, detected_type: str) -> bool:
 def _property_types_compatible(
     logical_type: str, physical_type: str, detected_type: str
 ) -> bool:
+    logical_type = logical_type.strip()
+    physical_type = physical_type.strip()
     if not logical_type and not physical_type:
         return True
     if physical_type:

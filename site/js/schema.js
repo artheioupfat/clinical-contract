@@ -1,5 +1,13 @@
 window.ClinicalModules = window.ClinicalModules || {};
 
+function dumpContractYaml(yamlLibrary, contract) {
+  return yamlLibrary.dump(contract, {
+    noRefs: true,
+    lineWidth: 110,
+    sortKeys: false,
+  });
+}
+
 window.ClinicalModules.schema = {
   ensureYamlLibrary() {
     const yamlLib = window.jsyaml;
@@ -38,8 +46,23 @@ window.ClinicalModules.schema = {
     this.resetContractModalOpen = false;
   },
 
+  openRemoveTableModal() {
+    if (!Array.isArray(this.schemaCollection) || this.schemaCollection.length === 0) return;
+    this.removeTableModalOpen = true;
+  },
+
+  closeRemoveTableModal() {
+    this.removeTableModalOpen = false;
+  },
+
+  confirmRemoveTable() {
+    this.removeTableModalOpen = false;
+    this.removeActiveSchemaTable();
+  },
+
   resetContractDraft() {
     this.resetContractModalOpen = false;
+    this.removeTableModalOpen = false;
     this.yamlText = '';
     this.yamlName = '';
     this.yamlNameGenerated = false;
@@ -308,7 +331,8 @@ window.ClinicalModules.schema = {
       nextRowId: () => this.nextSchemaRowId(),
     });
     this.schemaRootExtras = {};
-    this.schemaOtherSchemas = [];
+    this.schemaCollection = [];
+    this.schemaActiveIndex = 0;
     this.columnEditorRowId = null;
     this.qualityEditorRuleId = null;
     this.teamEditorMemberId = null;
@@ -345,11 +369,13 @@ window.ClinicalModules.schema = {
 
     const decoded = this.ensureContractCodec().contractObjectToDraft(parsed, {
       nextRowId: () => this.nextSchemaRowId(),
+      activeSchemaIndex: this.schemaActiveIndex,
     });
 
     this.schemaDraft = decoded.draft;
     this.schemaRootExtras = decoded.rootExtras;
-    this.schemaOtherSchemas = decoded.otherSchemas;
+    this.schemaCollection = decoded.schemas;
+    this.schemaActiveIndex = decoded.activeSchemaIndex;
     this.columnEditorRowId = null;
     this.qualityEditorRuleId = null;
     this.teamEditorMemberId = null;
@@ -373,10 +399,14 @@ window.ClinicalModules.schema = {
   pushSchemaToYaml() {
     try {
       this.schemaStarted = true;
-      this.yamlText = this.ensureContractCodec().draftToYamlText(this.schemaDraft || {}, this.ensureYamlLibrary(), {
-        rootExtras: this.schemaRootExtras || {},
-        otherSchemas: this.schemaOtherSchemas || [],
-      });
+      const contract = this.ensureContractCodec().draftToContractObject(
+        this.schemaDraft || {},
+        this.schemaRootExtras || {},
+        this.schemaCollection || [],
+        this.schemaActiveIndex
+      );
+      this.schemaCollection = Array.isArray(contract.schema) ? contract.schema : [];
+      this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), contract);
       this.yamlName = this.yamlNameGenerated
         ? this.ensureContractCodec().contractFileName(this.schemaDraft?.name)
         : this.yamlName || 'contract.yaml';
@@ -385,5 +415,43 @@ window.ClinicalModules.schema = {
     } catch (error) {
       this.schemaParseWarning = this.t('editor.messages.schemaSync', { message: error.message });
     }
+  },
+
+  selectSchemaTable(index) {
+    const nextIndex = Number(index);
+    if (!Number.isInteger(nextIndex) || nextIndex === this.schemaActiveIndex) return;
+    this.pushSchemaToYaml();
+    this.schemaActiveIndex = nextIndex;
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+  },
+
+  addSchemaTable() {
+    this.pushSchemaToYaml();
+    const parsed = this.ensureYamlLibrary().load(this.yamlText) || {};
+    const schemas = Array.isArray(parsed.schema) ? parsed.schema : [];
+    schemas.push({ name: '', physicalType: 'TABLE', properties: [] });
+    parsed.schema = schemas;
+    this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), parsed);
+    this.schemaActiveIndex = schemas.length - 1;
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    this.setSchemaSection('schema');
+    this.persistEditorSession();
+  },
+
+  removeActiveSchemaTable() {
+    this.pushSchemaToYaml();
+    const parsed = this.ensureYamlLibrary().load(this.yamlText) || {};
+    const schemas = Array.isArray(parsed.schema) ? parsed.schema : [];
+    if (!schemas.length) return;
+    if (schemas.length === 1) {
+      schemas[0] = { name: '', physicalType: 'TABLE', properties: [] };
+    } else {
+      schemas.splice(this.schemaActiveIndex, 1);
+    }
+    parsed.schema = schemas;
+    this.yamlText = dumpContractYaml(this.ensureYamlLibrary(), parsed);
+    this.schemaActiveIndex = Math.min(this.schemaActiveIndex, schemas.length - 1);
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    this.persistEditorSession();
   },
 };

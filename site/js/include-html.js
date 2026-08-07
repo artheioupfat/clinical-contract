@@ -28,9 +28,17 @@
     node.replaceWith(template.content.cloneNode(true));
   }
 
+  function findIncludeNodes(root = document) {
+    const includeNodes = [...root.querySelectorAll(INCLUDE_SELECTOR)];
+    for (const template of root.querySelectorAll('template')) {
+      includeNodes.push(...findIncludeNodes(template.content));
+    }
+    return includeNodes;
+  }
+
   async function hydrateIncludes() {
     for (let depth = 0; depth < MAX_INCLUDE_DEPTH; depth += 1) {
-      const includeNodes = [...document.querySelectorAll(INCLUDE_SELECTOR)];
+      const includeNodes = findIncludeNodes();
       if (includeNodes.length === 0) return;
       await Promise.all(includeNodes.map(replaceInclude));
     }

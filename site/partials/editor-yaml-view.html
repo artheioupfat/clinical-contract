@@ -1,0 +1,26 @@
+              <!-- YAML mode: plain code editor optimized for manual contract editing. -->
+              <template x-if="schemaStarted && editorView === 'yaml'">
+                <div class="editor-wrap" @dragover.prevent @drop.prevent="dropYaml($event)">
+                  <div class="editor-gutter" aria-hidden="true">
+                    <template x-for="line in lineNumbers" :key="line">
+                      <div class="editor-line-number" x-text="line"></div>
+                    </template>
+                  </div>
+                  <textarea
+                    id="yaml-editor"
+                    x-ref="yamlEditor"
+                    x-model="yamlText"
+                    @input="invalidateResultsFromYamlEditor()"
+                    @input.debounce.350ms="syncSchemaFromYamlEditor()"
+                    @scroll="syncEditorScroll($event)"
+                    @keydown="handleEditorKeydown($event)"
+                    spellcheck="false"
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    class="editor-textarea"
+                    :placeholder="t('editor.emptyContract.placeholder')"
+                  ></textarea>
+                </div>
+              </template>
+

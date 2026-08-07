@@ -2,7 +2,7 @@
 
 > Write healthcare data contracts, validate their structure, and check CSV or Parquet datasets against them.
 
-[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg?cacheSeconds=300&release=0.2.2)](https://pypi.org/project/clinical-contract/)
+[![PyPI](https://img.shields.io/pypi/v/clinical-contract.svg?cacheSeconds=300&release=0.3.0)](https://pypi.org/project/clinical-contract/)
 [![Python](https://img.shields.io/pypi/pyversions/clinical-contract.svg?cacheSeconds=300)](https://pypi.org/project/clinical-contract/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -53,7 +53,7 @@ This makes data delivery easier to review, easier to automate, and easier to dis
    Required columns must exist and detected DuckDB types must match the contract logical or physical types.
 
 3. **Quality rules**
-   SQL checks are executed against the loaded CSV/Parquet file and reported as passed or failed.
+   SQL checks are executed against the loaded CSV/Parquet tables and reported as passed or failed. Rules may join several contract tables.
 
 ## Python Package
 
@@ -74,7 +74,13 @@ clinical-contract validate site/examples/clinical-template.yaml
 Check a data file:
 
 ```bash
-clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
+clinical-contract check site/examples/clinical-template.yaml site/examples/clinical_template.parquet
+```
+
+For a multi-table contract, pass one file per table. Each filename stem must match its schema name:
+
+```bash
+clinical-contract check contract.yaml orders.parquet line_items.csv
 ```
 
 Display the installed version with `clinical-contract --version`.
@@ -101,13 +107,20 @@ report = contract.check("data.parquet")
 print(report.success)
 ```
 
+Multi-table checks accept a list of named files or an explicit mapping, which is useful for in-memory data:
+
+```python
+report = contract.check(["orders.parquet", "line_items.csv"])
+report = contract.check({"orders": orders_bytes, "line_items": lines_bytes})
+```
+
 ## Security Model
 
 Data contracts are treated as untrusted input. Each SQL quality rule must contain
 exactly one read-only `SELECT` statement and return one finite numeric value.
 Commands that modify data, files, extensions, or DuckDB settings are rejected.
 
-Before quality rules run, the selected CSV or Parquet file is loaded into an
+Before quality rules run, each selected CSV or Parquet file is loaded into an
 isolated in-memory DuckDB connection. External file and network access is then
 disabled, extensions are locked down, and execution resources are limited. The
 web application performs these checks locally in the browser and does not upload

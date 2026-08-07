@@ -1,0 +1,132 @@
+                      <!-- Schema: table metadata and column definitions. -->
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
+                        <div class="schema-stage-bar schema-stage-bar--primary">
+                          <div class="schema-stage-title" x-text="t('editor.sections.schema')"></div>
+                          <div data-include="./partials/schema-table-tabs.html"></div>
+                        </div>
+                        <div class="schema-form-grid schema-form-grid--schema">
+                          <label class="schema-form-field">
+                            <span class="schema-form-label"><span x-text="t('editor.columns.tableName')"></span> <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak x-text="t('common.required')"></span></span>
+                            <input type="text" x-model="schemaDraft.tableName" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableName')" class="schema-input schema-form-control" />
+                          </label>
+                          <label class="schema-form-field">
+                            <span class="schema-form-label"><span x-text="t('editor.columns.description')"></span> <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak x-text="t('common.required')"></span></span>
+                            <input type="text" x-model="schemaDraft.tableDescription" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableDescription')" class="schema-input schema-form-control" />
+                          </label>
+                        </div>
+
+                        <div class="schema-subsection-bar">
+                          <div class="schema-stage-title" x-text="t('editor.columns.title')"></div>
+                        </div>
+
+                        <div class="column-list-shell mt-3">
+                          <template x-if="schemaDraft.properties.length === 0">
+                            <div class="column-empty" x-text="t('editor.columns.empty')"></div>
+                          </template>
+                          <table x-show="schemaDraft.properties.length > 0" x-cloak class="column-table">
+                            <thead>
+                              <tr>
+                                <th x-text="t('editor.columns.column')"></th>
+                                <th x-text="t('editor.columns.type')"></th>
+                                <th x-text="t('editor.columns.required')"></th>
+                                <th x-text="t('editor.columns.description')"></th>
+                                <th class="text-right" x-text="t('editor.columns.action')"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="row in schemaDraft.properties" :key="row._rowId">
+                                <tr class="column-table__row" @click="openSchemaProperty(row._rowId)" tabindex="0" @keydown.enter.prevent="openSchemaProperty(row._rowId)">
+                                  <td class="column-table__column">
+                                    <span x-text="row.name || t('editor.columns.unnamed')"></span>
+                                    <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak x-text="t('common.required')"></span>
+                                  </td>
+                                  <td class="column-table__type">
+                                    <span x-text="columnTypeSummary(row)"></span>
+                                  </td>
+                                  <td class="column-table__required" x-text="row.required ? t('common.yes') : t('common.no')"></td>
+                                  <td class="column-table__description" x-text="row.description || t('editor.columns.noDescription')"></td>
+                                  <td class="column-table__action">
+                                    <button type="button" class="column-edit-button" @click.stop.prevent="openSchemaProperty(row._rowId)" x-text="t('common.edit')"></button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addSchemaProperty()" x-text="t('editor.columns.add')"></button>
+                        </div>
+                      </div>
+
+                      <template x-if="schemaEditorProperty()">
+                        <div
+                          class="entity-modal-backdrop"
+                          @keydown.escape.window="closeSchemaProperty()"
+                        >
+                          <div class="entity-modal" x-data="{ row: schemaEditorProperty() }" @click.outside="closeSchemaProperty()">
+                            <div class="entity-modal__header">
+                              <div>
+                                <div class="entity-modal__kicker" x-text="t('editor.columns.details')"></div>
+                                <div class="entity-modal__title" x-text="row.name || t('editor.columns.unnamed')"></div>
+                              </div>
+                            </div>
+
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label"><span x-text="t('editor.columns.name')"></span> <span class="schema-required" x-show="showRequiredFor('propertyName', row)" x-cloak x-text="t('common.required')"></span></span>
+                                <input type="text" x-model="row.name" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('propertyName', row)" class="schema-input" placeholder="column_name" />
+                              </label>
+
+                              <label class="entity-modal__field column-required-field">
+                                <span class="entity-modal__label" x-text="t('editor.columns.required')"></span>
+                                <input type="checkbox" x-model="row.required" @change="pushSchemaToYaml()" class="column-required-checkbox" />
+                              </label>
+
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label" x-text="t('editor.columns.logicalType')"></span>
+                                <select
+                                  :value="row.logicalType || ''"
+                                  @change="row.logicalType = $event.target.value; onLogicalTypeChanged(row)"
+                                  x-effect="row.logicalType; $nextTick(() => { $el.value = row.logicalType || '' })"
+                                  class="schema-input"
+                                >
+                                  <option value="" x-text="t('editor.columns.noConstraint')"></option>
+                                  <template x-for="logicalType in getLogicalTypeOptions(row)" :key="`logical-modal-${row._rowId}-${logicalType}`">
+                                    <option :value="logicalType" x-text="logicalType"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="entity-modal__field" x-show="shouldShowPhysicalType(row)" x-cloak>
+                                <span class="entity-modal__label" x-text="t('editor.columns.physicalType')"></span>
+                                <select
+                                  :value="row.physicalType || ''"
+                                  @change="row.physicalType = $event.target.value; onPhysicalTypeChanged(row)"
+                                  x-effect="row.physicalType; $nextTick(() => { $el.value = row.physicalType || '' })"
+                                  class="schema-input"
+                                >
+                                  <option value="" x-text="t('common.notSpecified')"></option>
+                                  <template x-for="physicalType in getPhysicalTypeOptions(row)" :key="`physical-modal-${row._rowId}-${physicalType}`">
+                                    <option :value="physicalType" x-text="physicalType"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="entity-modal__field entity-modal__field--wide column-description-field">
+                                <span class="entity-modal__label" x-text="t('editor.columns.description')"></span>
+                                <textarea x-model="row.description" @input.debounce.150ms="pushSchemaToYaml()" rows="5" class="schema-input schema-input--description column-description-textarea" :placeholder="t('editor.columns.descriptionPlaceholder')"></textarea>
+                              </label>
+
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label" x-text="t('editor.columns.examples')"></span>
+                                <textarea x-model="row.examplesText" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description" :placeholder="t('editor.columns.examplesPlaceholder')"></textarea>
+                              </label>
+                            </div>
+
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeSchemaProperty(row._rowId)" x-text="t('editor.columns.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeSchemaProperty()" x-text="t('common.done')"></button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>

@@ -152,7 +152,11 @@ test('editor module blocks the template selector until Python is ready', () => {
 test('editor module loads only the selected contract template', async () => {
   const editor = loadEditorModule();
   const originalFetch = global.fetch;
-  global.fetch = async () => ({ ok: true, async text() { return 'name: Example'; } });
+  let fetchOptions = null;
+  global.fetch = async (_path, options) => {
+    fetchOptions = options;
+    return { ok: true, async text() { return 'name: Example'; } };
+  };
   let dataLoads = 0;
   const context = {
     t,
@@ -168,7 +172,7 @@ test('editor module loads only the selected contract template', async () => {
     syncSchemaFromYaml() {},
     setSchemaSection() {},
     persistEditorSession() {},
-    loadDataFile() { dataLoads += 1; },
+    loadDataFiles() { dataLoads += 1; },
   };
 
   try {
@@ -186,6 +190,7 @@ test('editor module loads only the selected contract template', async () => {
   assert.equal(context.editorView, 'schema');
   assert.equal(context.contractTemplateModalOpen, false);
   assert.equal(dataLoads, 0);
+  assert.deepEqual(fetchOptions, { cache: 'no-cache' });
 });
 
 test('editor module applies imported YAML through one shared loading path', () => {

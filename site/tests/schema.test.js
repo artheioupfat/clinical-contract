@@ -203,6 +203,7 @@ test('resetting a contract preserves the loaded data file', () => {
   const context = {
     t,
     resetContractModalOpen: true,
+    removeTableModalOpen: true,
     yamlText: 'id: example',
     yamlName: 'example.yaml',
     yamlNameGenerated: true,
@@ -230,12 +231,106 @@ test('resetting a contract preserves the loaded data file', () => {
   assert.equal(resultsCleared, 1);
   assert.equal(sessionCleared, 1);
   assert.equal(context.resetContractModalOpen, false);
+  assert.equal(context.removeTableModalOpen, false);
   assert.equal(context.yamlText, '');
   assert.equal(context.yamlName, '');
   assert.equal(context.yamlNameGenerated, false);
   assert.equal(context.schemaStarted, false);
   assert.equal(context.schemaSection, 'fundamentals');
   assert.equal(context.dataTab, 'data');
+});
+
+test('table removal requires an explicit confirmation', () => {
+  const schema = loadSchemaModule();
+  let removals = 0;
+  const context = {
+    schemaCollection: [{ name: 'orders' }, { name: 'line_items' }],
+    removeTableModalOpen: false,
+    removeActiveSchemaTable() {
+      removals += 1;
+    },
+  };
+
+  schema.openRemoveTableModal.call(context);
+  assert.equal(context.removeTableModalOpen, true);
+  assert.equal(removals, 0);
+
+  schema.closeRemoveTableModal.call(context);
+  assert.equal(context.removeTableModalOpen, false);
+  assert.equal(removals, 0);
+
+  schema.openRemoveTableModal.call(context);
+  schema.confirmRemoveTable.call(context);
+  assert.equal(context.removeTableModalOpen, false);
+  assert.equal(removals, 1);
+});
+
+test('table removal confirmation opens for the only table', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaCollection: [{ name: 'orders' }],
+    removeTableModalOpen: false,
+  };
+
+  schema.openRemoveTableModal.call(context);
+
+  assert.equal(context.removeTableModalOpen, true);
+});
+
+test('table removal confirmation stays closed without a table', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    schemaCollection: [],
+    removeTableModalOpen: false,
+  };
+
+  schema.openRemoveTableModal.call(context);
+
+  assert.equal(context.removeTableModalOpen, false);
+});
+
+test('removing the only table clears it while preserving global contract fields', () => {
+  const schema = loadSchemaModule();
+  const source = {
+    name: 'Orders contract',
+    description: { purpose: 'Share orders' },
+    team: { name: 'Data office' },
+    schema: [{
+      name: 'orders',
+      physicalType: 'TABLE',
+      description: 'Order records',
+      properties: [{ name: 'order_id', quality: [{ query: 'select 0' }] }],
+    }],
+  };
+  let written = null;
+  let synced = 0;
+  let persisted = 0;
+  const context = {
+    yamlText: 'contract yaml',
+    schemaActiveIndex: 0,
+    pushSchemaToYaml() {},
+    ensureYamlLibrary() {
+      return {
+        load: () => structuredClone(source),
+        dump(value) {
+          written = value;
+          return 'updated yaml';
+        },
+      };
+    },
+    syncSchemaFromYaml() { synced += 1; },
+    persistEditorSession() { persisted += 1; },
+  };
+
+  schema.removeActiveSchemaTable.call(context);
+
+  assert.equal(written.name, 'Orders contract');
+  assert.deepEqual(written.description, { purpose: 'Share orders' });
+  assert.deepEqual(written.team, { name: 'Data office' });
+  assert.deepEqual(written.schema, [{ name: '', physicalType: 'TABLE', properties: [] }]);
+  assert.equal(context.yamlText, 'updated yaml');
+  assert.equal(synced, 1);
+  assert.equal(persisted, 1);
 });
 
 test('schema module blocks blank contract creation until Python is ready', () => {
@@ -294,17 +389,18 @@ test('generated contract filenames follow the contract name', () => {
     schemaStarted: true,
     schemaDraft: { name: 'Clinical Cohort 2026' },
     schemaRootExtras: {},
-    schemaOtherSchemas: [],
+    schemaCollection: [],
+    schemaActiveIndex: 0,
     yamlName: 'contract.yaml',
     yamlNameGenerated: true,
     schemaParseWarning: '',
     ensureContractCodec() {
       return {
         contractFileName: codec.contractFileName,
-        draftToYamlText: () => 'name: Clinical Cohort 2026\n',
+        draftToContractObject: () => ({ schema: [], name: 'Clinical Cohort 2026' }),
       };
     },
-    ensureYamlLibrary: () => ({}),
+    ensureYamlLibrary: () => ({ dump: () => 'name: Clinical Cohort 2026\n' }),
     clearResults() {},
   };
 
@@ -319,17 +415,18 @@ test('imported contract filenames remain unchanged while editing', () => {
     schemaStarted: true,
     schemaDraft: { name: 'Renamed Contract' },
     schemaRootExtras: {},
-    schemaOtherSchemas: [],
+    schemaCollection: [],
+    schemaActiveIndex: 0,
     yamlName: 'hospital-export.yaml',
     yamlNameGenerated: false,
     schemaParseWarning: '',
     ensureContractCodec() {
       return {
         contractFileName: codec.contractFileName,
-        draftToYamlText: () => 'name: Renamed Contract\n',
+        draftToContractObject: () => ({ schema: [], name: 'Renamed Contract' }),
       };
     },
-    ensureYamlLibrary: () => ({}),
+    ensureYamlLibrary: () => ({ dump: () => 'name: Renamed Contract\n' }),
     clearResults() {},
   };
 

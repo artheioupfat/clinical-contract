@@ -184,6 +184,121 @@ schema:
     assert desc_field.display_value == "invalid (not an object)"
 
 
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("apiVersion", ""),
+        ("kind", "  "),
+        ("id", ""),
+        ("name", 42),
+        ("version", None),
+        ("status", ""),
+    ],
+)
+def test_validate_structure_rejects_empty_or_invalid_required_text_fields(
+    field,
+    value,
+):
+    raw = load_raw(YAML_COMPLET)
+    raw[field] = value
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    result = next(item for item in report.fields if item.field == field)
+    assert result.present is False
+
+
+def test_validate_structure_rejects_invalid_optional_description_value():
+    raw = load_raw(YAML_COMPLET)
+    raw["description"]["usage"] = ["not", "text"]
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    result = next(item for item in report.fields if item.field == "description")
+    assert result.display_value == "invalid string field(s): usage"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("name", "", ".name empty or invalid"),
+        ("logicalType", 32, ".logicalType must be a string"),
+        ("physicalType", ["varchar"], ".physicalType must be a string"),
+        ("description", {"text": "invalid"}, ".description must be a string"),
+    ],
+)
+def test_validate_structure_rejects_invalid_property_values(
+    field,
+    value,
+    message,
+):
+    raw = load_raw(YAML_COMPLET)
+    raw["schema"][0]["properties"][0][field] = value
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(item for item in report.fields if item.field == "schema")
+    assert message in schema_field.display_value
+
+
+def test_validate_structure_rejects_case_insensitive_duplicate_property_names():
+    raw = load_raw(YAML_COMPLET)
+    duplicate = dict(raw["schema"][0]["properties"][0])
+    duplicate["name"] = duplicate["name"].upper()
+    raw["schema"][0]["properties"].append(duplicate)
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(item for item in report.fields if item.field == "schema")
+    assert ".name duplicate" in schema_field.display_value
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("physicalType", 1, ".physicalType empty or invalid"),
+        ("description", {"invalid": True}, ".description must be a string"),
+    ],
+)
+def test_validate_structure_rejects_invalid_schema_values(field, value, message):
+    raw = load_raw(YAML_COMPLET)
+    raw["schema"][0][field] = value
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(item for item in report.fields if item.field == "schema")
+    assert message in schema_field.display_value
+
+
+def test_validate_structure_rejects_duplicate_schema_names():
+    raw = load_raw(YAML_COMPLET)
+    raw["schema"].append(dict(raw["schema"][0]))
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "schema[1].name duplicate" in schema_field.display_value
+
+
+def test_validate_structure_rejects_case_insensitive_duplicate_schema_names():
+    raw = load_raw(YAML_COMPLET)
+    duplicate = dict(raw["schema"][0])
+    duplicate["name"] = duplicate["name"].upper()
+    raw["schema"].append(duplicate)
+
+    report = DataContract.validate_structure(raw)
+
+    assert report.success is False
+    schema_field = next(f for f in report.fields if f.field == "schema")
+    assert "schema[1].name duplicate" in schema_field.display_value
+
+
 def test_validate_structure_accepts_standard_optional_column_metadata():
     yaml_valid = """
 apiVersion: v3.1.0

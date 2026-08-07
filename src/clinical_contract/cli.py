@@ -8,6 +8,7 @@ Available commands:
 from __future__ import annotations
 
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import yaml
@@ -117,25 +118,33 @@ def cmd_validate(yaml_path: str) -> None:
 # Command: check                                                       #
 # ------------------------------------------------------------------ #
 
-def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
+def cmd_check(
+    yaml_path: str,
+    data_paths: str | Sequence[str],
+    backend: str = "auto",
+) -> None:
     """
     1. Validate YAML structure
     2. Validate required data columns (name + type)
     3. Run SQL quality checks if schema is valid
     """
-    yaml_file    = Path(yaml_path)
-    data_file = Path(data_path)
+    yaml_file = Path(yaml_path)
+    source_paths = [data_paths] if isinstance(data_paths, str) else list(data_paths)
+    data_files = [Path(path) for path in source_paths]
 
     if not yaml_file.exists():
         print(f"❌  YAML file not found: {yaml_path}")
         sys.exit(1)
-    if not data_file.exists():
-        print(f"❌  Data file not found: {data_path}")
-        sys.exit(1)
+    for data_file in data_files:
+        if not data_file.exists():
+            print(f"❌  Data file not found: {data_file}")
+            sys.exit(1)
 
     print("\n🔍  Contract check")
     print(f"    Contract: {yaml_file.name}")
-    print(f"    Data file: {data_file.name}")
+    print("    Data files:")
+    for data_file in data_files:
+        print(f"      - {data_file.name}")
 
     # ── 1. YAML structure validation ────────────────────────────────
     raw = _load_raw_for_cli(yaml_file)
@@ -155,14 +164,21 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
     # ── 2. Schema validation (columns + types) ──────────────────────
     print("\n── Schema validation ────────────────────────────────────────────\n")
     try:
-        schema_reports = contract.check_schema(str(data_file))
+        schema_reports = contract.check_schema([str(path) for path in data_files])
     except Exception as exc:
         print(f"❌  Failed to read data schema:\n    {exc}\n")
         sys.exit(1)
 
     schema_ok = True
+    valid_schema_names: set[str] = set()
     for sr in schema_reports:
         print(f"  Schema: {sr.schema_name}")
+        print(f"  Data file: {sr.source_name or 'not mapped'}")
+        if sr.error_message:
+            schema_ok = False
+            print(f"\n  ❌ {sr.error_message}\n")
+            continue
+
         headers = ["Column", "Expected", "Detected", "Status"]
         rows = [
             [
@@ -182,25 +198,34 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
             for f in failures:
                 if f.status == ColumnCheckStatus.missing:
                     print(f"     • required column '{f.column}' is missing in data file")
+                elif f.status == ColumnCheckStatus.ambiguous:
+                    print(
+                        f"     • '{f.column}' matches multiple case-insensitive "
+                        f"data columns: {f.parquet_type}"
+                    )
                 elif f.status == ColumnCheckStatus.type_mismatch:
                     print(
                         f"     • '{f.column}': expected type '{f.yaml_type}' "
                         f"is incompatible with detected type '{f.parquet_type}'"
                     )
         else:
+            valid_schema_names.add(sr.schema_name)
             n = len(sr.columns)
             print(f"\n  ✅ {n}/{n} columns valid")
         print()
 
-    # Stop if schema validation failed
+    # Continue with valid tables; failures remain part of the final exit code.
     if not schema_ok:
-        print("❌  Invalid schema — quality checks cancelled.\n")
-        sys.exit(1)
+        print("⚠️  Invalid schemas detected — their quality checks are skipped.\n")
 
     # ── 3. SQL quality checks ────────────────────────────────────────
     print(f"── Quality checks ──────────────────────────────────────────────\n")
     try:
-        report = contract.check(str(data_file), backend=backend)
+        report = contract.check(
+            [str(path) for path in data_files],
+            backend=backend,
+            include_schemas=valid_schema_names,
+        )
     except Exception as exc:
         print(f"❌  Error while running checks:\n    {exc}\n")
         sys.exit(1)
@@ -244,6 +269,8 @@ def cmd_check(yaml_path: str, data_path: str, backend: str = "auto") -> None:
 
     if not report.success:
         sys.exit(report.code)
+    if not schema_ok:
+        sys.exit(1)
 
 
 # ------------------------------------------------------------------ #
@@ -271,10 +298,24 @@ def main() -> None:
 
     elif command == "check":
         if len(args) < 3:
-            print("❌  Usage: clinical-contract check <contract.yaml> <data_file>")
+            print("❌  Usage: clinical-contract check <contract.yaml> <data_file> [data_file ...]")
             sys.exit(1)
-        backend = args[3] if len(args) > 3 else "auto"
-        cmd_check(args[1], args[2], backend=backend)
+        check_args = args[2:]
+        backend = "auto"
+        if "--backend" in check_args:
+            backend_index = check_args.index("--backend")
+            if backend_index + 1 >= len(check_args):
+                print("❌  --backend requires auto or duckdb")
+                sys.exit(1)
+            backend = check_args[backend_index + 1]
+            del check_args[backend_index : backend_index + 2]
+        elif len(check_args) > 1 and check_args[-1] in {"auto", "duckdb"}:
+            # Preserve the historical positional backend syntax.
+            backend = check_args.pop()
+        if not check_args:
+            print("❌  At least one data file is required")
+            sys.exit(1)
+        cmd_check(args[1], check_args, backend=backend)
 
     else:
         print(f"❌  Unknown command: '{command}'")
@@ -293,13 +334,14 @@ Usage:
   clinical-contract validate <contract.yaml>
       Validate that required fields are present in the YAML contract.
 
-  clinical-contract check <contract.yaml> <data_file> [backend]
-      Run schema and quality checks against a parquet/csv file.
-      backend: auto (default) | duckdb
+  clinical-contract check <contract.yaml> <data_file> [data_file ...] [--backend auto|duckdb]
+      Match each CSV/Parquet filename to a schema name, then run schema and
+      cross-table quality checks in one DuckDB session.
 
 Examples:
   clinical-contract validate my_contract.yaml
   clinical-contract check my_contract.yaml patients.parquet
   clinical-contract check my_contract.yaml patients.csv
-  clinical-contract check my_contract.yaml patients.parquet duckdb
+  clinical-contract check my_contract.yaml orders.parquet line_items.csv
+  clinical-contract check my_contract.yaml patients.parquet --backend duckdb
 """)

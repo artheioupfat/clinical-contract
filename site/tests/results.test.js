@@ -204,14 +204,18 @@ test('failed validation replaces stale rows with the current YAML error', async 
 
 test('successful checks finish on quality after evaluating schema first', async () => {
   const results = loadResultsModule();
-  global.window.pyRunContractCheck = () => JSON.stringify({
+  let bridgeArguments = null;
+  global.window.pyRunContractCheck = (...args) => {
+    bridgeArguments = args;
+    return JSON.stringify({
     validate: { success: true, fields: [] },
     validate_duration_ms: 8.4,
     schema_rows: [{ status: 'ok' }],
     quality_rows: [{ status: 'passed' }],
     schema_success: true,
     report_success: true,
-  });
+    });
+  };
   const context = {
     t,
     pythonReady: true,
@@ -247,6 +251,54 @@ test('successful checks finish on quality after evaluating schema first', async 
   assert.equal(Number.isFinite(context.checkDurationMs), true);
   assert.equal(context.dataTab, 'quality');
   assert.equal(context.logoVariant, 'green');
+  assert.deepEqual(JSON.parse(bridgeArguments[1]), [null]);
+  assert.equal(Array.isArray(bridgeArguments[2]), true);
+});
+
+test('check bridge errors are displayed in the schema results table', async () => {
+  const results = loadResultsModule();
+  global.window.pyRunContractCheck = () => JSON.stringify({
+    validate: { success: true, fields: [] },
+    schema_rows: [],
+    quality_rows: [],
+    schema_success: false,
+    report_success: false,
+    error: 'No schema matches sample.parquet.',
+  });
+  const context = {
+    t,
+    pythonReady: true,
+    schemaStarted: true,
+    dataFile: {
+      name: 'sample.parquet',
+      async arrayBuffer() { return new ArrayBuffer(1); },
+    },
+    yamlText: 'name: contract',
+    busy: false,
+    dataTab: 'data',
+    showRequiredHints: false,
+    validateRows: [],
+    schemaRows: [],
+    qualityRows: [],
+    validateRunState: 'idle',
+    schemaRunState: 'idle',
+    qualityRunState: 'idle',
+    validateDurationMs: null,
+    checkDurationMs: null,
+    normalizeValidateRows: results.normalizeValidateRows,
+    normalizeSchemaRows: results.normalizeSchemaRows,
+    resetDataCheckState: results.resetDataCheckState,
+    setLogoSuccess() { this.logoVariant = 'green'; },
+    setLogoFailure() { this.logoVariant = 'red'; },
+  };
+
+  await results.runCheck.call(context);
+
+  assert.equal(context.schemaRunState, 'failed');
+  assert.equal(context.schemaRows.length, 1);
+  assert.equal(context.schemaRows[0].parquet_type, 'No schema matches sample.parquet.');
+  assert.equal(context.schemaRows[0].status, 'failed');
+  assert.equal(context.dataTab, 'schema');
 });
 
 test('checks stay blocked until contract and data are both available', async () => {

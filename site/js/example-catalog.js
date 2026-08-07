@@ -11,11 +11,11 @@ const catalog = {
       "fileName": "clinical-template.yaml"
     },
     {
-      "id": "contract-epidemiology-survey-yaml",
-      "name": "Epidemiology Survey",
+      "id": "contract-covid-diagnosis-cohort-yaml",
+      "name": "COVID-19 Diagnosis Cohort",
       "description": "Bundled YAML data contract.",
-      "path": "./examples/epidemiology-survey.yaml",
-      "fileName": "epidemiology-survey.yaml"
+      "path": "./examples/covid-diagnosis-cohort.yaml",
+      "fileName": "covid-diagnosis-cohort.yaml"
     },
     {
       "id": "contract-laboratory-results-yaml",
@@ -37,33 +37,41 @@ const catalog = {
       "id": "data-clinical-template-parquet",
       "name": "Clinical template dataset",
       "description": "Bundled PARQUET dataset.",
-      "path": "./examples/clinical-template.parquet",
-      "fileName": "clinical-template.parquet",
+      "path": "./examples/clinical_template.parquet",
+      "fileName": "clinical_template.parquet",
       "mimeType": "application/octet-stream"
     },
     {
-      "id": "data-epidemiology-survey-csv",
-      "name": "Epidemiology survey dataset",
+      "id": "data-covid-csv",
+      "name": "Covid dataset",
       "description": "Bundled CSV dataset.",
-      "path": "./examples/epidemiology-survey.csv",
-      "fileName": "epidemiology-survey.csv",
+      "path": "./examples/covid.csv",
+      "fileName": "covid.csv",
       "mimeType": "text/csv"
     },
     {
       "id": "data-laboratory-results-parquet",
       "name": "Laboratory results dataset",
       "description": "Bundled PARQUET dataset.",
-      "path": "./examples/laboratory-results.parquet",
-      "fileName": "laboratory-results.parquet",
+      "path": "./examples/laboratory_results.parquet",
+      "fileName": "laboratory_results.parquet",
       "mimeType": "application/octet-stream"
     },
     {
       "id": "data-medication-administration-parquet",
       "name": "Medication administration dataset",
       "description": "Bundled PARQUET dataset.",
-      "path": "./examples/medication-administration.parquet",
-      "fileName": "medication-administration.parquet",
+      "path": "./examples/medication_administration.parquet",
+      "fileName": "medication_administration.parquet",
       "mimeType": "application/octet-stream"
+    },
+    {
+      "id": "data-patients-csv",
+      "name": "Patients dataset",
+      "description": "Bundled CSV dataset.",
+      "path": "./examples/patients.csv",
+      "fileName": "patients.csv",
+      "mimeType": "text/csv"
     }
   ]
 };

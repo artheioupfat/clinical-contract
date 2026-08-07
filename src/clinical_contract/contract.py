@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .models import (
     ContractReport,
     Description,
-    Property,
-    Quality,
     SchemaCheckReport,
     SchemaItem,
     ValidateReport,
 )
 from .quality_check import run_quality_checks
 from .schema_check import check_contract_schema
+from .sources import DataSources
 from .validation import validate_contract_structure
 
 
@@ -32,19 +31,36 @@ class DataContract(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+    @model_validator(mode="after")
+    def enforce_structure(self) -> DataContract:
+        """Reject models that do not satisfy the public contract rules."""
+        report = validate_contract_structure(self.model_dump(by_alias=True))
+        if not report.success:
+            details = "; ".join(
+                f"{field.field}: {field.display_value}" for field in report.missing()
+            )
+            raise ValueError(f"Invalid data contract structure: {details}")
+        return self
+
     @classmethod
     def validate_structure(cls, raw: dict) -> ValidateReport:
         """Validate the required structure of a raw contract mapping."""
         return validate_contract_structure(raw)
 
-    def check_schema(self, data_path: str | bytes) -> list[SchemaCheckReport]:
-        """Compare contract columns and types with a CSV or Parquet source."""
-        return check_contract_schema(self.schema_, data_path)
+    def check_schema(self, data_sources: DataSources) -> list[SchemaCheckReport]:
+        """Compare each contract schema with its CSV or Parquet source."""
+        return check_contract_schema(self.schema_, data_sources)
 
     def check(
         self,
-        data_path: str | bytes,
+        data_sources: DataSources,
         backend: str = "auto",
+        include_schemas: set[str] | None = None,
     ) -> ContractReport:
-        """Execute SQL quality rules against a CSV or Parquet source."""
-        return run_quality_checks(self.schema_, data_path, backend=backend)
+        """Execute SQL quality rules across resolved CSV or Parquet tables."""
+        return run_quality_checks(
+            self.schema_,
+            data_sources,
+            backend=backend,
+            include_schemas=include_schemas,
+        )

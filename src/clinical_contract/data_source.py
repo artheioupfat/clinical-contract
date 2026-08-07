@@ -8,13 +8,15 @@ from pathlib import Path
 
 import duckdb
 
+from .sources import DataSource
+
 
 def _quote_identifier(identifier: str) -> str:
     escaped = identifier.replace('"', '""')
     return f'"{escaped}"'
 
 
-def _materialize_data_source(path_or_bytes: str | bytes) -> tuple[str, str | None, str]:
+def _materialize_data_source(path_or_bytes: DataSource) -> tuple[str, str | None, str]:
     """
     Return (file_path, temp_path_to_cleanup, extension).
     Bytes are written to a temporary file with unknown extension (.bin)
@@ -27,11 +29,11 @@ def _materialize_data_source(path_or_bytes: str | bytes) -> tuple[str, str | Non
             handle.write(bytes(path_or_bytes))
         return temp_path, temp_path, ".bin"
 
-    file_path = str(path_or_bytes)
+    file_path = os.fspath(path_or_bytes)
     return file_path, None, Path(file_path).suffix.lower()
 
 
-def _read_data_source(path_or_bytes: str | bytes):
+def _read_data_source(path_or_bytes: DataSource) -> dict[str, str]:
     """Return the DuckDB column types detected in a CSV or Parquet source."""
     file_path, cleanup, ext = _materialize_data_source(path_or_bytes)
     file_path_literal = file_path.replace("'", "''")
@@ -51,7 +53,7 @@ def _read_data_source(path_or_bytes: str | bytes):
                     rows = conn.execute(
                         f"DESCRIBE SELECT * FROM read_parquet('{file_path_literal}')"
                     ).fetchall()
-                except Exception as parquet_exc:
+                except Exception:
                     try:
                         rows = conn.execute(
                             f"DESCRIBE SELECT * FROM read_csv_auto('{file_path_literal}')"

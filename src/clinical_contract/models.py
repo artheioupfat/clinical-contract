@@ -105,7 +105,7 @@ class Description(BaseModel):
 
 
 class Quality(BaseModel):
-    type: str
+    type: str = "sql"
     description: str = ""
     query: str = ""
     mustBe: Optional[NumericValue] = None
@@ -258,10 +258,11 @@ class ValidateReport(BaseModel):
 
 
 class ColumnCheckStatus(str, Enum):
-    ok = "ok"  # colonne présente et type compatible
-    missing = "missing"  # colonne absente du parquet
-    optional_missing = "optional_missing"  # colonne absente mais optionnelle
-    type_mismatch = "type_mismatch"  # colonne présente mais type incompatible
+    ok = "ok"  # Column is present and its type is compatible.
+    missing = "missing"  # Required column is absent from the data file.
+    optional_missing = "optional_missing"  # Optional column is absent.
+    type_mismatch = "type_mismatch"  # Column type is incompatible.
+    ambiguous = "ambiguous"  # multiple case-insensitive matches
 
 
 class ColumnCheckResult(BaseModel):
@@ -269,7 +270,7 @@ class ColumnCheckResult(BaseModel):
 
     column: str
     yaml_type: str
-    parquet_type: str  # "column not found" si absente
+    parquet_type: str
     required: bool
     status: ColumnCheckStatus
 
@@ -278,9 +279,11 @@ class ColumnCheckResult(BaseModel):
         if self.status == ColumnCheckStatus.ok:
             return "✅"
         if self.status == ColumnCheckStatus.optional_missing:
-            return "⚪ optionnel"
+            return "⚪ optional"
         if self.status == ColumnCheckStatus.missing:
-            return "❌ absent"
+            return "❌ missing"
+        if self.status == ColumnCheckStatus.ambiguous:
+            return "❌ ambiguous"
         return "❌ type"
 
 
@@ -289,6 +292,8 @@ class SchemaCheckReport(BaseModel):
 
     success: bool
     schema_name: str
+    source_name: Optional[str] = None
+    error_message: Optional[str] = None
     columns: list[ColumnCheckResult] = Field(default_factory=list)
 
     def failures(self) -> list[ColumnCheckResult]:

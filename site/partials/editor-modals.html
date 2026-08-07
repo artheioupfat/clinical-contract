@@ -1,0 +1,92 @@
+              <!-- Contract template selector. -->
+              <div
+                class="entity-modal-backdrop"
+                x-show="contractTemplateModalOpen"
+                x-cloak
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="contract-template-title"
+                @click.self="closeContractTemplateModal()"
+                @keydown.escape.window="closeContractTemplateModal()"
+              >
+                  <div class="template-modal" @click.stop>
+                    <div class="template-modal__header">
+                      <div>
+                        <div class="entity-modal__kicker" x-text="t('editor.templates.contracts')"></div>
+                        <div id="contract-template-title" class="template-modal__title" x-text="t('editor.templates.contractChoice')"></div>
+                      </div>
+                      <button type="button" class="entity-modal__close" @click="closeContractTemplateModal()" x-text="t('common.close')"></button>
+                    </div>
+                    <div class="template-modal__list">
+                      <template x-for="template in contractTemplates" :key="template.id">
+                        <button type="button" class="template-option" @click="loadContractTemplate(template)">
+                          <span class="template-option__title" x-text="template.name"></span>
+                          <span class="template-option__description" x-text="t('editor.templates.contractDescription')"></span>
+                          <span class="template-option__file" x-text="template.fileName"></span>
+                        </button>
+                      </template>
+                    </div>
+                  </div>
+              </div>
+
+              <!-- Table removal confirmation: protects completed schema definitions. -->
+              <template x-if="removeTableModalOpen">
+                <div
+                  class="entity-modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="remove-table-title"
+                  @click.self="closeRemoveTableModal()"
+                  @keydown.escape.window="closeRemoveTableModal()"
+                >
+                  <div class="reset-modal" @click.stop>
+                    <div class="reset-modal__header">
+                      <div>
+                        <div class="entity-modal__kicker" x-text="schemaCollection.length === 1 ? t('editor.removeTable.clearKicker') : t('editor.removeTable.kicker')"></div>
+                        <div id="remove-table-title" class="reset-modal__title" x-text="schemaCollection.length === 1 ? t('editor.removeTable.clearQuestion') : t('editor.removeTable.question')"></div>
+                      </div>
+                    </div>
+                    <div class="reset-modal__body">
+                      <p x-text="t(schemaCollection.length === 1 ? 'editor.removeTable.clearBody' : 'editor.removeTable.body', { name: schemaDraft.tableName || t('editor.removeTable.unnamed') })"></p>
+                    </div>
+                    <div class="reset-modal__footer">
+                      <div></div>
+                      <div class="reset-modal__actions">
+                        <button type="button" class="pine-btn" @click="closeRemoveTableModal()" x-text="t('common.cancel')"></button>
+                        <button type="button" class="reset-modal__danger" @click="confirmRemoveTable()" x-text="t(schemaCollection.length === 1 ? 'editor.removeTable.clearConfirm' : 'editor.removeTable.confirm')"></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Reset confirmation: removes only the contract draft. -->
+              <template x-if="resetContractModalOpen">
+                <div
+                  class="entity-modal-backdrop"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="reset-contract-title"
+                  @click.self="closeResetContractModal()"
+                  @keydown.escape.window="closeResetContractModal()"
+                >
+                  <div class="reset-modal" @click.stop>
+                    <div class="reset-modal__header">
+                      <div>
+                        <div class="entity-modal__kicker" x-text="t('editor.reset.title')"></div>
+                        <div id="reset-contract-title" class="reset-modal__title" x-text="t('editor.reset.question')"></div>
+                      </div>
+                    </div>
+                    <div class="reset-modal__body">
+                      <p x-text="t('editor.reset.body')"></p>
+                    </div>
+                    <div class="reset-modal__footer">
+                      <button type="button" class="pine-btn" @click="downloadYaml()" :disabled="!yamlText.trim()" x-text="t('editor.reset.download')"></button>
+                      <div class="reset-modal__actions">
+                        <button type="button" class="pine-btn" @click="closeResetContractModal()" x-text="t('common.cancel')"></button>
+                        <button type="button" class="reset-modal__danger" @click="resetContractDraft()" x-text="t('editor.reset.confirm')"></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>

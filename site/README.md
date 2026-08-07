@@ -24,12 +24,15 @@ Then open `http://localhost:8000`.
 
 - `index.html`: lightweight landing page. It must not load PyScript.
 - `editor.html`: interactive editor shell. It loads HTML partials before Alpine starts.
-- `docs.html`: localized documentation page rendered from Markdown.
-- `docs/documentation.en.md`: English documentation source.
-- `docs/documentation.fr.md`: French documentation source.
+- `docs.html`: localized documentation shell with an allowlisted page router.
+- `docs/documentation.*.md`: project introduction and editor workflow.
+- `docs/python-api.*.md`: Python library and integration reference.
+- `docs/contract-reference.*.md`: block-by-block YAML contract reference.
 - `app.js`: Alpine root state and composition of the editor feature modules.
 - `partials/header.html`: brand header and theme switch.
-- `partials/editor-panel.html`: contract input, YAML/schema editor, and validation results.
+- `partials/editor-panel.html`: lightweight contract-panel shell.
+- `partials/editor-*.html`: contract empty state, YAML view, builder shell, validation results, and dialogs.
+- `partials/schema-*.html`: independent Fundamentals, Schema, Quality, and Team builder steps.
 - `partials/split-resizer.html`: draggable divider between editor and checker.
 - `partials/data-panel.html`: independent data input, preview, schema, and quality results.
 - `partials/runtime-footer.html`: runtime progress bar and compact footer.
@@ -39,7 +42,8 @@ Then open `http://localhost:8000`.
 - `css/build-input.mjs`: expands the manifest into a temporary Tailwind input.
 - `css/tailwind.css`: compiled CSS used by the browser and GitHub Pages.
 - `js/landing.js`: Alpine state for landing-page locale, theme, metadata, and version.
-- `js/docs.js`: localized Markdown loader and table-of-contents state.
+- `js/docs-routing.js`: closed documentation page registry and safe URL routing.
+- `js/docs.js`: localized Markdown loader, guide navigation, and table-of-contents state.
 - `js/i18n.js`: locale resolution, catalog loading, persistence, and translation lookup.
 - `js/include-html.js`: loads static partials, then starts Alpine.
 - `js/constants.js`: shared UI constants and runtime messages.
@@ -53,7 +57,7 @@ Then open `http://localhost:8000`.
 - `js/contract-codec.js`: pure YAML/draft conversion helpers.
 - `js/schema.js`: visual contract builder actions.
 - `js/data-storage.js`: IndexedDB persistence for the current browser data session.
-- `js/data.js`: CSV/Parquet loading, sample datasets, and paginated preview actions.
+- `js/data.js`: multi-file CSV/Parquet loading, active dataset selection, samples, and paginated preview actions.
 - `js/results.js`: validate/check result presentation.
 - `locales/en.json`: English interface catalog.
 - `locales/fr.json`: French interface catalog.
@@ -111,14 +115,15 @@ GitHub Actions regenerates these assets and fails when the committed output is s
 
 ## Bundled examples
 
-Each YAML contract has exactly one homonymous dataset:
+Each YAML contract has one homonymous dataset per declared schema. Contract and
+data templates remain independent and are loaded separately in the editor.
 
 | Pair | Format | Main coverage |
 |---|---|---|
 | `clinical-template` | Parquet | Common scalar types and equality checks |
 | `laboratory-results` | Parquet | UUID, DECIMAL, TIME, INTERVAL, and timezone-aware timestamps |
 | `medication-administration` | Parquet | ARRAY, float32, optional unconstrained text, and comparison operators |
-| `epidemiology-survey` | CSV | CSV inference, broad logical families, and aggregate checks |
+| `covid-diagnosis-cohort` | 2 CSV files | Patient/COVID joins, CIM-10 codes, conditional dates, and ICU consistency |
 
 The datasets are synthetic fixtures prepared outside the public source tree. Only the final YAML, CSV, and Parquet files are committed. `tests/test_site_examples.py` verifies pairing and executes structure, schema, and quality checks for every example.
 
@@ -127,11 +132,11 @@ The datasets are synthetic fixtures prepared outside the public source tree. Onl
 - Put YAML serialization and parsing behavior in `js/contract-codec.js`.
 - Keep Alpine UI actions in the feature modules under `js/`.
 - Add user-facing interface text to both locale catalogs and keep their key sets identical.
-- Edit documentation in both localized Markdown files; do not add hardcoded prose to `docs.html`.
+- Edit every documentation page in both locales; register new pages in `js/docs-routing.js` and never load a Markdown path directly from the URL.
 - Keep `index.html` lightweight. PyScript, DuckDB, and the Python bridge belong only in `editor.html`.
 - Edit editor markup in `partials/`; keep `editor.html` as the lightweight shell.
 - Edit CSS in `css/src/`. Add new partials to `css/tailwind.input.css`, then run `npm run build:site:css`.
-- Add examples as homonymous contract/dataset pairs under `examples/`, then run `npm run generate:site-examples` and commit the generated catalog.
+- Add contracts under `examples/` and name each dataset after its YAML schema, then run `npm run generate:site-examples` and commit the generated catalog.
 - Do not edit `css/tailwind.css` directly; it is the compiled production bundle.
 - Add or update the test matching the changed module. YAML/draft behavior belongs in `contract-codec.test.js`.
 - Keep the site static: no backend, no hardcoded local paths, and relative assets only.

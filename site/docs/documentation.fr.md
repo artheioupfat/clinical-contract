@@ -44,101 +44,25 @@ Enfin, ajoutez une **description** afin de documenter la signification de la col
 
 ## Comprendre les types
 
-Chaque colonne est décrite par deux types complémentaires :
+Une colonne peut définir un **Logical Type**, qui décrit la famille sémantique
+de la donnée, et un **Physical Type**, qui précise sa représentation technique.
+Le type physique est contrôlé en priorité ; s'il est absent, Clinical-Contract
+utilise la famille logique. Lorsque aucun type n'est renseigné, seule la
+présence de la colonne est vérifiée.
 
-- **Logical Type** : décrit la nature de l'information (*Que représente cette donnée ?*).
-- **Physical Type** : décrit la manière dont cette donnée est stockée ou représentée dans le système source.
-
-Les types disponibles sont les suivants :
-
-| Logical&nbsp;Type | Description | Physical Types compatibles |
-| :-----------: | :----------: | :-------------------------: |
-| `string` | Texte ou chaîne de caractères | `varchar`, `text`, `string`, `char`, `uuid` |
-| `integer` | Nombre entier | `int8`, `int16`, `int32`, `int64`, `uint8`, `uint16`, `uint32`, `uint64` |
-| `float` | Nombre décimal | `float32`, `float64` |
-| `decimal` | Nombre décimal exact | `decimal` |
-| `boolean` | Valeur booléenne (`true` ou `false`) | `boolean`, `binary` |
-| `date` | Date ou date et heure | `datetime`, `timestamp`, `timestamp with timezone` |
-| `time` | Heure sans information de date | `time` |
-| `interval` | Durée ou écart temporel | `interval` |
-| `array` | Collection de valeurs | `array` |
-
-Dans la plupart des cas, commencez par choisir le **Logical Type**, puis sélectionnez le **Physical Type** correspondant au système produisant les données.
-
-Le type `array` accepte les collections DuckDB de taille variable ou fixe. Le type des éléments contenus dans la collection n'est pas contraint pour le moment.
-
-Le type `decimal` vérifie la famille DuckDB `DECIMAL`. La précision et l'échelle, par exemple `DECIMAL(18, 4)`, ne sont pas encore comparées.
-
-Le **Physical Type** est optionnel. Si aucun type n'est renseigné, Clinical-Contract vérifie uniquement la présence de la colonne dans le fichier, sans imposer de type logique ni de représentation technique.
+La liste complète des types, leurs correspondances DuckDB et les règles de
+comparaison sont disponibles dans la
+[référence du contrat](./docs.html?page=contract-reference&lang=fr).
 
 ## Ajouter des règles de qualité
 
-Clinical-Contract permet d'ajouter des règles de qualité afin de vérifier automatiquement la conformité des données.
+Une règle qualité associe une requête SQL en lecture seule à une comparaison
+attendue. La requête doit retourner une seule valeur numérique et peut utiliser
+une ou plusieurs tables du contrat dans la même session DuckDB.
 
-Chaque règle est composée d'une **requête SQL**, d'une **comparaison attendue** et, de manière facultative, d'une **description** permettant de documenter le contrôle effectué.
-
-La requête doit retourner une seule valeur numérique (une ligne et une colonne). Cette valeur peut être comparée avec `equal`, `notEqual`, `greaterThan`, `greaterThanOrEqual`, `lessThan`, `lessThanOrEqual` ou une plage inclusive `between`.
-
-Dans les requêtes SQL, utilisez le nom de la table défini précédemment dans le contrat.
-
-### Exemples
-
-Vérifier qu'aucune valeur n'est manquante dans la colonne `STAY` (séjour) :
-
-```sql
-SELECT COUNT(*)
-FROM export
-WHERE STAY IS NULL;
-```
-
-```yaml
-expected:
-  equal: 0
-```
-<br>
-<br>
-
----
-
-Vérifier que le fichier contient exactement 1 000 lignes :
-
-```sql
-SELECT COUNT(*)
-FROM export;
-```
-
-```yaml
-expected:
-  equal: 1000
-```
-<br>
-<br>
-
----
-
-Vérifier que tous les identifiants sont uniques :
-
-```sql
-SELECT COUNT(*) - COUNT(DISTINCT PATIENT_ID)
-FROM export;
-```
-
-```yaml
-expected:
-  equal: 0
-```
-<br>
-
-Pour accepter une plage de valeurs, utilisez par exemple :
-
-```yaml
-expected:
-  between:
-    min: 90000
-    max: 110000
-```
-
-L'ancien champ `mustBe` reste accepté comme alias de `expected.equal` afin de préserver les contrats existants.
+Les opérateurs disponibles, la syntaxe `expected`, les exemples SQL et la
+compatibilité avec `mustBe` sont détaillés dans la
+[référence du contrat](./docs.html?page=contract-reference&lang=fr).
 
 ### Sécurité des règles SQL
 
@@ -161,89 +85,51 @@ Les champs concernés sont également mis en évidence dans l'éditeur grâce à
 
 Lorsque un contract est chargé et validé, il peut être utilisé pour vérifier la conformité d'un jeu de données produit.
 
-Ouvrez le panneau **Checker**, puis déposez votre fichier dans la zone de **drag and drop** ou sélectionnez-le depuis votre ordinateur.
+Ouvrez le panneau **Checker**, puis déposez un fichier par table dans la zone de **drag and drop** ou sélectionnez-les depuis votre ordinateur. **Le nom du fichier, sans son extension, doit correspondre au nom du schéma associé.**
 
 Clinical-Contract accepte actuellement les fichiers aux formats **CSV** et **Parquet** uniquement. 
 
 ## Vérifier la conformité des données avec le contrat
 
-Une fois le fichier chargé, cliquez sur **Run Check** pour lancer la vérification.
+Une fois les fichiers chargés, cliquez sur **Run Check** pour lancer la vérification.
 
 Clinical-Contract compare d'abord le **schéma** du fichier de données avec celui défini dans le contrat. Les colonnes attendues sont vérifiées, ainsi que leurs types de données. Toute différence (colonne manquante ou type incompatible) est signalée dans le rapport de validation.
 
-Si le schéma est conforme, les **règles de qualité** définies dans le contrat sont ensuite exécutées. Ces contrôles sont réalisés à l'aide du moteur **DuckDB**, qui exécute les requêtes SQL et compare leur résultat à la valeur attendue (*Expected Result*).
+Si les schémas sont conformes, les **règles de qualité** définies dans le contrat sont ensuite exécutées dans une session **DuckDB** partagée. Une règle peut ainsi joindre plusieurs tables avant de comparer son résultat à la valeur attendue (*Expected Result*).
 
 À l'issue de l'exécution, le panneau de résultats présente le statut de chaque vérification afin d'identifier rapidement les éventuelles non-conformités.
 
 ## Utiliser Clinical-Contract en ligne de commande
 
-Clinical-Contract peut également être utilisé directement depuis un terminal pour valider un contrat de données ou vérifier la conformité d'un fichier.
-
-### Installer Clinical-Contract
-
-L'outil s'installe avec `uv` :
+Le CLI permet d'appliquer les mêmes validations depuis un terminal, un script
+ou une étape de CI. Python 3.11 ou une version plus récente est nécessaire.
 
 ```bash
 uv tool install --python python3.11 clinical-contract
+clinical-contract validate contract.yaml
+clinical-contract check contract.yaml patients.csv diagnoses.parquet
 ```
 
-### Valider un contrat
+Les options du CLI, l'utilisation de plusieurs sources et l'intégration dans
+une application sont présentées dans la
+[documentation de l'API Python](./docs.html?page=python-api&lang=fr).
 
-La commande `validate` vérifie qu'un contrat est correctement rédigé et que tous les champs obligatoires sont présents.
+## Aller plus loin
 
-```bash
-clinical-contract validate site/examples/clinical-template.yaml
-```
+Deux guides complètent cette introduction :
 
-### Vérifier un fichier de données
-
-La commande `check` compare un fichier de données avec un contrat de données. Elle vérifie d'abord le schéma (colonnes et types), puis exécute les règles de qualité définies dans le contrat.
-
-```bash
-clinical-contract check site/examples/clinical-template.yaml site/examples/clinical-template.parquet
-```
-
-Utilisez `clinical-contract --help` pour afficher les commandes disponibles et
-`clinical-contract --version` pour connaître la version installée.
-
-## Python API
-
-La bibliothèque Python permet d'intégrer les mêmes contrôles dans un pipeline ou une application.
-
-Python 3.11 ou une version plus récente est nécessaire.
-
-```bash
-pip install clinical-contract
-```
-
-### Valider la structure d'un contrat
-
-```python
-from clinical_contract import DataContract, load_raw
-
-raw_contract = load_raw("contract.yaml")
-report = DataContract.validate_structure(raw_contract)
-
-print(report.success)
-```
-
-### Vérifier un fichier de données
-
-```python
-from clinical_contract import load_contract
-
-contract, _ = load_contract("contract.yaml")
-report = contract.check("data.parquet")
-
-print(report.success)
-```
+- la [documentation de l'API Python](./docs.html?page=python-api&lang=fr)
+  détaille l'installation, les rapports, le multi-table et l'intégration dans
+  une application ;
+- la [référence du contrat YAML](./docs.html?page=contract-reference&lang=fr)
+  présente chaque bloc, les types et tous les opérateurs qualité pris en charge.
 
 
 ## Limites actuelles
 
 Clinical-Contract est en développement actif. La version actuelle présente les limitations suivantes :
 
-- Un contrat de données décrit **une seule table**.
+- Un contrat peut décrire plusieurs tables ; chaque table correspond exactement à un fichier CSV ou Parquet.
 - Seuls les fichiers **CSV** et **Parquet** sont pris en charge pour la validation.
 - Les règles de qualité doivent être exprimées sous forme de requêtes **SQL**.
 - Les types logiques et physiques disponibles sont limités à ceux proposés par l'application.

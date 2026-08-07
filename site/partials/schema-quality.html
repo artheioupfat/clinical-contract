@@ -1,0 +1,130 @@
+                      <!-- Quality: SQL checks attached to contract columns. -->
+                      <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
+                        <div class="schema-stage-bar schema-stage-bar--primary">
+                          <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
+                          <div data-include="./partials/schema-table-tabs.html"></div>
+                        </div>
+                        <div class="quality-list-shell">
+                          <template x-if="schemaDraft.qualityRules.length === 0">
+                            <div class="quality-empty" x-text="t('editor.quality.empty')"></div>
+                          </template>
+                          <table x-show="schemaDraft.qualityRules.length > 0" x-cloak class="quality-table">
+                            <thead>
+                              <tr>
+                                <th x-text="t('editor.quality.column')"></th>
+                                <th x-text="t('editor.quality.description')"></th>
+                                <th class="text-right" x-text="t('editor.quality.action')"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
+                                <tr class="quality-table__row" @click="openQualityRule(rule._rowId)" tabindex="0" @keydown.enter.prevent="openQualityRule(rule._rowId)">
+                                  <td class="quality-table__column" x-text="rule.propertyName || t('editor.quality.noColumn')"></td>
+                                  <td class="quality-table__description" x-text="rule.description || t('editor.quality.untitled')"></td>
+                                  <td class="quality-table__action">
+                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)" x-text="t('common.edit')"></button>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div class="schema-add-row">
+                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)" x-text="t('editor.quality.add')"></button>
+                        </div>
+                      </div>
+
+                      <template x-if="qualityEditorRule()">
+                        <div
+                          class="entity-modal-backdrop"
+                          @keydown.escape.window="closeQualityRule()"
+                        >
+                          <div class="entity-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
+                            <div class="entity-modal__header">
+                              <div>
+                                <div class="entity-modal__kicker" x-text="t('editor.quality.details')"></div>
+                                <div class="entity-modal__title" x-text="rule.description || t('editor.quality.untitled')"></div>
+                              </div>
+                            </div>
+
+                            <div class="entity-modal__body">
+                              <label class="entity-modal__field">
+                                <span class="entity-modal__label" x-text="t('editor.quality.column')"></span>
+                                <select
+                                  x-ref="qualityColumnSelect"
+                                  :value="rule.propertyName || ''"
+                                  x-init="$nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' })"
+                                  @change="
+                                    setQualityRuleProperty(rule, $event.target.value);
+                                    $nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' });
+                                  "
+                                  class="schema-input"
+                                >
+                                  <template x-for="property in schemaDraft.properties" :key="`entity-modal-property-${rule._rowId}-${property._rowId}`">
+                                    <option
+                                      :value="property.name"
+                                      :selected="property.name === rule.propertyName"
+                                      x-text="property.name || t('editor.columns.unnamed')"
+                                    ></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <div class="quality-comparison">
+                                <label class="entity-modal__field">
+                                  <span class="entity-modal__label" x-text="t('editor.quality.comparison')"></span>
+                                  <select x-model="rule.comparisonOperator" @change="pushSchemaToYaml()" class="schema-input">
+                                    <option value="equal" x-text="t('editor.quality.operators.equal')"></option>
+                                    <option value="notEqual" x-text="t('editor.quality.operators.notEqual')"></option>
+                                    <option value="greaterThan" x-text="t('editor.quality.operators.greaterThan')"></option>
+                                    <option value="greaterThanOrEqual" x-text="t('editor.quality.operators.greaterThanOrEqual')"></option>
+                                    <option value="lessThan" x-text="t('editor.quality.operators.lessThan')"></option>
+                                    <option value="lessThanOrEqual" x-text="t('editor.quality.operators.lessThanOrEqual')"></option>
+                                    <option value="between" x-text="t('editor.quality.operators.between')"></option>
+                                  </select>
+                                </label>
+
+                                <label class="entity-modal__field" x-show="rule.comparisonOperator !== 'between'">
+                                  <span class="entity-modal__label" x-text="t('editor.quality.expected')"></span>
+                                  <input type="number" step="any" x-model.number="rule.expectedValue" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                </label>
+
+                                <div class="quality-comparison__range" x-show="rule.comparisonOperator === 'between'" x-cloak>
+                                  <label class="entity-modal__field">
+                                    <span class="entity-modal__label" x-text="t('editor.quality.minimum')"></span>
+                                    <input type="number" step="any" x-model.number="rule.expectedMin" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                  </label>
+                                  <label class="entity-modal__field">
+                                    <span class="entity-modal__label" x-text="t('editor.quality.maximum')"></span>
+                                    <input type="number" step="any" x-model.number="rule.expectedMax" @input.debounce.150ms="pushSchemaToYaml()" class="schema-input" />
+                                  </label>
+                                </div>
+                              </div>
+
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label" x-text="t('editor.quality.description')"></span>
+                                <textarea x-model="rule.description" @input.debounce.150ms="pushSchemaToYaml()" rows="3" class="schema-input schema-input--description quality-description-textarea" :placeholder="t('editor.quality.descriptionPlaceholder')"></textarea>
+                              </label>
+
+                              <label class="entity-modal__field entity-modal__field--wide">
+                                <span class="entity-modal__label" x-text="t('editor.quality.sqlQuery')"></span>
+                                <div class="quality-sql-editor">
+                                  <div class="quality-sql-editor__bar">
+                                    <span x-text="t('editor.quality.duckdbSql')"></span>
+                                    <span class="quality-sql-editor__table-hint">
+                                      <span class="quality-sql-editor__table-label" x-text="t('editor.quality.tableName')"></span>
+                                      <span class="quality-sql-editor__table-name" x-text="schemaDraft.tableName || 'data'"></span>
+                                    </span>
+                                  </div>
+                                  <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" :placeholder="t('editor.quality.sqlPlaceholder')"></textarea>
+                                </div>
+                              </label>
+                            </div>
+
+                            <div class="entity-modal__footer">
+                              <button type="button" class="entity-modal__remove" @click="removeQualityRule(rule._rowId)" x-text="t('editor.quality.remove')"></button>
+                              <button type="button" class="pine-btn pine-btn--primary" @click="closeQualityRule()" x-text="t('common.done')"></button>
+                            </div>
+                          </div>
+                        </div>
+                      </template>

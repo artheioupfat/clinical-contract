@@ -2,6 +2,7 @@
 
 from clinical_contract import load_contract
 from clinical_contract.models import ColumnCheckStatus
+from clinical_contract.schema_check import _resolve_data_column
 
 from tests.helpers import (
     YAML_OPTIONAL_COLUMN,
@@ -61,6 +62,37 @@ def test_check_schema_depuis_csv_bytes(tmp_path):
     assert cols["id"].status == ColumnCheckStatus.ok
     assert cols["notes"].status == ColumnCheckStatus.optional_missing
     assert reports[0].success is True
+
+
+def test_check_schema_column_names_are_case_insensitive(tmp_path):
+    parquet_file = _write_parquet_ids(tmp_path, ["A001", "A002"])
+    uppercase_contract = YAML_OPTIONAL_COLUMN.replace("- name: id", "- name: ID")
+
+    contract, _ = load_contract(uppercase_contract)
+    reports = contract.check_schema(str(parquet_file))
+    cols = {column.column: column for column in reports[0].columns}
+
+    assert cols["ID"].status == ColumnCheckStatus.ok
+    assert cols["ID"].parquet_type == "varchar"
+    assert reports[0].success is True
+
+
+def test_case_insensitive_column_resolution_rejects_ambiguous_matches():
+    data_columns = {"id": "VARCHAR", "Id": "INTEGER"}
+
+    resolved_type, ambiguous_columns = _resolve_data_column(data_columns, "ID")
+
+    assert resolved_type is None
+    assert ambiguous_columns == ["id", "Id"]
+
+
+def test_exact_column_name_takes_priority_over_case_insensitive_matches():
+    data_columns = {"id": "VARCHAR", "Id": "INTEGER"}
+
+    resolved_type, ambiguous_columns = _resolve_data_column(data_columns, "id")
+
+    assert resolved_type == "VARCHAR"
+    assert ambiguous_columns == []
 
 
 def test_check_schema_csv_path_with_single_quote(tmp_path):
@@ -136,4 +168,39 @@ schema:
     assert reports[0].success is True
     assert reports[0].columns[0].yaml_type == "not specified"
     assert reports[0].columns[0].parquet_type == "uint32"
+    assert reports[0].columns[0].status == ColumnCheckStatus.ok
+
+
+def test_check_schema_whitespace_types_are_treated_as_unspecified(tmp_path):
+    parquet_file = _write_parquet_single_typed_column(
+        tmp_path=tmp_path,
+        table_name="orders",
+        column_name="status_code",
+        duckdb_type="UINTEGER",
+    )
+    yaml_without_type = """
+apiVersion: v1.0.0
+kind: DataContract
+id: whitespace-type-contract
+name: Whitespace Type Contract
+version: 1.0.0
+status: active
+description:
+  purpose: Test
+schema:
+  - name: orders
+    physicalType: TABLE
+    description: Orders table
+    properties:
+      - name: status_code
+        logicalType: "  "
+        physicalType: "  "
+        required: true
+"""
+    contract, _ = load_contract(yaml_without_type)
+
+    reports = contract.check_schema(parquet_file)
+
+    assert reports[0].success is True
+    assert reports[0].columns[0].yaml_type == "not specified"
     assert reports[0].columns[0].status == ColumnCheckStatus.ok

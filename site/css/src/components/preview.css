@@ -38,7 +38,7 @@
   }
 
   .preview-th {
-    @apply text-[11px] font-bold uppercase tracking-[0.08em];
+    @apply text-[11px] font-bold tracking-[0.04em];
   }
 
   .preview-th--first,

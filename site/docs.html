@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Clinical-Contract documentation." />
     <title>Documentation | clinical-contract</title>
     <link rel="icon" href="./logo/phare.png" type="image/png" />
     <link rel="apple-touch-icon" href="./logo/phare.png" />
@@ -62,24 +63,37 @@
 
         <main class="docs-main">
           <section class="docs-hero">
-            <h2 x-text="t('docs.heroTitle')"></h2>
-            <p x-text="t('docs.heroBody')"></p>
+            <h2 x-text="pageTitle()"></h2>
+            <p x-text="pageBody()"></p>
+            <nav class="docs-guide-tabs" :aria-label="t('docs.pagesAria')" x-cloak>
+              <template x-for="page in docPages" :key="page.id">
+                <a
+                  class="docs-guide-link"
+                  :class="{ 'docs-guide-link--active': currentPageId === page.id }"
+                  :href="pageHref(page.id)"
+                  :aria-current="currentPageId === page.id ? 'page' : null"
+                  x-text="t(page.labelKey)"
+                ></a>
+              </template>
+            </nav>
           </section>
 
           <section class="docs-layout" aria-live="polite">
-            <aside class="docs-toc" x-show="toc.length > 0" x-cloak>
-              <div class="docs-toc-title" x-text="t('docs.toc')"></div>
-              <nav :aria-label="t('docs.tocAria')">
-                <template x-for="item in toc" :key="item.id">
-                  <a
-                    class="docs-toc-link"
-                    :class="{ 'docs-toc-link--active': activeTocId === item.id }"
-                    :href="`#${item.id}`"
-                    @click="activeTocId = item.id"
-                    x-text="item.text"
-                  ></a>
-                </template>
-              </nav>
+            <aside class="docs-toc" x-cloak>
+              <div class="docs-page-toc" x-show="toc.length > 0">
+                <div class="docs-toc-title" x-text="t('docs.onThisPage')"></div>
+                <nav :aria-label="t('docs.tocAria')">
+                  <template x-for="item in toc" :key="item.id">
+                    <a
+                      class="docs-toc-link"
+                      :class="{ 'docs-toc-link--active': activeTocId === item.id }"
+                      :href="`#${item.id}`"
+                      @click="activeTocId = item.id"
+                      x-text="item.text"
+                    ></a>
+                  </template>
+                </nav>
+              </div>
             </aside>
 
             <section class="docs-shell">
@@ -95,6 +109,7 @@
     <script src="./js/i18n.js"></script>
     <script src="./js/page-shell.js"></script>
     <script src="./js/site-version.js"></script>
+    <script src="./js/docs-routing.js"></script>
     <script src="./js/docs.js"></script>
   </body>
 </html>

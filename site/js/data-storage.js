@@ -45,8 +45,9 @@ window.ClinicalModules.dataStorage = {
     }
   },
 
-  async persistDataFileSession(file) {
-    if (!file) return;
+  async persistDataFilesSession(files) {
+    const sourceFiles = Array.from(files || []).filter(Boolean);
+    if (!sourceFiles.length) return;
     const sessionId = this.getDataStorageSessionId(true);
     if (!sessionId) return;
 
@@ -58,10 +59,12 @@ window.ClinicalModules.dataStorage = {
         const transaction = database.transaction(this.dataStorageStoreName, 'readwrite');
         transaction.objectStore(this.dataStorageStoreName).put({
           sessionId,
-          name: file.name || 'dataset',
-          type: file.type || 'application/octet-stream',
-          lastModified: file.lastModified || Date.now(),
-          data: file,
+          files: sourceFiles.map((file) => ({
+            name: file.name || 'dataset',
+            type: file.type || 'application/octet-stream',
+            lastModified: file.lastModified || Date.now(),
+            data: file,
+          })),
           savedAt: Date.now(),
         });
         transaction.oncomplete = () => resolve();
@@ -73,9 +76,9 @@ window.ClinicalModules.dataStorage = {
     }
   },
 
-  async readPersistedDataFile() {
+  async readPersistedDataFiles() {
     const sessionId = this.getDataStorageSessionId(false);
-    if (!sessionId) return null;
+    if (!sessionId) return [];
 
     const database = await this.openDataStorage();
     try {
@@ -87,9 +90,10 @@ window.ClinicalModules.dataStorage = {
       });
       if (this.isStoredDataFileExpired(stored)) {
         await this.clearPersistedDataFile();
-        return null;
+        return [];
       }
-      return stored;
+      if (Array.isArray(stored?.files)) return stored.files;
+      return stored?.data ? [stored] : [];
     } finally {
       database.close();
     }
