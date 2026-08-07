@@ -382,6 +382,13 @@ def validate_and_check(contract_path, data_sources):
     }
 ```
 
+Example call with multiple data files:
+
+```python
+sources = ["patients.csv", "diagnostic.parquet"]
+validate_and_check("covid-diagnosis.yaml", sources)
+```
+
 An application may stop all quality checks after one invalid table, or follow
 the CLI behavior and run rules for tables that remain valid.
 
