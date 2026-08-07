@@ -3,7 +3,12 @@
               <div class="panel-head">
                 <div>
                   <div class="panel-eyebrow" x-text="t('editor.panel.editor')"></div>
-                  <div class="panel-title" x-text="yamlName || t('editor.panel.untitled')"></div>
+                  <div
+                    class="panel-title"
+                    x-show="schemaStarted"
+                    x-cloak
+                    x-text="yamlName || t('editor.panel.untitled')"
+                  ></div>
                 </div>
                 <div class="pine-toolbar">
                   <div class="view-switch" :class="!schemaStarted ? 'view-switch--locked' : ''" :title="!schemaStarted ? t('editor.panel.unlockContract') : ''">

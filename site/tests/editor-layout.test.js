@@ -39,6 +39,15 @@ test('editor separates contract validation from dataset checks', () => {
   assert.doesNotMatch(dataPanel, />Validate</);
 });
 
+test('editor hides the contract filename until a contract is active', () => {
+  const editorPanel = fs.readFileSync(path.join(siteRoot, 'partials/editor-panel.html'), 'utf8');
+
+  assert.match(
+    editorPanel,
+    /class="panel-title"\s+x-show="schemaStarted"\s+x-cloak\s+x-text="yamlName \|\| t\('editor\.panel\.untitled'\)"/
+  );
+});
+
 test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 

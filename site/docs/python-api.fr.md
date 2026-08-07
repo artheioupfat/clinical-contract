@@ -387,6 +387,13 @@ def validate_and_check(contract_path, data_sources):
     }
 ```
 
+Exemple d'appel avec plusieurs fichiers de données :
+
+```python
+sources = ["patients.csv", "diagnostic.parquet"]
+validate_and_check("covid-diagnosis.yaml", sources)
+```
+
 Une application peut choisir de ne pas exécuter la qualité si une seule table
 est invalide, ou de conserver le comportement du CLI et exécuter les règles
 des tables encore valides.
