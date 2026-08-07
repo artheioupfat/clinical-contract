@@ -64,7 +64,7 @@
     "meta": { "title": "Éditeur | clinical-contract", "description": "Rédigez, validez et vérifiez un contrat de données cliniques directement dans votre navigateur." },
     "sections": { "fundamentals": "Fondamentaux", "schema": "Schéma", "quality": "Qualité", "team": "Équipe" },
     "panel": {
-      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé", "dataFile": "Fichier de données", "dataFiles": "Fichiers de données chargés",
+      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé", "dataFile": "Fichiers de données", "dataFiles": "Fichiers de données chargés",
       "unlockContract": "Créez ou chargez un contrat pour déverrouiller", "unlockData": "Chargez un fichier de données pour déverrouiller"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
