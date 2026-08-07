@@ -87,7 +87,7 @@
       "objectives": { "predictive": "Predictive", "therapeutic": "Therapeutic", "diagnostic": "Diagnostic", "epidemiological": "Epidemiological", "descriptive": "Descriptive", "operational": "Operational" }
     },
     "columns": {
-      "table": "Table", "addTable": "Add table", "removeTable": "Remove table",
+      "table": "Table", "tables": "Tables", "addTable": "Add table", "removeTable": "Remove table",
       "tableName": "Table name", "description": "Description", "title": "Columns", "empty": "Add a column, then edit its type and description from the details panel.",
       "column": "Column", "type": "Type", "required": "Required", "action": "Action", "unnamed": "Unnamed column", "noDescription": "No description yet",
       "details": "Column details", "name": "Column name", "logicalType": "Logical type", "physicalType": "Physical type", "noConstraint": "No type constraint",

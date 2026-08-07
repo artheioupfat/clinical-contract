@@ -28,7 +28,7 @@ test('editor separates contract validation from dataset checks', () => {
   assert.match(editorPanel, /editorModeButtonClass\('validation'\)/);
   assert.match(editorPanel, /tabDotClass\(validateRunState\)/);
   assert.match(editorPanel, /editor\.actions\.download/);
-  assert.match(editorPanel, /pine-btn--action-success pine-btn--icon/);
+  assert.match(editorPanel, /pine-btn--success-outline pine-btn--icon/);
   assert.match(editorPanel, /editor\.actions\.reset/);
   assert.match(editorPanel, /pine-btn--danger pine-btn--icon/);
   assert.match(editorPanel, /x-if="!schemaStarted"/);
@@ -163,22 +163,25 @@ test('quality editor exposes every supported comparison operator', () => {
   assert.match(editorPanel, /rule\.expectedMax/);
 });
 
-test('schema and quality use the same table tabs and active table state', () => {
+test('schema and quality use the same table selector and active table state', () => {
   const editorPanel = readEditorPanel();
 
-  const tableTabGroups = editorPanel.match(/class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"/g) || [];
+  const tableSelectors = editorPanel.match(/class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"/g) || [];
   const tableSelectionCalls = editorPanel.match(/@click="selectSchemaTable\(index\)"/g) || [];
 
-  assert.equal(tableTabGroups.length, 2);
+  assert.equal(tableSelectors.length, 2);
   assert.equal(tableSelectionCalls.length, 2);
   assert.doesNotMatch(editorPanel, /@change="selectSchemaTable\(\$event\.target\.value\)"/);
+  assert.equal((editorPanel.match(/editor\.columns\.tables/g) || []).length, 4);
+  assert.equal((editorPanel.match(/role="listbox"/g) || []).length, 2);
+  assert.equal((editorPanel.match(/:aria-selected="index === schemaActiveIndex"/g) || []).length, 2);
   assert.match(
     editorPanel,
-    /schemaSection === 'schema'[\s\S]*entity-tabs-list[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
+    /schemaSection === 'schema'[\s\S]*schema-table-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
   assert.match(
     editorPanel,
-    /schemaSection === 'quality'[\s\S]*entity-tabs-list[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
+    /schemaSection === 'quality'[\s\S]*schema-table-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
 });
 
@@ -189,7 +192,17 @@ test('every builder section uses the aligned primary stage bar', () => {
   assert.equal(primaryBars.length, 4);
 });
 
-test('shared entity tabs keep actions visible outside the scroll area', () => {
+test('builder navigation header aligns with primary stage bars', () => {
+  const schemaBuilderCss = fs.readFileSync(
+    path.join(siteRoot, 'css/src/components/schema-builder.css'),
+    'utf8'
+  );
+
+  assert.match(schemaBuilderCss, /\.schema-nav-head\s*\{[\s\S]*?min-h-\[51px\]/);
+  assert.match(schemaBuilderCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?min-h-\[51px\]/);
+});
+
+test('shared table selector keeps table actions visible beside the menu', () => {
   const editorPanel = readEditorPanel();
   const buttonCss = fs.readFileSync(
     path.join(siteRoot, 'css/src/components/buttons.css'),
@@ -206,15 +219,15 @@ test('shared entity tabs keep actions visible outside the scroll area', () => {
 
   assert.match(
     editorPanel,
-    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*entity-tabs-toolbar--inline schema-table-toolbar[\s\S]*entity-tabs-list[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*schema-table-toolbar[\s\S]*schema-table-label[\s\S]*schema-table-select[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
-  assert.match(shellCss, /\.entity-tabs-list\s*\{[\s\S]*?overflow-x-auto/);
   assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
   assert.match(shellCss, /\.entity-tabs-actions \.pine-btn\s*\{[\s\S]*?h-\[30px\][\s\S]*?w-\[30px\]/);
   assert.match(shellCss, /\.entity-tabs-toolbar--inline \.entity-tabs-controls\s*\{[\s\S]*?flex-1/);
+  assert.match(shellCss, /\.schema-table-trigger\s*\{[\s\S]*?h-\[30px\]/);
+  assert.match(shellCss, /\.schema-table-menu\s*\{[\s\S]*?max-h-56[\s\S]*?overflow-y-auto/);
   assert.match(buttonCss, /\.pine-btn\s*\{[\s\S]*?h-9/);
-  assert.match(shellCss, /\.entity-tab\s*\{[\s\S]*?h-\[30px\]/);
   assert.match(shellCss, /\.view-switch\s*\{[\s\S]*?h-9/);
   assert.match(schemaCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?-mx-4[\s\S]*?min-h-\[51px\][\s\S]*?py-2\.5/);
 });

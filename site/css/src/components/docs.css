@@ -41,8 +41,7 @@
   }
 
   .docs-hero {
-    @apply mb-8 border-b pb-8;
-    border-color: var(--cc-border);
+    @apply mb-8;
   }
 
   .docs-hero h2 {
@@ -56,26 +55,29 @@
   }
 
   .docs-guide-tabs {
-    @apply mt-6 flex flex-wrap items-center gap-2;
+    @apply mt-6 flex items-end gap-7 overflow-x-auto border-b;
+    border-color: var(--cc-border);
+    scrollbar-width: thin;
   }
 
   .docs-guide-link {
-    @apply inline-flex items-center rounded-md border px-4 py-2 text-sm font-semibold no-underline transition;
-    background: var(--cc-surface);
-    border-color: var(--cc-border);
-    color: var(--cc-text);
+    @apply relative inline-flex shrink-0 items-center border-b-2 border-transparent px-0.5 pb-3 pt-1 text-sm font-semibold no-underline transition;
+    color: var(--cc-muted);
   }
 
   .docs-guide-link:hover,
   .docs-guide-link:focus-visible {
-    border-color: var(--cc-primary);
     color: var(--cc-primary-strong);
   }
 
+  .docs-guide-link:focus-visible {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: var(--cc-primary-ring);
+  }
+
   .docs-guide-link--active {
-    background: var(--cc-primary);
     border-color: var(--cc-primary);
-    color: white;
+    color: var(--cc-primary-strong);
   }
 
   .docs-layout {
@@ -219,10 +221,6 @@
     background: var(--cc-dark-page);
   }
 
-  .theme-dark .docs-hero {
-    border-color: var(--cc-night-border);
-  }
-
   .theme-dark .docs-shell,
   .theme-dark .docs-toc,
   .theme-dark .docs-nav-link--active {
@@ -265,21 +263,21 @@
   }
 
   .theme-dark .docs-guide-link {
-    background: var(--cc-night-raised);
-    border-color: var(--cc-night-border);
-    color: var(--cc-night-text);
+    color: var(--cc-night-muted);
   }
 
   .theme-dark .docs-guide-link:hover,
   .theme-dark .docs-guide-link:focus-visible {
-    border-color: var(--cc-primary);
-    color: var(--cc-primary-strong);
+    color: white;
   }
 
   .theme-dark .docs-guide-link--active {
-    background: #005ca9;
-    border-color: #005ca9;
-    color: white;
+    border-color: var(--cc-primary-ring);
+    color: #72b7ea;
+  }
+
+  .theme-dark .docs-guide-tabs {
+    border-color: var(--cc-night-border);
   }
 
   .theme-dark .docs-prose th {

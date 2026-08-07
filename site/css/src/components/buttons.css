@@ -59,6 +59,18 @@
     color: white;
   }
 
+  .pine-btn--success-outline {
+    border-color: var(--cc-success);
+    background: transparent;
+    color: var(--cc-success);
+  }
+
+  .pine-btn--success-outline:hover:not(:disabled) {
+    border-color: var(--cc-success);
+    background: var(--cc-success-soft);
+    color: var(--cc-success);
+  }
+
   .pine-btn--icon {
     @apply h-9 w-9 shrink-0 p-0;
   }

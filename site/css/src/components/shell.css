@@ -249,6 +249,73 @@
     @apply h-[30px] w-[30px];
   }
 
+  .schema-table-controls {
+    @apply justify-end;
+  }
+
+  .schema-table-label {
+    @apply shrink-0 text-[12px] font-semibold;
+    color: var(--cc-muted);
+  }
+
+  .schema-table-select {
+    @apply relative min-w-0 w-56 max-w-[min(14rem,45vw)];
+  }
+
+  .schema-table-trigger {
+    @apply flex h-[30px] w-full items-center justify-between gap-2 rounded-md border bg-white px-2.5 text-left text-[12px] font-semibold transition;
+    border-color: var(--cc-border);
+    color: var(--cc-text);
+  }
+
+  .schema-table-trigger:hover,
+  .schema-table-trigger:focus-visible {
+    background: var(--cc-primary-soft);
+    border-color: var(--cc-primary-ring);
+    color: var(--cc-primary-strong);
+  }
+
+  .schema-table-trigger:focus-visible {
+    @apply outline-none ring-2 ring-offset-1;
+    --tw-ring-color: var(--cc-primary-ring);
+  }
+
+  .schema-table-trigger__label {
+    @apply min-w-0 flex-1 truncate;
+  }
+
+  .schema-table-trigger__icon {
+    @apply h-4 w-4 shrink-0;
+    color: var(--cc-muted);
+  }
+
+  .schema-table-menu {
+    @apply absolute right-0 top-full z-40 mt-1 max-h-56 w-full min-w-[12rem] overflow-y-auto rounded-md border bg-white py-1 shadow-lg;
+    border-color: var(--cc-border);
+  }
+
+  .schema-table-option {
+    @apply flex w-full items-center gap-2 px-2.5 py-2 text-left text-[12px] font-medium transition;
+    color: var(--cc-text);
+  }
+
+  .schema-table-option:hover,
+  .schema-table-option:focus-visible,
+  .schema-table-option--active {
+    @apply outline-none;
+    background: var(--cc-primary-soft);
+    color: var(--cc-primary-strong);
+  }
+
+  .schema-table-option__check {
+    @apply h-4 w-4 shrink-0 opacity-0;
+  }
+
+  .schema-table-option__check--visible {
+    @apply opacity-100;
+    color: var(--cc-primary);
+  }
+
   .data-file-toolbar {
     @apply min-h-[51px] border-b px-4 py-2.5;
     border-color: var(--cc-border);
