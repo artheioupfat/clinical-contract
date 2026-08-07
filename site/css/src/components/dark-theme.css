@@ -108,13 +108,10 @@
   .theme-dark .schema-nav { background: var(--cc-dark-nav); }
   .theme-dark :is(.column-table__row:hover, .quality-table__row:hover, .results-table tbody tr:hover, .schema-nav-item:hover, .team-table__row:hover) { background: #1b222b; }
   .theme-dark .schema-nav-item--active .schema-nav-item-title { color: white; }
-  .theme-dark .entity-tab { background: var(--cc-dark-control); border-color: var(--cc-night-border-strong); color: var(--cc-night-text); }
-  .theme-dark .entity-tab:hover { background: var(--cc-dark-hover); border-color: var(--cc-primary-ring); color: white; }
-  .theme-dark :is(.entity-tab--active, .entity-tab--active:hover) { background: #005ca9; border-color: #005ca9; color: white; }
-  .theme-dark .schema-table-label { color: var(--cc-night-muted); }
-  .theme-dark :is(.schema-table-trigger, .schema-table-menu) { background: var(--cc-dark-control); border-color: var(--cc-night-border-strong); color: var(--cc-night-text); }
-  .theme-dark :is(.schema-table-trigger:hover, .schema-table-trigger:focus-visible, .schema-table-option:hover, .schema-table-option:focus-visible, .schema-table-option--active) { background: var(--cc-dark-hover); border-color: var(--cc-primary-ring); color: white; }
-  .theme-dark .schema-table-trigger__icon { color: var(--cc-night-muted); }
+  .theme-dark .entity-select-label { color: var(--cc-night-muted); }
+  .theme-dark :is(.entity-select-trigger, .entity-select-menu) { background: var(--cc-dark-control); border-color: var(--cc-night-border-strong); color: var(--cc-night-text); }
+  .theme-dark :is(.entity-select-trigger:hover, .entity-select-trigger:focus-visible, .entity-select-option:hover, .entity-select-option:focus-visible, .entity-select-option--active) { background: var(--cc-dark-hover); border-color: var(--cc-primary-ring); color: white; }
+  .theme-dark .entity-select-trigger__icon { color: var(--cc-night-muted); }
 
   /* Builder controls */
   .theme-dark :is(.column-required-checkbox, .schema-editor .schema-input, .schema-form-control) { background: var(--cc-dark-control); border-color: #3f4b59; color: #f1f5f9; }

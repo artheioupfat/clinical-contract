@@ -44,24 +44,76 @@
 
               <input x-ref="dataInput" type="file" class="sr-only" accept=".parquet,.csv" multiple @change="pickDataFile($event)" />
 
-              <div class="entity-tabs-toolbar data-file-toolbar" x-show="dataTab === 'data' && dataFile" x-cloak>
-                <div class="entity-tabs-controls">
-                  <div class="entity-tabs-list" role="group" :aria-label="t('editor.panel.dataFiles')">
-                    <template x-for="(file, index) in dataFiles" :key="`${file.name}-${index}`">
-                      <button
-                        type="button"
-                        class="entity-tab"
-                        :class="{ 'entity-tab--active': index === activeDataIndex }"
-                        :aria-pressed="index === activeDataIndex"
-                        :title="file.name"
-                        @click="selectDataFile(index)"
-                        x-text="file.name"
-                      ></button>
-                    </template>
+              <div
+                class="entity-tabs-toolbar data-file-toolbar"
+                x-show="dataTab === 'data' && dataFile"
+                x-data="{ dataFileMenuOpen: false }"
+                @keydown.escape.stop="dataFileMenuOpen = false"
+                x-cloak
+              >
+                <div class="entity-tabs-controls entity-select-controls">
+                  <span class="entity-select-label">
+                    <span x-text="t('editor.panel.dataFile')"></span><span aria-hidden="true">&nbsp;:</span>
+                  </span>
+                  <div class="entity-select">
+                    <button
+                      type="button"
+                      class="entity-select-trigger"
+                      @click="dataFileMenuOpen = !dataFileMenuOpen"
+                      :aria-expanded="dataFileMenuOpen"
+                      aria-haspopup="listbox"
+                    >
+                      <span class="entity-select-trigger__label" x-text="dataFile?.name || t('editor.panel.noData')"></span>
+                      <svg class="entity-select-trigger__icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 0 1 1.06 0L10 10.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                      </svg>
+                    </button>
+                    <ul
+                      x-show="dataFileMenuOpen"
+                      x-cloak
+                      @click.outside="dataFileMenuOpen = false"
+                      x-transition:enter="transition ease-out duration-100"
+                      x-transition:enter-start="opacity-0 -translate-y-1"
+                      x-transition:enter-end="opacity-100 translate-y-0"
+                      x-transition:leave="transition ease-in duration-75"
+                      x-transition:leave-start="opacity-100 translate-y-0"
+                      x-transition:leave-end="opacity-0 -translate-y-1"
+                      class="entity-select-menu"
+                      role="listbox"
+                      :aria-label="t('editor.panel.dataFiles')"
+                    >
+                      <template x-for="(file, index) in dataFiles" :key="`${file.name}-${index}`">
+                        <li role="presentation">
+                          <button
+                            type="button"
+                            class="entity-select-option"
+                            role="option"
+                            :aria-selected="index === activeDataIndex"
+                            :class="{ 'entity-select-option--active': index === activeDataIndex }"
+                            @click.capture="dataFileMenuOpen = false"
+                            @click="selectDataFile(index)"
+                          >
+                            <svg
+                              class="entity-select-option__check"
+                              :class="{ 'entity-select-option__check--visible': index === activeDataIndex }"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              aria-hidden="true"
+                            >
+                              <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+                            </svg>
+                            <span x-text="file.name"></span>
+                          </button>
+                        </li>
+                      </template>
+                    </ul>
                   </div>
                   <div class="entity-tabs-actions">
                     <button
                       type="button"
+                      @click.capture="dataFileMenuOpen = false"
                       @click="$refs.dataInput.click()"
                       class="pine-btn pine-btn--icon"
                       :aria-label="t('editor.actions.addData')"
@@ -73,6 +125,7 @@
                     </button>
                     <button
                       type="button"
+                      @click.capture="dataFileMenuOpen = false"
                       @click="deleteDataFile()"
                       :disabled="busy || previewLoading"
                       class="pine-btn pine-btn--danger pine-btn--icon"

@@ -52,12 +52,17 @@ test('checker exposes Data, Schema, and Quality in its panel toolbar', () => {
   assert.doesNotMatch(dataPanel, /class="results-shell"/);
 });
 
-test('data files use tabs only in the Data preview tab', () => {
+test('data files use the shared entity selector in the Data preview tab', () => {
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
 
-  assert.match(dataPanel, /class="entity-tabs-toolbar data-file-toolbar" x-show="dataTab === 'data' && dataFile"/);
+  assert.match(dataPanel, /class="entity-tabs-toolbar data-file-toolbar"[\s\S]*x-show="dataTab === 'data' && dataFile"/);
+  assert.match(dataPanel, /editor\.panel\.dataFile/);
+  assert.match(dataPanel, /class="entity-select"/);
+  assert.match(dataPanel, /role="listbox"/);
+  assert.match(dataPanel, /:aria-selected="index === activeDataIndex"/);
   assert.match(dataPanel, /@click="selectDataFile\(index\)"/);
-  assert.match(dataPanel, /x-text="file\.name"/);
+  assert.match(dataPanel, /selectDataFile\(index\)[\s\S]*entity-tabs-actions[\s\S]*\$refs\.dataInput\.click\(\)/);
+  assert.doesNotMatch(dataPanel, /class="entity-tab"/);
   assert.doesNotMatch(dataPanel, /editor\.panel\.allDataFiles/);
 });
 
@@ -177,11 +182,11 @@ test('schema and quality use the same table selector and active table state', ()
   assert.equal((editorPanel.match(/:aria-selected="index === schemaActiveIndex"/g) || []).length, 2);
   assert.match(
     editorPanel,
-    /schemaSection === 'schema'[\s\S]*schema-table-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
+    /schemaSection === 'schema'[\s\S]*entity-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
   assert.match(
     editorPanel,
-    /schemaSection === 'quality'[\s\S]*schema-table-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
+    /schemaSection === 'quality'[\s\S]*entity-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
 });
 
@@ -219,14 +224,14 @@ test('shared table selector keeps table actions visible beside the menu', () => 
 
   assert.match(
     editorPanel,
-    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*schema-table-toolbar[\s\S]*schema-table-label[\s\S]*schema-table-select[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*schema-table-toolbar[\s\S]*entity-select-label[\s\S]*entity-select[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
   assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
   assert.match(shellCss, /\.entity-tabs-actions \.pine-btn\s*\{[\s\S]*?h-\[30px\][\s\S]*?w-\[30px\]/);
   assert.match(shellCss, /\.entity-tabs-toolbar--inline \.entity-tabs-controls\s*\{[\s\S]*?flex-1/);
-  assert.match(shellCss, /\.schema-table-trigger\s*\{[\s\S]*?h-\[30px\]/);
-  assert.match(shellCss, /\.schema-table-menu\s*\{[\s\S]*?max-h-56[\s\S]*?overflow-y-auto/);
+  assert.match(shellCss, /\.entity-select-trigger\s*\{[\s\S]*?h-\[30px\]/);
+  assert.match(shellCss, /\.entity-select-menu\s*\{[\s\S]*?max-h-56[\s\S]*?overflow-y-auto/);
   assert.match(buttonCss, /\.pine-btn\s*\{[\s\S]*?h-9/);
   assert.match(shellCss, /\.view-switch\s*\{[\s\S]*?h-9/);
   assert.match(schemaCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?-mx-4[\s\S]*?min-h-\[51px\][\s\S]*?py-2\.5/);
