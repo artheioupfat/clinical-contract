@@ -8,6 +8,7 @@ version = "0.3.0"
 description = "Validate clinical YAML data contracts against Parquet and CSV files"
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [{ name = "Arthur PRIGENT" }]
 license = { text = "MIT" }
 license-files = ["LICENSE"]
 keywords = ["data-contract", "clinical", "parquet", "validation", "quality"]
@@ -28,6 +29,12 @@ dependencies = [
     "pyyaml>=6.0",
     "duckdb>=1.0",
 ]
+
+[project.urls]
+Homepage = "https://artheioupfat.github.io/clinical-contract/"
+Documentation = "https://artheioupfat.github.io/clinical-contract/docs.html"
+Repository = "https://github.com/artheioupfat/clinical-contract"
+Issues = "https://github.com/artheioupfat/clinical-contract/issues"
 
 # CLI entry point
 [project.scripts]

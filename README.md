@@ -130,6 +130,15 @@ Read-only SQL can still be computationally expensive. Contracts received from an
 untrusted organization should therefore be reviewed before automated execution
 on shared production infrastructure.
 
+## Current Limitations
+
+- Only CSV and Parquet data files are currently supported.
+- Type validation is limited to the logical and physical types listed in the supported type catalog. Unsupported types are rejected during contract validation.
+- CSV column types are inferred and are therefore less reliable than the explicit types stored in Parquet files.
+- The web application runs entirely in the browser and does not upload contracts or datasets. Its performance and maximum practical file size therefore depend on the memory and processing resources available on the user's machine.
+
+See [planned improvements and open issues](https://github.com/artheioupfat/clinical-contract/issues).
+
 ## Local Development
 
 Clone the repository:
