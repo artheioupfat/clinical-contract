@@ -30,7 +30,7 @@ jobs:
         run: ruff check .
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=clinical_contract --cov-report=term-missing --cov-fail-under=85
 
   site-test:
     runs-on: ubuntu-latest
