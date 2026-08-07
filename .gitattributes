@@ -1,0 +1,5 @@
+# Generated website artifacts. 
+site/css/tailwind.css linguist-generated=true
+site/js/example-catalog.js linguist-generated=true
+site/js/site-version.js linguist-generated=true
+site/js/type-catalog.js linguist-generated=true
