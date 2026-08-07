@@ -20,7 +20,7 @@
   }
 
   .schema-nav-head {
-    @apply border-b px-3 py-3;
+    @apply flex min-h-[51px] items-center border-b px-3 py-2.5;
     border-color: var(--cc-border);
   }
 

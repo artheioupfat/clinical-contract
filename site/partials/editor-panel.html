@@ -21,7 +21,7 @@
                     type="button"
                     @click="downloadYaml()"
                     :disabled="!schemaStarted || !yamlText.trim()"
-                    class="pine-btn pine-btn--action-success pine-btn--icon"
+                    class="pine-btn pine-btn--success-outline pine-btn--icon"
                     :aria-label="t('editor.actions.download')"
                     :title="schemaStarted ? t('editor.actions.download') : t('editor.panel.unlockContract')"
                   >

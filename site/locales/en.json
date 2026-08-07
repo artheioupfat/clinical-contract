@@ -64,7 +64,7 @@
     "meta": { "title": "Editor | clinical-contract", "description": "Write, validate and check a clinical data contract directly in your browser." },
     "sections": { "fundamentals": "Fundamentals", "schema": "Schema", "quality": "Quality", "team": "Team" },
     "panel": {
-      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded", "dataFiles": "Loaded data files",
+      "editor": "Editor", "checker": "Checker", "untitled": "Untitled contract", "noData": "No data file loaded", "dataFile": "Data file", "dataFiles": "Loaded data files",
       "unlockContract": "Create or load a contract to unlock", "unlockData": "Load a data file to unlock"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
@@ -87,7 +87,7 @@
       "objectives": { "predictive": "Predictive", "therapeutic": "Therapeutic", "diagnostic": "Diagnostic", "epidemiological": "Epidemiological", "descriptive": "Descriptive", "operational": "Operational" }
     },
     "columns": {
-      "table": "Table", "addTable": "Add table", "removeTable": "Remove table",
+      "table": "Table", "tables": "Tables", "addTable": "Add table", "removeTable": "Remove table",
       "tableName": "Table name", "description": "Description", "title": "Columns", "empty": "Add a column, then edit its type and description from the details panel.",
       "column": "Column", "type": "Type", "required": "Required", "action": "Action", "unnamed": "Unnamed column", "noDescription": "No description yet",
       "details": "Column details", "name": "Column name", "logicalType": "Logical type", "physicalType": "Physical type", "noConstraint": "No type constraint",

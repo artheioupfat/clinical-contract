@@ -1,22 +1,76 @@
-                          <!-- Shared table navigation for schema-scoped builder sections. -->
-                          <div class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar">
-                            <div class="entity-tabs-controls">
-                              <div class="entity-tabs-list" role="group" :aria-label="t('editor.columns.table')">
-                                <template x-for="(table, index) in schemaCollection" :key="`schema-table-${schemaSection}-${index}`">
-                                  <button
-                                    type="button"
-                                    class="entity-tab"
-                                    :class="{ 'entity-tab--active': index === schemaActiveIndex }"
-                                    :aria-pressed="index === schemaActiveIndex"
-                                    @click="selectSchemaTable(index)"
-                                    x-text="table.name || `${t('editor.columns.table')} ${index + 1}`"
-                                  ></button>
-                                </template>
+                          <!-- Shared table selector for schema-scoped builder sections. -->
+                          <div
+                            class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"
+                            x-data="{ tableMenuOpen: false }"
+                            @keydown.escape.stop="tableMenuOpen = false"
+                          >
+                            <div class="entity-tabs-controls entity-select-controls">
+                              <span class="entity-select-label">
+                                <span x-text="t('editor.columns.tables')"></span><span aria-hidden="true">&nbsp;:</span>
+                              </span>
+                              <div class="entity-select">
+                                <button
+                                  type="button"
+                                  class="entity-select-trigger"
+                                  @click="tableMenuOpen = !tableMenuOpen"
+                                  :aria-expanded="tableMenuOpen"
+                                  aria-haspopup="listbox"
+                                >
+                                  <span
+                                    class="entity-select-trigger__label"
+                                    x-text="schemaCollection[schemaActiveIndex]?.name || `${t('editor.columns.table')} ${schemaActiveIndex + 1}`"
+                                  ></span>
+                                  <svg class="entity-select-trigger__icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 0 1 1.06 0L10 10.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+                                  </svg>
+                                </button>
+                                <ul
+                                  x-show="tableMenuOpen"
+                                  x-cloak
+                                  @click.outside="tableMenuOpen = false"
+                                  x-transition:enter="transition ease-out duration-100"
+                                  x-transition:enter-start="opacity-0 -translate-y-1"
+                                  x-transition:enter-end="opacity-100 translate-y-0"
+                                  x-transition:leave="transition ease-in duration-75"
+                                  x-transition:leave-start="opacity-100 translate-y-0"
+                                  x-transition:leave-end="opacity-0 -translate-y-1"
+                                  class="entity-select-menu"
+                                  role="listbox"
+                                  :aria-label="t('editor.columns.tables')"
+                                >
+                                  <template x-for="(table, index) in schemaCollection" :key="`schema-table-option-${schemaSection}-${index}`">
+                                    <li role="presentation">
+                                      <button
+                                        type="button"
+                                        class="entity-select-option"
+                                        role="option"
+                                        :aria-selected="index === schemaActiveIndex"
+                                        :class="{ 'entity-select-option--active': index === schemaActiveIndex }"
+                                        @click.capture="tableMenuOpen = false"
+                                        @click="selectSchemaTable(index)"
+                                      >
+                                        <svg
+                                          class="entity-select-option__check"
+                                          :class="{ 'entity-select-option__check--visible': index === schemaActiveIndex }"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          stroke-width="2"
+                                          aria-hidden="true"
+                                        >
+                                          <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+                                        </svg>
+                                        <span x-text="table.name || `${t('editor.columns.table')} ${index + 1}`"></span>
+                                      </button>
+                                    </li>
+                                  </template>
+                                </ul>
                               </div>
                               <div class="entity-tabs-actions">
                                 <button
                                   type="button"
                                   class="pine-btn pine-btn--icon"
+                                  @click.capture="tableMenuOpen = false"
                                   @click="addSchemaTable()"
                                   :aria-label="t('editor.columns.addTable')"
                                   :title="t('editor.columns.addTable')"
@@ -28,6 +82,7 @@
                                 <button
                                   type="button"
                                   class="pine-btn pine-btn--danger pine-btn--icon"
+                                  @click.capture="tableMenuOpen = false"
                                   @click="openRemoveTableModal()"
                                   :aria-label="t('editor.columns.removeTable')"
                                   :title="t('editor.columns.removeTable')"

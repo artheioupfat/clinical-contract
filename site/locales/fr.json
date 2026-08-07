@@ -64,7 +64,7 @@
     "meta": { "title": "Éditeur | clinical-contract", "description": "Rédigez, validez et vérifiez un contrat de données cliniques directement dans votre navigateur." },
     "sections": { "fundamentals": "Fondamentaux", "schema": "Schéma", "quality": "Qualité", "team": "Équipe" },
     "panel": {
-      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé", "dataFiles": "Fichiers de données chargés",
+      "editor": "Éditeur", "checker": "Vérification", "untitled": "Contrat sans titre", "noData": "Aucun fichier de données chargé", "dataFile": "Fichier de données", "dataFiles": "Fichiers de données chargés",
       "unlockContract": "Créez ou chargez un contrat pour déverrouiller", "unlockData": "Chargez un fichier de données pour déverrouiller"
     },
     "tabs": { "schema": "Schema", "yaml": "YAML", "validation": "Validation", "data": "Data", "quality": "Quality" },
@@ -87,7 +87,7 @@
       "objectives": { "predictive": "Prédictif", "therapeutic": "Thérapeutique", "diagnostic": "Diagnostique", "epidemiological": "Épidémiologique", "descriptive": "Descriptif", "operational": "Opérationnel" }
     },
     "columns": {
-      "table": "Table", "addTable": "Ajouter une table", "removeTable": "Supprimer la table",
+      "table": "Table", "tables": "Tables", "addTable": "Ajouter une table", "removeTable": "Supprimer la table",
       "tableName": "Nom de la table", "description": "Description", "title": "Colonnes", "empty": "Ajoutez une colonne, puis renseignez son type et sa description dans le panneau de détails.",
       "column": "Colonne", "type": "Type", "required": "Obligatoire", "action": "Action", "unnamed": "Colonne sans nom", "noDescription": "Aucune description",
       "details": "Détails de la colonne", "name": "Nom de la colonne", "logicalType": "Type logique", "physicalType": "Type physique", "noConstraint": "Aucune contrainte de type",
