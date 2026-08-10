@@ -15,8 +15,8 @@ test('documentation routing exposes a closed registry of supported pages', () =>
     routing.pages.map(({ id, fileBase }) => ({ id, fileBase })),
     [
       { id: 'overview', fileBase: 'documentation' },
-      { id: 'python-api', fileBase: 'python-api' },
       { id: 'contract-reference', fileBase: 'contract-reference' },
+      { id: 'python-api', fileBase: 'python-api' },
     ],
   );
 });
