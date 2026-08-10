@@ -229,6 +229,12 @@ window.ClinicalModules.schema = {
     return this.t('editor.columns.noConstraint');
   },
 
+  qualityNoteVisible: true,
+
+  closeQualityNote() {
+    this.qualityNoteVisible = false;
+  },
+
   addQualityRule() {
     const firstProperty = (this.schemaDraft.properties || []).find((property) => property.name);
     if (!firstProperty) return;

@@ -4,6 +4,57 @@
                           <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
                           <div data-include="./partials/schema-table-tabs.html"></div>
                         </div>
+                        <!-- Quality information note -->
+                        <div
+                          x-show="qualityNoteVisible"
+                          x-transition.opacity
+                          x-cloak
+                          class="quality-note"
+                          role="note"
+                        >
+                          <div class="quality-note__icon">
+                            <svg
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-3a1 1 0 11-2 0 1 1 0 012 0zm-1 2a1 1 0 011 1v4a1 1 0 11-2 0v-3a1 1 0 010-2h1z"
+                                clip-rule="evenodd"
+                              />
+                            </svg>
+                          </div>
+
+                          <div class="quality-note__content">
+                            <div
+                              class="quality-note__title"
+                              x-text="t('editor.quality.noteTitle')"
+                            ></div>
+
+                            <div
+                              class="quality-note__message"
+                              x-text="t('editor.quality.noteMessage')"
+                            ></div>
+                          </div>
+
+                          <button
+                            type="button"
+                            class="quality-note__close"
+                            @click="closeQualityNote()"
+                            :aria-label="t('common.close')"
+                          >
+                            <svg
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                         <div class="quality-list-shell">
                           <template x-if="schemaDraft.qualityRules.length === 0">
                             <div class="quality-empty" x-text="t('editor.quality.empty')"></div>
