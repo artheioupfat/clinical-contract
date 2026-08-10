@@ -50,3 +50,109 @@
   }
 
 }
+@layer components {
+  /* Quality information note */
+  .quality-note {
+    @apply relative mb-4 flex w-full items-start gap-3
+           rounded-lg border border-blue-200 bg-blue-50
+           px-4 py-3 pr-11;
+  }
+
+  .quality-note__icon {
+    @apply mt-0.5 flex h-5 w-5 shrink-0
+           items-center justify-center text-blue-500;
+  }
+
+  .quality-note__icon svg {
+    @apply h-5 w-5;
+  }
+
+  .quality-note__content {
+    @apply min-w-0 flex-1;
+  }
+
+  .quality-note__title {
+    @apply text-sm font-semibold text-blue-900;
+  }
+
+  .quality-note__message {
+    @apply mt-1 text-sm leading-5 text-blue-700;
+  }
+
+  .quality-note__close {
+    @apply absolute right-3 top-3 inline-flex h-7 w-7
+           cursor-pointer items-center justify-center
+           rounded-md text-blue-400 transition
+           hover:bg-blue-100 hover:text-blue-700
+           focus-visible:outline focus-visible:outline-2
+           focus-visible:outline-offset-2 focus-visible:outline-blue-500;
+  }
+
+  .quality-note__close svg {
+    @apply h-5 w-5;
+  }
+
+
+  /* Quality checks */
+  .quality-list-shell {
+    @apply w-full overflow-x-auto overflow-y-hidden
+           rounded-lg border border-slate-200 bg-white;
+  }
+
+  .quality-empty {
+    @apply rounded-lg border border-dashed border-slate-300
+           bg-slate-50 px-3 py-6 text-center
+           text-sm text-slate-500;
+  }
+
+  .quality-table {
+    @apply w-full min-w-[760px] divide-y divide-slate-200;
+  }
+
+  .quality-table thead {
+    @apply bg-slate-50;
+  }
+
+  .quality-table th {
+    @apply px-4 py-3 text-left text-[11px] font-semibold
+           uppercase tracking-[0.12em] text-slate-500;
+  }
+
+  .quality-table tbody {
+    @apply divide-y divide-slate-100;
+  }
+
+  .quality-table tr {
+    @apply text-sm text-slate-800;
+  }
+
+  .quality-table__row {
+    @apply cursor-pointer transition hover:bg-slate-50
+           focus-visible:outline focus-visible:outline-2
+           focus-visible:outline-offset-[-2px]
+           focus-visible:outline-blue-500;
+  }
+
+  .quality-table__column {
+    @apply px-4 py-3 font-semibold;
+  }
+
+  .quality-table__description {
+    @apply max-w-[32rem] truncate px-4 py-3 text-slate-600;
+  }
+
+  .quality-table__action {
+    @apply px-4 py-3 text-left;
+  }
+
+  .quality-edit-button {
+    @apply relative z-[1] inline-flex cursor-pointer
+           items-center justify-center rounded-md
+           border border-blue-200 bg-blue-50
+           px-2.5 py-1.5 text-xs font-semibold text-blue-700
+           transition hover:border-blue-300 hover:bg-blue-100
+           hover:text-blue-900
+           focus-visible:outline focus-visible:outline-2
+           focus-visible:outline-offset-2 focus-visible:outline-blue-500;
+  }
+}

@@ -106,7 +106,9 @@
       "noColumn": "Aucune colonne sélectionnée", "untitled": "Contrôle qualité sans titre", "add": "Ajouter un contrôle", "details": "Contrôle qualité", "comparison": "Comparaison",
       "operators": { "equal": "Égal", "notEqual": "Différent", "greaterThan": "Supérieur à", "greaterThanOrEqual": "Supérieur ou égal à", "lessThan": "Inférieur à", "lessThanOrEqual": "Inférieur ou égal à", "between": "Compris entre" },
       "expected": "Valeur attendue", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Expliquez ce que protège ce contrôle qualité",
-      "sqlQuery": "Requête SQL", "duckdbSql": "SQL DuckDB", "tableName": "Nom de la table :", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Supprimer le contrôle"
+      "sqlQuery": "Requête SQL", "duckdbSql": "SQL DuckDB", "tableName": "Nom de la table :", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Supprimer le contrôle",
+      "noteTitle": "Information", 
+      "noteMessage": "Les contrôles de qualité utilisent des requêtes SQL exécutées avec DuckDB. Ces requêtes peuvent interroger plusieurs tables, notamment à l’aide de jointures (JOIN)."
     },
     "team": {
       "name": "Nom de l’équipe", "description": "Description", "members": "Membres", "empty": "Aucun membre dans l’équipe.", "memberName": "Nom", "role": "Rôle", "action": "Action",

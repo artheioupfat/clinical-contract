@@ -106,7 +106,10 @@
       "noColumn": "No column selected", "untitled": "Untitled quality check", "add": "Add check", "details": "Quality check", "comparison": "Comparison",
       "operators": { "equal": "Equal", "notEqual": "Not equal", "greaterThan": "Greater than", "greaterThanOrEqual": "Greater than or equal", "lessThan": "Less than", "lessThanOrEqual": "Less than or equal", "between": "Between" },
       "expected": "Expected value", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Explain what this quality check protects",
-      "sqlQuery": "SQL query", "duckdbSql": "DuckDB SQL", "tableName": "Table name:", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Remove check"
+      "sqlQuery": "SQL query", "duckdbSql": "DuckDB SQL", "tableName": "Table name:", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Remove check",
+      "noteTitle": "Information", 
+      "noteMessage": "Quality checks use SQL queries executed with DuckDB. These queries can access multiple tables, including through joins (JOIN)."
+
     },
     "team": {
       "name": "Team name", "description": "Description", "members": "Members", "empty": "No team members yet.", "memberName": "Name", "role": "Role", "action": "Action",
