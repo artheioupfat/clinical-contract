@@ -8,18 +8,18 @@
       bodyKey: 'docs.pageMeta.overviewBody',
     }),
     Object.freeze({
-      id: 'python-api',
-      fileBase: 'python-api',
-      labelKey: 'docs.pages.pythonApi',
-      titleKey: 'docs.pageMeta.pythonApiTitle',
-      bodyKey: 'docs.pageMeta.pythonApiBody',
-    }),
-    Object.freeze({
       id: 'contract-reference',
       fileBase: 'contract-reference',
       labelKey: 'docs.pages.contractReference',
       titleKey: 'docs.pageMeta.contractReferenceTitle',
       bodyKey: 'docs.pageMeta.contractReferenceBody',
+    }),
+    Object.freeze({
+      id: 'python-api',
+      fileBase: 'python-api',
+      labelKey: 'docs.pages.pythonApi',
+      titleKey: 'docs.pageMeta.pythonApiTitle',
+      bodyKey: 'docs.pageMeta.pythonApiBody',
     }),
   ]);
 
