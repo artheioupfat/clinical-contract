@@ -125,6 +125,42 @@ test('schema module labels columns without types as unconstrained', () => {
   );
 });
 
+test('quality SQL hint displays the active table for a single-table contract', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    t,
+    schemaActiveIndex: 0,
+    schemaCollection: [{ name: 'patients' }],
+    schemaDraft: { tableName: 'patients' },
+    qualitySqlTableNames: schema.qualitySqlTableNames,
+  };
+
+  assert.deepEqual(schema.qualitySqlTableNames.call(context), ['patients']);
+  assert.equal(schema.qualitySqlTableLabel.call(context), 'Table name:');
+});
+
+test('quality SQL hint displays every named table in a multi-table contract', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    t,
+    schemaActiveIndex: 1,
+    schemaCollection: [
+      { name: 'patients' },
+      { name: 'covid_diagnoses' },
+      { name: 'encounters' },
+    ],
+    schemaDraft: { tableName: 'covid_diagnoses' },
+    qualitySqlTableNames: schema.qualitySqlTableNames,
+  };
+
+  assert.deepEqual(schema.qualitySqlTableNames.call(context), [
+    'patients',
+    'covid_diagnoses',
+    'encounters',
+  ]);
+  assert.equal(schema.qualitySqlTableLabel.call(context), 'Table names:');
+});
+
 test('schema module keeps the current builder section when returning from YAML', () => {
   const schema = loadSchemaModule();
   let synced = 0;

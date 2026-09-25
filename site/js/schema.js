@@ -266,6 +266,28 @@ window.ClinicalModules.schema = {
     ) || null;
   },
 
+  qualitySqlTableNames() {
+    const schemas = Array.isArray(this.schemaCollection) ? this.schemaCollection : [];
+    const activeIndex = Number(this.schemaActiveIndex);
+    const names = schemas.map((schema, index) => {
+      const tableName = index === activeIndex ? this.schemaDraft?.tableName : schema?.name;
+      return String(tableName || '').trim();
+    }).filter(Boolean);
+
+    const uniqueNames = [...new Set(names)];
+    if (uniqueNames.length > 0) return uniqueNames;
+
+    const activeTableName = String(this.schemaDraft?.tableName || '').trim();
+    return activeTableName ? [activeTableName] : ['data'];
+  },
+
+  qualitySqlTableLabel() {
+    const key = this.qualitySqlTableNames().length === 1
+      ? 'editor.quality.tableName'
+      : 'editor.quality.tableNames';
+    return this.t(key);
+  },
+
   setQualityRuleProperty(rule, propertyName) {
     if (!rule) return;
     rule.propertyName = propertyName || '';

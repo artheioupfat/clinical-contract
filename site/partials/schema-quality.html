@@ -163,8 +163,8 @@
                                   <div class="quality-sql-editor__bar">
                                     <span x-text="t('editor.quality.duckdbSql')"></span>
                                     <span class="quality-sql-editor__table-hint">
-                                      <span class="quality-sql-editor__table-label" x-text="t('editor.quality.tableName')"></span>
-                                      <span class="quality-sql-editor__table-name" x-text="schemaDraft.tableName || 'data'"></span>
+                                      <span class="quality-sql-editor__table-label" x-text="qualitySqlTableLabel()"></span>
+                                      <span class="quality-sql-editor__table-name" x-text="qualitySqlTableNames().join(', ')"></span>
                                     </span>
                                   </div>
                                   <textarea x-model="rule.query" @input.debounce.200ms="pushSchemaToYaml()" rows="8" class="quality-sql-editor__textarea" spellcheck="false" :placeholder="t('editor.quality.sqlPlaceholder')"></textarea>
