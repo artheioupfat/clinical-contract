@@ -2,7 +2,6 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'quality'" x-cloak>
                         <div class="schema-stage-bar schema-stage-bar--primary">
                           <div class="schema-stage-title" x-text="t('editor.sections.quality')"></div>
-                          <div data-include="./partials/schema-table-tabs.html"></div>
                         </div>
                         <!-- Quality information note -->
                         <div
@@ -56,24 +55,26 @@
                           </button>
                         </div>
                         <div class="quality-list-shell">
-                          <template x-if="schemaDraft.qualityRules.length === 0">
+                          <template x-if="qualityRuleRows().length === 0">
                             <div class="quality-empty" x-text="t('editor.quality.empty')"></div>
                           </template>
-                          <table x-show="schemaDraft.qualityRules.length > 0" x-cloak class="quality-table">
+                          <table x-show="qualityRuleRows().length > 0" x-cloak class="quality-table">
                             <thead>
                               <tr>
+                                <th x-text="t('editor.quality.schema')"></th>
                                 <th x-text="t('editor.quality.column')"></th>
                                 <th x-text="t('editor.quality.description')"></th>
                                 <th class="text-right" x-text="t('editor.quality.action')"></th>
                               </tr>
                             </thead>
                             <tbody>
-                              <template x-for="rule in schemaDraft.qualityRules" :key="rule._rowId">
-                                <tr class="quality-table__row" @click="openQualityRule(rule._rowId)" tabindex="0" @keydown.enter.prevent="openQualityRule(rule._rowId)">
+                              <template x-for="rule in qualityRuleRows()" :key="`${rule.schemaIndex}-${rule.propertyIndex}-${rule.qualityIndex}`">
+                                <tr class="quality-table__row" @click="openQualityRuleFromTable(rule)" tabindex="0" @keydown.enter.prevent="openQualityRuleFromTable(rule)">
+                                  <td class="quality-table__schema" x-text="rule.schemaNames.join(', ')"></td>
                                   <td class="quality-table__column" x-text="rule.propertyName || t('editor.quality.noColumn')"></td>
                                   <td class="quality-table__description" x-text="rule.description || t('editor.quality.untitled')"></td>
                                   <td class="quality-table__action">
-                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRule(rule._rowId)" x-text="t('common.edit')"></button>
+                                    <button type="button" class="quality-edit-button" @click.stop.prevent="openQualityRuleFromTable(rule)" x-text="t('common.edit')"></button>
                                   </td>
                                 </tr>
                               </template>
@@ -81,7 +82,7 @@
                           </table>
                         </div>
                         <div class="schema-add-row">
-                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="!schemaDraft.properties.some((property) => property.name)" x-text="t('editor.quality.add')"></button>
+                          <button type="button" class="schema-add-btn" @click="addQualityRule()" :disabled="firstQualitySchemaIndex() < 0" x-text="t('editor.quality.add')"></button>
                         </div>
                       </div>
 
@@ -90,7 +91,7 @@
                           class="entity-modal-backdrop"
                           @keydown.escape.window="closeQualityRule()"
                         >
-                          <div class="entity-modal" x-data="{ rule: qualityEditorRule() }" @click.outside="closeQualityRule()">
+                          <div class="entity-modal" x-data="{ get rule() { return qualityEditorRule(); } }" @click.outside="closeQualityRule()">
                             <div class="entity-modal__header">
                               <div>
                                 <div class="entity-modal__kicker" x-text="t('editor.quality.details')"></div>
@@ -100,11 +101,23 @@
 
                             <div class="entity-modal__body">
                               <label class="entity-modal__field">
+                                <span class="entity-modal__label" x-text="t('editor.quality.schema')"></span>
+                                <select
+                                  :value="qualityEditorSchemaIndex"
+                                  @change="setQualityRuleSchema(rule, Number($event.target.value))"
+                                  class="schema-input"
+                                >
+                                  <template x-for="schema in qualitySchemaOptions()" :key="`quality-schema-${schema.index}`">
+                                    <option :value="schema.index" :disabled="!schema.hasColumns" x-text="schema.name"></option>
+                                  </template>
+                                </select>
+                              </label>
+
+                              <label class="entity-modal__field">
                                 <span class="entity-modal__label" x-text="t('editor.quality.column')"></span>
                                 <select
                                   x-ref="qualityColumnSelect"
                                   :value="rule.propertyName || ''"
-                                  x-init="$nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' })"
                                   @change="
                                     setQualityRuleProperty(rule, $event.target.value);
                                     $nextTick(() => { $refs.qualityColumnSelect.value = rule.propertyName || '' });

@@ -131,7 +131,7 @@
   .theme-dark :is(.preview-table tbody td, .results-table tbody td) { border-color: var(--cc-night-border); }
   .theme-dark :is(.column-table, .quality-table, .team-table) { @apply divide-slate-700; }
   .theme-dark :is(.column-table tbody, .quality-table tbody, .team-table tbody) { @apply divide-slate-800; }
-  .theme-dark :is(.column-table th, .column-table__description, .column-table__required, .column-table__type, .empty-row, .preview-empty, .quality-table th, .quality-table__description, .team-table th, .team-table__role) { color: var(--cc-night-muted); }
+  .theme-dark :is(.column-table th, .column-table__description, .column-table__required, .column-table__type, .empty-row, .preview-empty, .quality-table th, .quality-table__schema, .quality-table__description, .team-table th, .team-table__role) { color: var(--cc-night-muted); }
   .theme-dark :is(.column-edit-button:hover, .entity-modal__close:hover, .quality-edit-button:hover, .team-edit-button:hover) { background: var(--cc-dark-hover); border-color: #0ea5e9; color: white; }
   .theme-dark .column-description-field { border-color: var(--cc-night-border); }
 

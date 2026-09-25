@@ -102,7 +102,7 @@
       "clearConfirm": "Vider la table"
     },
     "quality": {
-      "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "column": "Colonne", "description": "Description", "action": "Action",
+      "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "schema": "Schéma", "column": "Colonne", "description": "Description", "action": "Action",
       "noColumn": "Aucune colonne sélectionnée", "untitled": "Contrôle qualité sans titre", "add": "Ajouter un contrôle", "details": "Contrôle qualité", "comparison": "Comparaison",
       "operators": { "equal": "Égal", "notEqual": "Différent", "greaterThan": "Supérieur à", "greaterThanOrEqual": "Supérieur ou égal à", "lessThan": "Inférieur à", "lessThanOrEqual": "Inférieur ou égal à", "between": "Compris entre" },
       "expected": "Valeur attendue", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Expliquez ce que protège ce contrôle qualité",

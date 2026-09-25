@@ -102,7 +102,7 @@
       "clearConfirm": "Clear table"
     },
     "quality": {
-      "empty": "Add at least one named column, then create SQL quality checks here.", "column": "Column", "description": "Description", "action": "Action",
+      "empty": "Add at least one named column, then create SQL quality checks here.", "schema": "Schema", "column": "Column", "description": "Description", "action": "Action",
       "noColumn": "No column selected", "untitled": "Untitled quality check", "add": "Add check", "details": "Quality check", "comparison": "Comparison",
       "operators": { "equal": "Equal", "notEqual": "Not equal", "greaterThan": "Greater than", "greaterThanOrEqual": "Greater than or equal", "lessThan": "Less than", "lessThanOrEqual": "Less than or equal", "between": "Between" },
       "expected": "Expected value", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Explain what this quality check protects",

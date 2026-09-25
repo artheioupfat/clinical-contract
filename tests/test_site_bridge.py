@@ -69,6 +69,15 @@ schema:
       - name: order_id
         logicalType: string
         required: true
+        quality:
+          - type: sql
+            description: Every order has an identifier
+            query: |
+              SELECT COUNT(*)
+              FROM orders
+              WHERE order_id IS NULL
+            expected:
+              equal: 0
   - name: line_items
     physicalType: table
     description: Lines
@@ -103,7 +112,11 @@ schema:
         "orders",
         "line_items",
     }
-    assert payload["quality_rows"][0]["obtained"] == 0
+    assert {row["schema_name"] for row in payload["quality_rows"]} == {
+        "orders",
+        "line_items",
+    }
+    assert all(row["obtained"] == 0 for row in payload["quality_rows"])
 
 
 def test_browser_bridge_keeps_single_table_filename_compatibility(
