@@ -191,7 +191,7 @@ test('quality lists every rule without a table selector and keeps schema selecti
   const editorPanel = readEditorPanel();
   const qualityPanel = fs.readFileSync(path.join(siteRoot, 'partials/schema-quality.html'), 'utf8');
 
-  const tableSelectors = editorPanel.match(/class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"/g) || [];
+  const tableSelectors = editorPanel.match(/class="[^"]*\bschema-table-toolbar\b[^"]*"/g) || [];
   const tableSelectionCalls = editorPanel.match(/@click="selectSchemaTable\(index\)"/g) || [];
 
   assert.equal(tableSelectors.length, 1);
@@ -244,7 +244,7 @@ test('shared table selector keeps table actions visible beside the menu', () => 
 
   assert.match(
     editorPanel,
-    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*schema-table-toolbar[\s\S]*entity-select-label[\s\S]*entity-select[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*<\/div>[\s\S]*schema-form-grid[\s\S]*schema-table-field[\s\S]*schema-table-toolbar--field[\s\S]*entity-select-label[\s\S]*entity-select[\s\S]*tableNameEditing[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*tableNameEditing = true[\s\S]*openRemoveTableModal\(\)/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
   assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
@@ -255,6 +255,7 @@ test('shared table selector keeps table actions visible beside the menu', () => 
   assert.match(buttonCss, /\.pine-btn\s*\{[\s\S]*?h-9/);
   assert.match(shellCss, /\.view-switch\s*\{[\s\S]*?h-9/);
   assert.match(schemaCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?-mx-4[\s\S]*?min-h-\[51px\][\s\S]*?py-2\.5/);
+  assert.match(schemaCss, /\.schema-table-field\s*\{[^}]*justify-end/);
 });
 
 test('template catalogs keep bundled assets declarative', () => {

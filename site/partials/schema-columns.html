@@ -2,13 +2,11 @@
                       <div class="schema-card schema-stage" x-show="schemaSection === 'schema'" x-cloak>
                         <div class="schema-stage-bar schema-stage-bar--primary">
                           <div class="schema-stage-title" x-text="t('editor.sections.schema')"></div>
-                          <div data-include="./partials/schema-table-tabs.html"></div>
                         </div>
                         <div class="schema-form-grid schema-form-grid--schema">
-                          <label class="schema-form-field">
-                            <span class="schema-form-label"><span x-text="t('editor.columns.tableName')"></span> <span class="schema-required" x-show="showRequiredFor('tableName')" x-cloak x-text="t('common.required')"></span></span>
-                            <input type="text" x-model="schemaDraft.tableName" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableName')" class="schema-input schema-form-control" />
-                          </label>
+                          <div class="schema-form-field schema-table-field">
+                            <div data-include="./partials/schema-table-tabs.html"></div>
+                          </div>
                           <label class="schema-form-field">
                             <span class="schema-form-label"><span x-text="t('editor.columns.description')"></span> <span class="schema-required" x-show="showRequiredFor('tableDescription')" x-cloak x-text="t('common.required')"></span></span>
                             <input type="text" x-model="schemaDraft.tableDescription" @input.debounce.150ms="pushSchemaToYaml()" :class="requiredInputClass('tableDescription')" class="schema-input schema-form-control" />
