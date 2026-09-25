@@ -244,7 +244,7 @@ test('shared table selector keeps table actions visible beside the menu', () => 
 
   assert.match(
     editorPanel,
-    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*<\/div>[\s\S]*schema-form-grid[\s\S]*schema-table-field[\s\S]*schema-table-toolbar--field[\s\S]*entity-select-label[\s\S]*entity-select[\s\S]*tableNameEditing[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*tableNameEditing = true[\s\S]*openRemoveTableModal\(\)/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*<\/div>[\s\S]*schema-form-grid[\s\S]*schema-table-field[\s\S]*schema-form-label[\s\S]*editor\.columns\.tables[\s\S]*schema-table-toolbar--field[\s\S]*entity-select[\s\S]*tableNameEditing[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*tableNameEditing = true[\s\S]*openRemoveTableModal\(\)/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
   assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
