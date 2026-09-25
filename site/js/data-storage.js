@@ -5,7 +5,7 @@ window.ClinicalModules.dataStorage = {
   dataStorageDbName: 'clinical-contract-browser-storage',
   dataStorageStoreName: 'session-files',
   dataStorageSessionKey: 'clinical-contract-data-session-v1',
-  dataStorageMaxAgeMs: 24 * 60 * 60 * 1000,
+  dataStorageMaxAgeMs: 6 * 60 * 60 * 1000,
 
   isStoredDataFileExpired(record, now = Date.now()) {
     const savedAt = Number(record?.savedAt || 0);

@@ -87,7 +87,7 @@
       "objectives": { "predictive": "Prédictif", "therapeutic": "Thérapeutique", "diagnostic": "Diagnostique", "epidemiological": "Épidémiologique", "descriptive": "Descriptif", "operational": "Opérationnel" }
     },
     "columns": {
-      "table": "Table", "tables": "Tables", "addTable": "Ajouter une table", "removeTable": "Supprimer la table",
+      "table": "Table", "tables": "Tables", "addTable": "Ajouter une table", "renameTable": "Renommer la table", "removeTable": "Supprimer la table",
       "tableName": "Nom de la table", "description": "Description", "title": "Colonnes", "empty": "Ajoutez une colonne, puis renseignez son type et sa description dans le panneau de détails.",
       "column": "Colonne", "type": "Type", "required": "Obligatoire", "action": "Action", "unnamed": "Colonne sans nom", "noDescription": "Aucune description",
       "details": "Détails de la colonne", "name": "Nom de la colonne", "logicalType": "Type logique", "physicalType": "Type physique", "noConstraint": "Aucune contrainte de type",
@@ -102,11 +102,11 @@
       "clearConfirm": "Vider la table"
     },
     "quality": {
-      "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "column": "Colonne", "description": "Description", "action": "Action",
+      "empty": "Ajoutez au moins une colonne nommée, puis créez ici vos contrôles qualité SQL.", "schema": "Schéma", "column": "Colonne", "description": "Description", "action": "Action",
       "noColumn": "Aucune colonne sélectionnée", "untitled": "Contrôle qualité sans titre", "add": "Ajouter un contrôle", "details": "Contrôle qualité", "comparison": "Comparaison",
       "operators": { "equal": "Égal", "notEqual": "Différent", "greaterThan": "Supérieur à", "greaterThanOrEqual": "Supérieur ou égal à", "lessThan": "Inférieur à", "lessThanOrEqual": "Inférieur ou égal à", "between": "Compris entre" },
       "expected": "Valeur attendue", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Expliquez ce que protège ce contrôle qualité",
-      "sqlQuery": "Requête SQL", "duckdbSql": "SQL DuckDB", "tableName": "Nom de la table :", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Supprimer le contrôle",
+      "sqlQuery": "Requête SQL", "duckdbSql": "SQL DuckDB", "tableName": "Nom de la table :", "tableNames": "Noms des tables :", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Supprimer le contrôle",
       "noteTitle": "Information", 
       "noteMessage": "Les contrôles de qualité utilisent des requêtes SQL exécutées avec DuckDB. Ces requêtes peuvent interroger plusieurs tables, notamment à l’aide de jointures (JOIN)."
     },

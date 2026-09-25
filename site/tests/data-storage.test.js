@@ -37,6 +37,7 @@ test('data storage module marks old persisted files as expired', () => {
 
   const dataStorage = global.window.ClinicalModules.dataStorage;
   const now = Date.UTC(2026, 0, 2);
+  assert.equal(dataStorage.dataStorageMaxAgeMs, 6 * 60 * 60 * 1000);
   assert.equal(dataStorage.isStoredDataFileExpired({ savedAt: now }, now), false);
   assert.equal(dataStorage.isStoredDataFileExpired({ savedAt: now - dataStorage.dataStorageMaxAgeMs - 1 }, now), true);
   assert.equal(dataStorage.isStoredDataFileExpired({}, now), true);

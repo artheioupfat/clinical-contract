@@ -1,15 +1,13 @@
                           <!-- Shared table selector for schema-scoped builder sections. -->
                           <div
-                            class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"
-                            x-data="{ tableMenuOpen: false }"
-                            @keydown.escape.stop="tableMenuOpen = false"
+                            class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar schema-table-toolbar--field"
+                            x-data="{ tableMenuOpen: false, tableNameEditing: false }"
+                            @keydown.escape.stop="tableMenuOpen = false; tableNameEditing = false"
                           >
                             <div class="entity-tabs-controls entity-select-controls">
-                              <span class="entity-select-label">
-                                <span x-text="t('editor.columns.tables')"></span><span aria-hidden="true">&nbsp;:</span>
-                              </span>
                               <div class="entity-select">
                                 <button
+                                  x-show="!tableNameEditing"
                                   type="button"
                                   class="entity-select-trigger"
                                   @click="tableMenuOpen = !tableMenuOpen"
@@ -24,8 +22,20 @@
                                     <path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 0 1 1.06 0L10 10.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
                                   </svg>
                                 </button>
+                                <input
+                                  x-show="tableNameEditing"
+                                  x-cloak
+                                  x-ref="tableNameInput"
+                                  type="text"
+                                  x-model="schemaDraft.tableName"
+                                  @input.debounce.150ms="pushSchemaToYaml()"
+                                  @keydown.enter.prevent="pushSchemaToYaml(); tableNameEditing = false"
+                                  @blur="pushSchemaToYaml(); tableNameEditing = false"
+                                  class="entity-select-trigger entity-select-trigger--input"
+                                  :aria-label="t('editor.columns.tableName')"
+                                />
                                 <ul
-                                  x-show="tableMenuOpen"
+                                  x-show="tableMenuOpen && !tableNameEditing"
                                   x-cloak
                                   @click.outside="tableMenuOpen = false"
                                   x-transition:enter="transition ease-out duration-100"
@@ -77,6 +87,18 @@
                                 >
                                   <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                                     <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+                                  </svg>
+                                </button>
+                                <button
+                                  type="button"
+                                  class="pine-btn pine-btn--icon"
+                                  @click.capture="tableMenuOpen = false"
+                                  @click="tableNameEditing = true; $nextTick(() => $refs.tableNameInput.focus())"
+                                  :aria-label="t('editor.columns.renameTable')"
+                                  :title="t('editor.columns.renameTable')"
+                                >
+                                  <svg class="pine-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m16.86 3.49 3.65 3.65M4 20l4.04-.81L19.7 7.53a2.58 2.58 0 0 0-3.65-3.65L4.4 15.54 4 20Z" />
                                   </svg>
                                 </button>
                                 <button

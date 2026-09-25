@@ -110,6 +110,16 @@ test('quality results expose per-rule execution logs', () => {
   assert.match(dataPanel, /colspan="7"/);
 });
 
+test('quality results show every rule with its source schema without a file selector', () => {
+  const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
+
+  assert.match(
+    dataPanel,
+    /x-show="dataTab === 'quality'"[\s\S]*?editor\.qualityResults\.schema[\s\S]*?x-for="\(row, idx\) in qualityRows"[\s\S]*?<td x-text="row\.schema_name"><\/td>/
+  );
+  assert.doesNotMatch(dataPanel, /x-show="dataTab === 'quality' && dataFile"/);
+});
+
 test('template selectors use persistent accessible dialogs', () => {
   const editorPanel = readEditorPanel();
   const dataPanel = fs.readFileSync(path.join(siteRoot, 'partials/data-panel.html'), 'utf8');
@@ -177,26 +187,27 @@ test('quality editor exposes every supported comparison operator', () => {
   assert.match(editorPanel, /rule\.expectedMax/);
 });
 
-test('schema and quality use the same table selector and active table state', () => {
+test('quality lists every rule without a table selector and keeps schema selection in its editor', () => {
   const editorPanel = readEditorPanel();
+  const qualityPanel = fs.readFileSync(path.join(siteRoot, 'partials/schema-quality.html'), 'utf8');
 
-  const tableSelectors = editorPanel.match(/class="entity-tabs-toolbar entity-tabs-toolbar--inline schema-table-toolbar"/g) || [];
+  const tableSelectors = editorPanel.match(/class="[^"]*\bschema-table-toolbar\b[^"]*"/g) || [];
   const tableSelectionCalls = editorPanel.match(/@click="selectSchemaTable\(index\)"/g) || [];
 
-  assert.equal(tableSelectors.length, 2);
-  assert.equal(tableSelectionCalls.length, 2);
+  assert.equal(tableSelectors.length, 1);
+  assert.equal(tableSelectionCalls.length, 1);
   assert.doesNotMatch(editorPanel, /@change="selectSchemaTable\(\$event\.target\.value\)"/);
-  assert.equal((editorPanel.match(/editor\.columns\.tables/g) || []).length, 4);
-  assert.equal((editorPanel.match(/role="listbox"/g) || []).length, 2);
-  assert.equal((editorPanel.match(/:aria-selected="index === schemaActiveIndex"/g) || []).length, 2);
+  assert.equal((editorPanel.match(/editor\.columns\.tables/g) || []).length, 2);
+  assert.equal((editorPanel.match(/role="listbox"/g) || []).length, 1);
+  assert.equal((editorPanel.match(/:aria-selected="index === schemaActiveIndex"/g) || []).length, 1);
   assert.match(
     editorPanel,
     /schemaSection === 'schema'[\s\S]*entity-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
   );
-  assert.match(
-    editorPanel,
-    /schemaSection === 'quality'[\s\S]*entity-select[\s\S]*index === schemaActiveIndex[\s\S]*@click="selectSchemaTable\(index\)"/
-  );
+  assert.doesNotMatch(qualityPanel, /schema-table-toolbar/);
+  assert.match(qualityPanel, /qualityRuleRows\(\)/);
+  assert.match(qualityPanel, /openQualityRuleFromTable\(rule\)/);
+  assert.match(qualityPanel, /setQualityRuleSchema\(rule, Number\(\$event\.target\.value\)\)/);
 });
 
 test('every builder section uses the aligned primary stage bar', () => {
@@ -233,7 +244,7 @@ test('shared table selector keeps table actions visible beside the menu', () => 
 
   assert.match(
     editorPanel,
-    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*schema-table-toolbar[\s\S]*entity-select-label[\s\S]*entity-select[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*openRemoveTableModal\(\)[\s\S]*<\/div>[\s\S]*schema-form-grid/
+    /schema-stage-bar schema-stage-bar--primary[\s\S]*schema-stage-title[\s\S]*<\/div>[\s\S]*schema-form-grid[\s\S]*schema-table-field[\s\S]*schema-form-label[\s\S]*editor\.columns\.tables[\s\S]*schema-table-toolbar--field[\s\S]*entity-select[\s\S]*tableNameEditing[\s\S]*entity-tabs-actions[\s\S]*addSchemaTable\(\)[\s\S]*tableNameEditing = true[\s\S]*openRemoveTableModal\(\)/
   );
   assert.match(editorPanel, /addSchemaTable\(\)[\s\S]*M12 5v14M5 12h14/);
   assert.match(shellCss, /\.entity-tabs-actions\s*\{[\s\S]*?shrink-0/);
@@ -244,6 +255,7 @@ test('shared table selector keeps table actions visible beside the menu', () => 
   assert.match(buttonCss, /\.pine-btn\s*\{[\s\S]*?h-9/);
   assert.match(shellCss, /\.view-switch\s*\{[\s\S]*?h-9/);
   assert.match(schemaCss, /\.schema-stage-bar--primary\s*\{[\s\S]*?-mx-4[\s\S]*?min-h-\[51px\][\s\S]*?py-2\.5/);
+  assert.match(schemaCss, /\.schema-table-field\s*\{[^}]*justify-end/);
 });
 
 test('template catalogs keep bundled assets declarative', () => {

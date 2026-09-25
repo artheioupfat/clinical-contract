@@ -125,6 +125,96 @@ test('schema module labels columns without types as unconstrained', () => {
   );
 });
 
+test('quality SQL hint displays the active table for a single-table contract', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    t,
+    schemaActiveIndex: 0,
+    schemaCollection: [{ name: 'patients' }],
+    schemaDraft: { tableName: 'patients' },
+    qualitySqlTableNames: schema.qualitySqlTableNames,
+  };
+
+  assert.deepEqual(schema.qualitySqlTableNames.call(context), ['patients']);
+  assert.equal(schema.qualitySqlTableLabel.call(context), 'Table name:');
+});
+
+test('quality SQL hint displays every named table in a multi-table contract', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    t,
+    schemaActiveIndex: 1,
+    schemaCollection: [
+      { name: 'patients' },
+      { name: 'covid_diagnoses' },
+      { name: 'encounters' },
+    ],
+    schemaDraft: { tableName: 'covid_diagnoses' },
+    qualitySqlTableNames: schema.qualitySqlTableNames,
+  };
+
+  assert.deepEqual(schema.qualitySqlTableNames.call(context), [
+    'patients',
+    'covid_diagnoses',
+    'encounters',
+  ]);
+  assert.equal(schema.qualitySqlTableLabel.call(context), 'Table names:');
+});
+
+test('quality rows include every schema and identify tables used by the SQL query', () => {
+  const schema = loadSchemaModule();
+  const context = {
+    t,
+    schemaActiveIndex: 0,
+    schemaDraft: {
+      tableName: 'patients',
+      properties: [{ name: 'patient_id' }],
+      qualityRules: [{
+        _rowId: 'quality-patients',
+        propertyName: 'patient_id',
+        description: 'Patient identifier is present.',
+        query: 'SELECT COUNT(*) FROM patients WHERE patient_id IS NULL',
+      }],
+    },
+    schemaCollection: [
+      { name: 'patients', properties: [{ name: 'patient_id', quality: [] }] },
+      {
+        name: 'covid_diagnoses',
+        properties: [{
+          name: 'diagnosis_code',
+          quality: [{
+            description: 'Every diagnosis belongs to a known patient.',
+            query: 'SELECT COUNT(*) FROM covid_diagnoses d LEFT JOIN patients p ON d.patient_id = p.patient_id',
+          }],
+        }],
+      },
+    ],
+    qualitySchemaOptions: schema.qualitySchemaOptions,
+    qualityRuleSchemaNames: schema.qualityRuleSchemaNames,
+  };
+
+  const rows = schema.qualityRuleRows.call(context);
+
+  assert.equal(rows.length, 2);
+  assert.deepEqual(rows[0].schemaNames, ['patients']);
+  assert.deepEqual(rows[1].schemaNames, ['covid_diagnoses', 'patients']);
+  assert.equal(rows[1].schemaName, 'covid_diagnoses');
+});
+
+test('quality SQL table detection falls back to the rule owner when no contract table is referenced', () => {
+  const schema = loadSchemaModule();
+
+  assert.deepEqual(
+    schema.qualityRuleSchemaNames.call(
+      { qualitySchemaOptions: () => [{ name: 'patients' }] },
+      'SELECT 0',
+      'patients',
+      [{ name: 'patients' }]
+    ),
+    ['patients']
+  );
+});
+
 test('schema module keeps the current builder section when returning from YAML', () => {
   const schema = loadSchemaModule();
   let synced = 0;

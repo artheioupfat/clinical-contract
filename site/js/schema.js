@@ -236,11 +236,19 @@ window.ClinicalModules.schema = {
   },
 
   addQualityRule() {
+    const targetSchemaIndex = this.firstQualitySchemaIndex();
+    if (targetSchemaIndex < 0) return;
+    if (targetSchemaIndex !== this.schemaActiveIndex) {
+      this.pushSchemaToYaml();
+      this.schemaActiveIndex = targetSchemaIndex;
+      this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    }
     const firstProperty = (this.schemaDraft.properties || []).find((property) => property.name);
     if (!firstProperty) return;
     const rule = this.createQualityRule({ propertyName: firstProperty?.name || '' });
     this.schemaDraft.qualityRules.push(rule);
     this.qualityEditorRuleId = rule._rowId;
+    this.qualityEditorSchemaIndex = this.schemaActiveIndex;
     this.pushSchemaToYaml();
   },
 
@@ -248,22 +256,156 @@ window.ClinicalModules.schema = {
     this.schemaDraft.qualityRules = this.schemaDraft.qualityRules.filter((rule) => rule._rowId !== rowId);
     if (this.qualityEditorRuleId === rowId) {
       this.qualityEditorRuleId = null;
+      this.qualityEditorSchemaIndex = null;
     }
     this.pushSchemaToYaml();
   },
 
   openQualityRule(rowId) {
     this.qualityEditorRuleId = rowId;
+    this.qualityEditorSchemaIndex = this.schemaActiveIndex;
   },
 
   closeQualityRule() {
     this.qualityEditorRuleId = null;
+    this.qualityEditorSchemaIndex = null;
   },
 
   qualityEditorRule() {
     return (this.schemaDraft.qualityRules || []).find(
       (rule) => rule._rowId === this.qualityEditorRuleId
     ) || null;
+  },
+
+  qualitySchemaOptions() {
+    const schemas = Array.isArray(this.schemaCollection) ? this.schemaCollection : [];
+    return schemas.map((schema, index) => {
+      const isActive = index === this.schemaActiveIndex;
+      const properties = isActive
+        ? (this.schemaDraft?.properties || [])
+        : (schema?.properties || []);
+      const name = isActive ? this.schemaDraft?.tableName : schema?.name;
+      return {
+        index,
+        name: String(name || '').trim() || `${this.t('editor.columns.table')} ${index + 1}`,
+        hasColumns: properties.some((property) => String(property?.name || '').trim()),
+      };
+    });
+  },
+
+  firstQualitySchemaIndex() {
+    const current = this.qualitySchemaOptions().find((schema) => schema.index === this.schemaActiveIndex);
+    if (current?.hasColumns) return current.index;
+    return this.qualitySchemaOptions().find((schema) => schema.hasColumns)?.index ?? -1;
+  },
+
+  qualityRuleRows() {
+    const schemas = Array.isArray(this.schemaCollection) ? this.schemaCollection : [];
+    const knownSchemas = this.qualitySchemaOptions();
+    return schemas.flatMap((schema, schemaIndex) => {
+      const isActive = schemaIndex === this.schemaActiveIndex;
+      const properties = isActive
+        ? (this.schemaDraft?.properties || [])
+        : (schema?.properties || []);
+      const rules = isActive ? (this.schemaDraft?.qualityRules || []) : null;
+      const schemaName = String(
+        isActive ? this.schemaDraft?.tableName : schema?.name
+      ).trim() || `${this.t('editor.columns.table')} ${schemaIndex + 1}`;
+
+      return properties.flatMap((property, propertyIndex) => {
+        const propertyName = String(property?.name || '').trim();
+        const qualityRules = isActive
+          ? rules.filter((rule) => rule.propertyName === property.name)
+          : (Array.isArray(property?.quality) ? property.quality : []);
+        return qualityRules.map((rule, qualityIndex) => ({
+          schemaIndex,
+          schemaName,
+          propertyIndex,
+          propertyName,
+          qualityIndex,
+          rowId: isActive ? rule._rowId : null,
+          schemaNames: this.qualityRuleSchemaNames(rule.query, schemaName, knownSchemas),
+          description: rule.description || '',
+        }));
+      });
+    });
+  },
+
+  qualityRuleSchemaNames(query, fallbackSchemaName, knownSchemas = this.qualitySchemaOptions()) {
+    const schemasByName = new Map(
+      knownSchemas.map((schema) => [schema.name.toLocaleLowerCase(), schema.name])
+    );
+    const matches = String(query || '').matchAll(
+      /\b(?:from|join)\s+(?:"([^"]+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][\w$]*))/gi
+    );
+    const names = [];
+    for (const match of matches) {
+      const identifier = (match[1] || match[2] || match[3] || match[4] || '').trim();
+      const schemaName = schemasByName.get(identifier.toLocaleLowerCase());
+      if (schemaName && !names.includes(schemaName)) names.push(schemaName);
+    }
+    return names.length ? names : [fallbackSchemaName];
+  },
+
+  openQualityRuleFromTable(entry) {
+    if (!entry) return;
+    this.pushSchemaToYaml();
+    this.schemaActiveIndex = entry.schemaIndex;
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+    const property = this.schemaDraft.properties?.[entry.propertyIndex];
+    const matchingRules = (this.schemaDraft.qualityRules || []).filter(
+      (rule) => rule.propertyName === property?.name
+    );
+    const rule = matchingRules[entry.qualityIndex];
+    if (!rule) return;
+    this.qualityEditorRuleId = rule._rowId;
+    this.qualityEditorSchemaIndex = entry.schemaIndex;
+  },
+
+  setQualityRuleSchema(rule, targetSchemaIndex) {
+    const targetIndex = Number(targetSchemaIndex);
+    if (!rule || !Number.isInteger(targetIndex) || targetIndex === this.schemaActiveIndex) return;
+    const target = this.qualitySchemaOptions().find((schema) => schema.index === targetIndex);
+    if (!target?.hasColumns) return;
+
+    const movedRule = { ...rule, extras: { ...(rule.extras || {}) } };
+    this.schemaDraft.qualityRules = this.schemaDraft.qualityRules.filter(
+      (candidate) => candidate._rowId !== rule._rowId
+    );
+    this.pushSchemaToYaml();
+    this.schemaActiveIndex = targetIndex;
+    this.syncSchemaFromYaml({ preserveCurrentOnError: false });
+
+    const targetProperty = this.schemaDraft.properties.find(
+      (property) => property.name === movedRule.propertyName
+    ) || this.schemaDraft.properties.find((property) => property.name);
+    movedRule.propertyName = targetProperty?.name || '';
+    this.schemaDraft.qualityRules.push(movedRule);
+    this.qualityEditorRuleId = movedRule._rowId;
+    this.qualityEditorSchemaIndex = targetIndex;
+    this.pushSchemaToYaml();
+  },
+
+  qualitySqlTableNames() {
+    const schemas = Array.isArray(this.schemaCollection) ? this.schemaCollection : [];
+    const activeIndex = Number(this.schemaActiveIndex);
+    const names = schemas.map((schema, index) => {
+      const tableName = index === activeIndex ? this.schemaDraft?.tableName : schema?.name;
+      return String(tableName || '').trim();
+    }).filter(Boolean);
+
+    const uniqueNames = [...new Set(names)];
+    if (uniqueNames.length > 0) return uniqueNames;
+
+    const activeTableName = String(this.schemaDraft?.tableName || '').trim();
+    return activeTableName ? [activeTableName] : ['data'];
+  },
+
+  qualitySqlTableLabel() {
+    const key = this.qualitySqlTableNames().length === 1
+      ? 'editor.quality.tableName'
+      : 'editor.quality.tableNames';
+    return this.t(key);
   },
 
   setQualityRuleProperty(rule, propertyName) {
@@ -341,6 +483,7 @@ window.ClinicalModules.schema = {
     this.schemaActiveIndex = 0;
     this.columnEditorRowId = null;
     this.qualityEditorRuleId = null;
+    this.qualityEditorSchemaIndex = null;
     this.teamEditorMemberId = null;
   },
 
@@ -384,6 +527,7 @@ window.ClinicalModules.schema = {
     this.schemaActiveIndex = decoded.activeSchemaIndex;
     this.columnEditorRowId = null;
     this.qualityEditorRuleId = null;
+    this.qualityEditorSchemaIndex = null;
     this.teamEditorMemberId = null;
     this.schemaParseWarning = '';
     this.schemaStarted = true;

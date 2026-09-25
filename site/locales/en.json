@@ -87,7 +87,7 @@
       "objectives": { "predictive": "Predictive", "therapeutic": "Therapeutic", "diagnostic": "Diagnostic", "epidemiological": "Epidemiological", "descriptive": "Descriptive", "operational": "Operational" }
     },
     "columns": {
-      "table": "Table", "tables": "Tables", "addTable": "Add table", "removeTable": "Remove table",
+      "table": "Table", "tables": "Tables", "addTable": "Add table", "renameTable": "Rename table", "removeTable": "Remove table",
       "tableName": "Table name", "description": "Description", "title": "Columns", "empty": "Add a column, then edit its type and description from the details panel.",
       "column": "Column", "type": "Type", "required": "Required", "action": "Action", "unnamed": "Unnamed column", "noDescription": "No description yet",
       "details": "Column details", "name": "Column name", "logicalType": "Logical type", "physicalType": "Physical type", "noConstraint": "No type constraint",
@@ -102,11 +102,11 @@
       "clearConfirm": "Clear table"
     },
     "quality": {
-      "empty": "Add at least one named column, then create SQL quality checks here.", "column": "Column", "description": "Description", "action": "Action",
+      "empty": "Add at least one named column, then create SQL quality checks here.", "schema": "Schema", "column": "Column", "description": "Description", "action": "Action",
       "noColumn": "No column selected", "untitled": "Untitled quality check", "add": "Add check", "details": "Quality check", "comparison": "Comparison",
       "operators": { "equal": "Equal", "notEqual": "Not equal", "greaterThan": "Greater than", "greaterThanOrEqual": "Greater than or equal", "lessThan": "Less than", "lessThanOrEqual": "Less than or equal", "between": "Between" },
       "expected": "Expected value", "minimum": "Minimum", "maximum": "Maximum", "descriptionPlaceholder": "Explain what this quality check protects",
-      "sqlQuery": "SQL query", "duckdbSql": "DuckDB SQL", "tableName": "Table name:", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Remove check",
+      "sqlQuery": "SQL query", "duckdbSql": "DuckDB SQL", "tableName": "Table name:", "tableNames": "Table names:", "sqlPlaceholder": "select count(*) from data where ...", "remove": "Remove check",
       "noteTitle": "Information", 
       "noteMessage": "Quality checks use SQL queries executed with DuckDB. These queries can access multiple tables, including through joins (JOIN)."
 

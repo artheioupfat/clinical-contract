@@ -41,6 +41,7 @@ document.addEventListener('alpine:init', () => {
     schemaActiveIndex: 0,
     columnEditorRowId: null,
     qualityEditorRuleId: null,
+    qualityEditorSchemaIndex: null,
     teamEditorMemberId: null,
     resetContractModalOpen: false,
     removeTableModalOpen: false,
