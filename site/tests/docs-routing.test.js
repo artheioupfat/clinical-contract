@@ -47,6 +47,16 @@ test('every registered page has French and English Markdown sources', () => {
   }
 });
 
+test('Python API guides include verified expected results', () => {
+  const english = read('docs/python-api.en.md');
+  const french = read('docs/python-api.fr.md');
+
+  assert.match(english, /Expected output for the bundled `clinical-template\.yaml` example/);
+  assert.match(english, /\[\('patients', True\), \('covid', True\)\]/);
+  assert.match(french, /Résultat attendu avec l'exemple embarqué `clinical-template\.yaml`/);
+  assert.match(french, /\[\('patients', True\), \('covid', True\)\]/);
+});
+
 test('documentation shell loads routing before the page controller', () => {
   const html = read('docs.html');
   assert.ok(html.indexOf('./js/docs-routing.js') < html.indexOf('./js/docs.js'));

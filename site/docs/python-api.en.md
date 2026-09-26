@@ -74,6 +74,12 @@ raw_contract = load_raw("contract.yaml")
 print(raw_contract["name"])
 ```
 
+Expected output for the bundled `clinical-template.yaml` example:
+
+```text
+Clinical Template Contract
+```
+
 This function does not build the Pydantic model. It is useful when an
 application needs to display all structural errors in an incomplete contract.
 
@@ -95,6 +101,12 @@ if report.success:
 else:
     for field in report.missing():
         print(field.field, field.display_value)
+```
+
+Expected output for a valid contract:
+
+```text
+Contract structure is valid
 ```
 
 Structural validation checks, among other things:
@@ -129,7 +141,15 @@ contract, raw_contract = load_contract("contract.yaml")
 
 print(contract.name)
 print(contract.version)
-print(contract.schema_)
+print([schema.name for schema in contract.schema_])
+```
+
+Expected output for `clinical-template.yaml`:
+
+```text
+Clinical Template Contract
+1.0.0
+['clinical_template']
 ```
 
 The function returns:
@@ -231,6 +251,13 @@ for table_report in schema_reports:
         print(column.column, column.status, column.parquet_type)
 ```
 
+Expected output for `clinical-template.yaml` and
+`clinical_template.parquet`:
+
+```text
+clinical_template True
+```
+
 The method returns one `SchemaCheckReport` per table, in contract order. Each
 report exposes:
 
@@ -281,6 +308,17 @@ for result in report.results:
     )
 ```
 
+Expected output for the bundled clinical template:
+
+```text
+True
+0
+All checks passed.
+clinical_template PATIENT_ID CheckStatus.passed 0 = 0
+clinical_template STAY CheckStatus.passed 0 = 0
+clinical_template EVENT_TIME CheckStatus.passed 0 = 0
+```
+
 `check()` executes quality rules but does not automatically call
 `check_schema()`. The CLI and browser editor orchestrate both steps explicitly.
 
@@ -325,6 +363,9 @@ report.passed()
 report.failed()
 report.errors()
 ```
+
+For the bundled clinical template, these helpers respectively return lists of
+3, 0, and 0 results.
 
 Every `QualityResult` contains:
 
@@ -382,11 +423,23 @@ def validate_and_check(contract_path, data_sources):
     }
 ```
 
-Example call with multiple data files:
+Example call with the bundled multi-table COVID cohort:
 
 ```python
-sources = ["patients.csv", "diagnostic.parquet"]
-validate_and_check("covid-diagnosis.yaml", sources)
+sources = ["patients.csv", "covid.csv"]
+result = validate_and_check("covid-diagnosis-cohort.yaml", sources)
+
+print(result["validation"].success)
+print([(item.schema_name, item.success) for item in result["schemas"]])
+print(result["quality"].success)
+```
+
+Expected output:
+
+```text
+True
+[('patients', True), ('covid', True)]
+True
 ```
 
 An application may stop all quality checks after one invalid table, or follow
